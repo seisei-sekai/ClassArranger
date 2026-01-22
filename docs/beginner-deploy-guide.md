@@ -1,76 +1,109 @@
-# ClassArranger 完整部署指南 - Best Practice
+# 小白部署指南 - 从零到公网访问
 
 **Created:** 2026-01-22  
-**Last Updated:** 2026-01-23  
-**Purpose:** 从零到生产环境的完整部署指南，包含团队协作和故障排查
+**Last Updated:** 2026-01-22  
+**Purpose:** 完全零基础的GCP Cloud Run部署指南，使用Mock数据，无需Firebase和OpenAI API
 
 ---
 
 ## 📋 目录
 
 1. [准备工作](#准备工作)
-2. [初始设置](#初始设置)
-3. [Terraform 基础设施部署](#terraform-基础设施部署)
-4. [Git-Based 团队协作](#git-based-团队协作)
-5. [日常开发流程](#日常开发流程)
-6. [GCP 故障排查](#gcp-故障排查)
-7. [CI/CD 自动化](#cicd-自动化)
-8. [生产环境优化](#生产环境优化)
+2. [第一步：注册MongoDB Atlas（免费数据库）](#第一步注册mongodb-atlas免费数据库)
+3. [第二步：准备GCP环境](#第二步准备gcp环境)
+4. [第三步：本地测试（可选）](#第三步本地测试可选)
+5. [第四步：部署到GCP](#第四步部署到gcp)
+6. [第五步：访问你的应用](#第五步访问你的应用)
+7. [常见问题](#常见问题)
 
 ---
 
 ## 准备工作
 
-### 你需要准备
+### 你需要准备：
 
-- ✅ **GCP 账号**（已绑定信用卡）
-- ✅ **GitHub 账号**
-- ✅ **一台电脑**（Mac/Windows/Linux）
-- ✅ **稳定的网络连接**
-- ✅ **60 分钟的时间**（首次设置）
+- ✅ GCP账号（已绑定信用卡）
+- ✅ 一台电脑（Mac/Windows/Linux都可以）
+- ✅ 稳定的网络连接
+- ✅ 1-2小时的时间
 
-### 费用说明
+### 费用说明：
 
-**GCP Compute Engine VM (e2-medium) - 东京区域:**
-- **配置**: 2 vCPU, 4GB RAM, 20GB 磁盘
-- **月费用**: 约 $27（东京区域，低延迟）
-- **免费额度**: 新用户 $300 免费试用（可用 90 天）
-- **优势**: 部署在东京，亚洲访问速度快
-
-### 技术栈 (Best Practice)
-
-```
-┌─────────────────────────────────────────┐
-│          Production Stack               │
-├─────────────────────────────────────────┤
-│ Frontend:  React + Vite + Nginx         │
-│ Backend:   FastAPI + Python 3.11        │
-│ Database:  MongoDB (containerized)      │
-│ Container: Docker + Docker Compose      │
-│ IaC:       Terraform                    │
-│ Hosting:   GCP Compute Engine VM        │
-│ Region:    asia-northeast1 (Tokyo)      │
-│ Deploy:    Git-based deployment         │
-│ CI/CD:     GitHub Actions               │
-└─────────────────────────────────────────┘
-```
+- **MongoDB Atlas**: 免费版（512MB存储，够用了）
+- **GCP Cloud Run**: 
+  - 每月免费额度：200万次请求
+  - 超出后约 $0.40/百万次请求
+  - **预计月费用**: $0-5（取决于访问量）
 
 ---
 
-## 初始设置
+## 第一步：注册MongoDB Atlas（免费数据库）
 
-### 步骤 1: 安装必要工具
+### 1.1 创建账号
 
-#### 1.1 安装 Google Cloud CLI
+1. 访问 [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)
+2. 使用Google账号或邮箱注册
+3. 验证邮箱
 
-**Mac (Homebrew):**
+### 1.2 创建免费集群
+
+1. 登录后，点击 **"Build a Database"**
+2. 选择 **"M0 FREE"** 计划（永久免费）
+3. 选择云服务商：**Google Cloud**
+4. 选择区域：**us-central1 (Iowa)** 或离你最近的区域
+5. 集群名称：`ClassArrangerCluster`（可自定义）
+6. 点击 **"Create"**
+
+⏰ **等待2-3分钟**，集群创建中...
+
+### 1.3 配置网络访问
+
+1. 左侧菜单点击 **"Network Access"**
+2. 点击 **"Add IP Address"**
+3. 选择 **"Allow Access from Anywhere"** (0.0.0.0/0)
+   - ⚠️ 这是为了简化，生产环境应该限制IP
+4. 点击 **"Confirm"**
+
+### 1.4 创建数据库用户
+
+1. 左侧菜单点击 **"Database Access"**
+2. 点击 **"Add New Database User"**
+3. 填写信息：
+   - Username: `classarranger_user`
+   - Password: 点击 **"Autogenerate Secure Password"**
+   - ⚠️ **复制密码并保存到记事本**
+4. Database User Privileges: **"Atlas admin"**
+5. 点击 **"Add User"**
+
+### 1.5 获取连接字符串
+
+1. 回到 **"Database"** 页面
+2. 点击你的集群的 **"Connect"**
+3. 选择 **"Drivers"**
+4. 选择 Driver: **"Python"**, Version: **"3.12 or later"**
+5. 复制连接字符串，格式如下：
+   ```
+   mongodb+srv://classarranger_user:<password>@classarrangercluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
+   ```
+6. **将 `<password>` 替换为你刚才保存的密码**
+7. **保存这个完整的连接字符串到记事本**
+
+✅ **MongoDB设置完成！**
+
+---
+
+## 第二步：准备GCP环境
+
+### 2.1 安装Google Cloud CLI
+
+**Mac（使用Homebrew）:**
 ```bash
 brew install google-cloud-sdk
 ```
 
 **Windows:**
-1. 下载: https://cloud.google.com/sdk/docs/install
-2. 运行安装程序
+1. 下载安装器：https://cloud.google.com/sdk/docs/install
+2. 运行安装程序，按默认选项安装
 
 **Linux:**
 ```bash
@@ -78,1207 +111,514 @@ curl https://sdk.cloud.google.com | bash
 exec -l $SHELL
 ```
 
-**验证安装:**
-```bash
-gcloud --version
-```
+### 2.2 登录GCP
 
-#### 1.2 安装 Terraform
-
-**Mac:**
-```bash
-brew tap hashicorp/tap
-brew install hashicorp/tap/terraform
-```
-
-**Windows:**
-```bash
-choco install terraform
-```
-
-**Linux:**
-```bash
-wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
-unzip terraform_1.6.0_linux_amd64.zip
-sudo mv terraform /usr/local/bin/
-```
-
-**验证安装:**
-```bash
-terraform version
-# 应显示: Terraform v1.6.0 或更高版本
-```
-
-#### 1.3 安装 Git
-
-**Mac:**
-```bash
-brew install git
-```
-
-**Windows/Linux:**  
-https://git-scm.com/downloads
-
-**配置 Git:**
-```bash
-git config --global user.name "Your Name"
-git config --global user.email "your-email@example.com"
-```
-
-### 步骤 2: 设置 GCP 环境
-
-#### 2.1 认证 GCP
+打开终端（Mac/Linux）或命令提示符（Windows），运行：
 
 ```bash
-# 登录 GCP
+# 登录GCP
 gcloud auth login
-
-# 设置应用默认凭据（Terraform 需要）
-gcloud auth application-default login
 ```
 
-#### 2.2 创建 GCP 项目
+浏览器会打开，选择你的Google账号登录。
+
+### 2.3 创建GCP项目
 
 ```bash
-# 创建项目（项目 ID 必须全球唯一）
-PROJECT_ID="classarranger-$(date +%s)"
-gcloud projects create $PROJECT_ID --name="ClassArranger"
+# 创建项目（项目ID必须全球唯一）
+gcloud projects create classarranger-app-$(date +%s) --name="ClassArranger"
 
-# 设置为默认项目
-gcloud config set project $PROJECT_ID
-
-# 保存项目 ID（后续会用到）
-echo $PROJECT_ID
+# 查看项目ID（复制下来）
+gcloud projects list --filter="name:ClassArranger"
 ```
 
-**📝 记下你的 PROJECT_ID!**
+记下你的 **PROJECT_ID**（类似 `classarranger-app-1234567890`）
 
-#### 2.3 启用计费
+### 2.4 设置项目和启用计费
 
 ```bash
+# 设置默认项目（替换为你的PROJECT_ID）
+gcloud config set project YOUR_PROJECT_ID
+
 # 列出计费账号
 gcloud billing accounts list
 
-# 关联计费账号
-gcloud billing projects link $PROJECT_ID \
-  --billing-account=YOUR_BILLING_ACCOUNT_ID
+# 将计费账号关联到项目（替换为你的BILLING_ACCOUNT_ID）
+gcloud billing projects link YOUR_PROJECT_ID --billing-account=YOUR_BILLING_ACCOUNT_ID
 ```
 
-#### 2.4 启用必要的 API
+### 2.5 启用必要的API
 
 ```bash
-# 启用 Compute Engine API
-gcloud services enable compute.googleapis.com
-
-# 验证
-gcloud services list --enabled
+# 启用所需的API（需要2-5分钟）
+gcloud services enable \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  cloudbuild.googleapis.com \
+  secretmanager.googleapis.com
 ```
 
-### 步骤 3: Fork 和克隆项目
+⏰ **等待API启用完成...**
 
-#### 3.1 Fork 项目
-
-1. 访问: https://github.com/seisei-sekai/ClassArranger
-2. 点击右上角 **Fork** 按钮
-3. Fork 到你的 GitHub 账号
-
-#### 3.2 克隆到本地
+### 2.6 创建Artifact Registry（存放Docker镜像）
 
 ```bash
-# 克隆你 Fork 的仓库
-git clone https://github.com/YOUR_USERNAME/ClassArranger.git
-cd ClassArranger
+# 创建Docker仓库
+gcloud artifacts repositories create classarranger-images \
+  --repository-format=docker \
+  --location=us-central1 \
+  --description="Docker images for ClassArranger"
 
-# 添加上游仓库（用于同步）
-git remote add upstream https://github.com/seisei-sekai/ClassArranger.git
-
-# 验证
-git remote -v
-# 应该看到 origin 和 upstream
+# 配置Docker认证
+gcloud auth configure-docker us-central1-docker.pkg.dev
 ```
+
+✅ **GCP环境准备完成！**
 
 ---
 
-## Terraform 基础设施部署
+## 第三步：本地测试（可选）
 
-### 步骤 4: 配置 Terraform
+如果你想先在本地测试，可以跳过这一步直接部署到GCP。
 
-#### 4.1 创建配置文件
-
-```bash
-cd terraform/vm
-
-# 复制示例配置
-cp terraform.tfvars.example terraform.tfvars
-
-# 编辑配置
-vim terraform.tfvars  # 或使用你喜欢的编辑器
-```
-
-#### 4.2 配置 terraform.tfvars
-
-```hcl
-# GCP Project Configuration
-project_id = "your-project-id-here"  # ⚠️ 替换为你的项目 ID
-region     = "asia-northeast1"       # 东京区域（推荐）
-zone       = "asia-northeast1-a"     # 东京可用区 A
-
-# VM Instance Configuration
-instance_name  = "classarranger-vm"
-machine_type   = "e2-medium"  # 推荐配置（2 vCPU, 4GB RAM）
-boot_disk_size = 20           # 磁盘大小 (GB)
-
-# Network Configuration
-use_static_ip = false  # 改为 true 可获得固定 IP（额外 ~$3/月）
-
-# Git Deployment Configuration
-git_repo_url = "https://github.com/YOUR_USERNAME/ClassArranger.git"  # ⚠️ 替换
-wait_for_deployment = true
-```
-
-**机器类型选择（东京区域）:**
-| 类型 | vCPU | 内存 | 月费用 | 适用场景 |
-|------|------|------|--------|---------|
-| e2-micro | 0.25-2 | 1GB | ~$7 | 仅测试 |
-| e2-small | 0.5-2 | 2GB | ~$14 | 轻量使用 |
-| **e2-medium** | **2** | **4GB** | **~$27** | **推荐** ✅ |
-| e2-standard-2 | 2 | 8GB | ~$53 | 高负载 |
-
-#### 4.3 初始化 Terraform
+### 3.1 克隆/下载项目代码
 
 ```bash
-# 初始化（下载 provider 插件）
-terraform init
+# 如果你已经有代码，进入项目目录
+cd /path/to/your/ClassArranger
 
-# 格式化代码
-terraform fmt
-
-# 验证配置
-terraform validate
+# 如果从GitHub克隆
+git clone https://github.com/seisei-sekai/ClassArranger.git
+cd ClassArranger
 ```
 
-### 步骤 5: 部署基础设施
+### 3.2 配置环境变量
 
-#### 方法一: 使用自动化脚本（推荐）
+创建 `.env` 文件：
 
 ```bash
-# 返回项目根目录
-cd ../..
+cat > .env << 'EOF'
+# MongoDB连接（使用你的MongoDB Atlas连接字符串）
+MONGODB_URL=mongodb+srv://classarranger_user:YOUR_PASSWORD@classarrangercluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB_NAME=xdf_class_arranger
 
-# 设置环境变量
+# Mock模式（不需要Firebase和OpenAI）
+DEV_MODE=true
+USE_MOCK_AUTH=true
+USE_MOCK_AI=true
+
+# API设置
+API_HOST=0.0.0.0
+API_PORT=8000
+EOF
+```
+
+⚠️ **记得替换MongoDB连接字符串！**
+
+### 3.3 使用Docker Compose测试
+
+```bash
+# 启动服务
+docker-compose up --build
+
+# 在另一个终端测试
+curl http://localhost:8000/health
+# 应该返回: {"status":"healthy"}
+
+# 访问前端
+open http://localhost:5173
+```
+
+如果一切正常，按 `Ctrl+C` 停止服务。
+
+✅ **本地测试成功！**
+
+---
+
+## 第四步：部署到GCP
+
+### 4.1 设置环境变量
+
+```bash
+# 设置项目变量（替换为你的值）
 export PROJECT_ID="your-project-id"
-export REGION="asia-northeast1"
-export ZONE="asia-northeast1-a"
-
-# 运行部署脚本
-./scripts/frequently-used/terraform-deploy.sh
+export REGION="us-central1"
+export MONGODB_URL="your-mongodb-connection-string"
 ```
 
-脚本会自动完成：
-1. ✅ 初始化 Terraform
-2. ✅ 生成执行计划
-3. ✅ 创建 VM 和网络资源
-4. ✅ 配置防火墙规则
-5. ✅ 克隆 Git 仓库到 VM
-6. ✅ 部署 Docker 容器
-7. ✅ 运行健康检查
-
-⏰ **等待时间:** 约 10-15 分钟
-
-#### 方法二: 手动 Terraform 命令
+### 4.2 创建Secret（保存敏感信息）
 
 ```bash
-cd terraform/vm
+# 将MongoDB连接字符串保存为secret
+echo -n "$MONGODB_URL" | gcloud secrets create mongodb-url \
+  --data-file=- \
+  --replication-policy="automatic"
 
-# 1. 生成执行计划
-terraform plan -out=tfplan
-
-# 2. 查看计划（确认要创建的资源）
-terraform show tfplan
-
-# 3. 应用更改
-terraform apply tfplan
-
-# 4. 查看输出
-terraform output
+# 验证
+gcloud secrets describe mongodb-url
 ```
 
-### 步骤 6: 验证部署
+### 4.3 构建并推送后端镜像
 
 ```bash
-# 获取 VM 外部 IP
-EXTERNAL_IP=$(terraform output -raw external_ip 2>/dev/null || \
-  gcloud compute instances describe classarranger-vm \
-  --zone=asia-northeast1-a \
-  --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-
-echo "External IP: $EXTERNAL_IP"
-
-# 测试前端
-curl -I http://$EXTERNAL_IP
-
-# 测试后端
-curl http://$EXTERNAL_IP:8000/health
-
-# 在浏览器中访问
-echo "Frontend: http://$EXTERNAL_IP"
-echo "Backend API: http://$EXTERNAL_IP:8000/docs"
-```
-
-✅ **基础设施部署完成！**
-
----
-
-## Git-Based 团队协作
-
-### 步骤 7: 团队协作设置
-
-#### 7.1 邀请团队成员
-
-**在 GitHub 上:**
-1. 进入你的仓库
-2. **Settings** → **Collaborators**
-3. 添加团队成员的 GitHub 账号
-
-**团队成员操作:**
-```bash
-# 克隆仓库
-git clone https://github.com/YOUR_USERNAME/ClassArranger.git
-cd ClassArranger
-
-# 配置 Git
-git config user.name "Team Member Name"
-git config user.email "member@example.com"
-```
-
-#### 7.2 分支策略 (Best Practice)
-
-```
-main (production)          ← 生产环境，受保护
-  ↑
-develop (integration)      ← 集成分支，测试新功能
-  ↑
-feature/* (features)       ← 功能开发分支
-```
-
-**设置分支保护:**
-1. GitHub 仓库 → **Settings** → **Branches**
-2. 添加规则保护 `main` 分支:
-   - ✅ Require pull request reviews
-   - ✅ Require status checks to pass
-   - ✅ Require branches to be up to date
-
-#### 7.3 创建功能分支
-
-```bash
-# 确保在最新的 main 分支
-git checkout main
-git pull origin main
-
-# 创建功能分支
-git checkout -b feature/add-user-profile
-
-# 进行开发...
-# 编辑文件
-
-# 提交更改
-git add .
-git commit -m "feat: add user profile page
-
-- Add profile component
-- Add profile API endpoint
-- Add tests"
-
-# 推送到远程
-git push origin feature/add-user-profile
-```
-
-**Commit 消息规范 (Conventional Commits):**
-```
-<type>: <subject>
-
-<body>
-
-<footer>
-```
-
-**Types:**
-- `feat`: 新功能
-- `fix`: Bug 修复
-- `docs`: 文档更新
-- `style`: 代码格式（不影响功能）
-- `refactor`: 重构
-- `test`: 测试
-- `chore`: 构建/工具/依赖更新
-
-#### 7.4 创建 Pull Request
-
-1. 推送分支后，GitHub 会提示创建 PR
-2. 点击 **Compare & pull request**
-3. 填写 PR 描述:
-   ```markdown
-   ## 描述
-   添加用户个人资料页面功能
-   
-   ## 更改内容
-   - [ ] 前端：用户资料组件
-   - [ ] 后端：用户资料 API
-   - [ ] 测试：单元测试和集成测试
-   
-   ## 测试步骤
-   1. 访问 `/profile` 页面
-   2. 验证用户信息显示正确
-   3. 测试编辑功能
-   
-   ## 截图
-   (可选)添加截图
-   ```
-4. 请求代码审查
-5. 等待审查通过后合并
-
-#### 7.5 代码审查 (Code Review)
-
-**审查者操作:**
-```bash
-# 拉取 PR 分支进行本地测试
-git fetch origin
-git checkout feature/add-user-profile
-
-# 本地测试
-docker-compose up
-
-# 运行测试
-cd backend && pytest
-cd frontend && npm test
-
-# 在 GitHub 上添加评论和批准
-```
-
-**审查清单:**
-- ✅ 代码质量和可读性
-- ✅ 测试覆盖率
-- ✅ 文档更新
-- ✅ 无安全问题
-- ✅ 符合项目规范
-
-#### 7.6 合并和部署
-
-```bash
-# 合并到 main 分支后，自动触发 CI/CD
-# GitHub Actions 会自动：
-# 1. 运行测试
-# 2. 构建 Docker 镜像
-# 3. 部署到生产环境（如果配置了）
-```
-
----
-
-## 日常开发流程
-
-### 本地开发
-
-#### 1. 启动本地环境
-
-```bash
-# 启动所有服务
-docker-compose up
-
-# 或后台运行
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-```
-
-访问:
-- 前端: http://localhost:5173
-- 后端: http://localhost:8000
-- API 文档: http://localhost:8000/docs
-
-#### 2. 进行更改
-
-```bash
-# 编辑代码
-vim backend/app/main.py
-vim frontend/src/App.jsx
-
-# 热重载会自动生效
-```
-
-#### 3. 运行测试
-
-```bash
-# 后端测试
+# 进入后端目录
 cd backend
-pytest
 
-# 前端测试
+# 构建Docker镜像
+docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest -f Dockerfile.prod .
+
+# 推送到Artifact Registry
+docker push us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest
+```
+
+⏰ **等待镜像上传（1-3分钟）...**
+
+### 4.4 部署后端到Cloud Run
+
+```bash
+# 部署后端服务
+gcloud run deploy classarranger-backend \
+  --image us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars DEV_MODE=true,USE_MOCK_AUTH=true,USE_MOCK_AI=true,MONGODB_DB_NAME=xdf_class_arranger \
+  --set-secrets MONGODB_URL=mongodb-url:latest \
+  --memory 512Mi \
+  --cpu 1 \
+  --min-instances 0 \
+  --max-instances 10
+
+# 获取后端URL
+BACKEND_URL=$(gcloud run services describe classarranger-backend --region $REGION --format='value(status.url)')
+echo "后端URL: $BACKEND_URL"
+```
+
+✅ **测试后端**
+```bash
+curl $BACKEND_URL/health
+# 应该返回: {"status":"healthy"}
+```
+
+### 4.5 构建并推送前端镜像
+
+```bash
+# 回到项目根目录
+cd ..
+
+# 进入前端目录
 cd frontend
-npm test
+
+# 构建Docker镜像（传入后端URL）
+docker build \
+  --build-arg VITE_API_URL=$BACKEND_URL \
+  --build-arg VITE_USE_MOCK_AUTH=true \
+  -t us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/frontend:latest \
+  -f Dockerfile.prod .
+
+# 推送镜像
+docker push us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/frontend:latest
 ```
 
-#### 4. 提交更改
+### 4.6 部署前端到Cloud Run
 
 ```bash
-# 查看更改
-git status
-git diff
+# 部署前端服务
+gcloud run deploy classarranger-frontend \
+  --image us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/frontend:latest \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --memory 256Mi \
+  --cpu 1 \
+  --min-instances 0 \
+  --max-instances 5
 
-# 暂存更改
-git add .
-
-# 提交
-git commit -m "feat: add new feature"
-
-# 推送
-git push origin feature/your-branch
+# 获取前端URL
+FRONTEND_URL=$(gcloud run services describe classarranger-frontend --region $REGION --format='value(status.url)')
+echo "前端URL: $FRONTEND_URL"
 ```
 
-### 部署到生产环境
-
-#### 方法一: Git-Based 部署（推荐，Best Practice）
-
-```bash
-# 1. 确保更改已推送到 GitHub
-git push origin main
-
-# 2. 运行 Git 部署脚本
-./scripts/frequently-used/deploy-git.sh
-```
-
-**脚本会自动:**
-1. ✅ 检查 VM 状态
-2. ✅ 验证本地没有未提交的更改
-3. ✅ 在 VM 上执行 `git pull`
-4. ✅ 重新构建 Docker 容器
-5. ✅ 重启服务
-6. ✅ 运行健康检查
-7. ✅ 显示部署状态
-
-**示例输出:**
-```
-======================================
-   ClassArranger Git Deployment
-======================================
-
->>> Checking VM status...
-✓ VM is running
-
->>> Checking for uncommitted changes...
-✓ No uncommitted changes
-
->>> Pulling latest code on VM...
-✓ Code updated successfully
-
->>> Rebuilding and restarting services...
-✓ Services restarted successfully
-
->>> Running health checks...
-✓ Backend is healthy
-✓ Frontend is accessible
-
-======================================
-   Deployment Complete! 🎉
-======================================
-
-📱 Frontend:  http://34.146.84.254
-🔌 Backend:   http://34.146.84.254:8000
-📚 API Docs:  http://34.146.84.254:8000/docs
-```
-
-#### 回滚部署
-
-```bash
-# 查看提交历史
-git log --oneline -n 10
-
-# 回滚到上一版本
-./scripts/frequently-used/rollback-git.sh HEAD~1
-
-# 或回滚到特定提交
-./scripts/frequently-used/rollback-git.sh abc1234
-```
+✅ **部署完成！**
 
 ---
 
-## GCP 故障排查
+## 第五步：访问你的应用
 
-### 常见问题诊断
+### 5.1 获取访问地址
 
-#### 1. VM 无法访问
-
-**检查 VM 状态:**
 ```bash
-# 查看 VM 列表
-gcloud compute instances list
-
-# 查看特定 VM
-gcloud compute instances describe classarranger-vm \
-  --zone=asia-northeast1-a
+# 显示所有URL
+echo "==================================="
+echo "🎉 部署成功！"
+echo "==================================="
+echo "后端API: $BACKEND_URL"
+echo "前端应用: $FRONTEND_URL"
+echo "==================================="
+echo ""
+echo "访问应用："
+echo "$FRONTEND_URL"
 ```
 
-**可能原因:**
-- ❌ VM 未运行
-- ❌ 防火墙规则未配置
-- ❌ 外部 IP 已更改
+### 5.2 测试功能
 
-**解决方案:**
-```bash
-# 启动 VM
-gcloud compute instances start classarranger-vm \
-  --zone=asia-northeast1-a
+1. **打开浏览器**，访问前端URL
+2. **测试登录**（Mock模式，任意邮箱密码都可以）
+   - Email: `test@example.com`
+   - Password: `password`
+3. **测试功能**
+   - Dashboard
+   - 排课功能
+   - 日历视图
 
-# 检查防火墙规则
-gcloud compute firewall-rules list
+### 5.3 查看日志（如果有问题）
 
-# 获取当前 IP
-gcloud compute instances describe classarranger-vm \
-  --zone=asia-northeast1-a \
-  --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
-```
-
-#### 2. SSH 连接问题
-
-**测试 SSH:**
-```bash
-# 标准 SSH
-gcloud compute ssh classarranger-vm \
-  --zone=asia-northeast1-a
-
-# 使用特定密钥
-gcloud compute ssh classarranger-vm \
-  --zone=asia-northeast1-a \
-  --ssh-key-file=~/.ssh/google_compute_engine
-```
-
-**故障排查:**
-```bash
-# 查看 SSH 密钥
-gcloud compute os-login ssh-keys list
-
-# 添加 SSH 密钥
-gcloud compute os-login ssh-keys add \
-  --key-file=~/.ssh/id_rsa.pub
-
-# 使用串行控制台（紧急情况）
-gcloud compute instances get-serial-port-output classarranger-vm \
-  --zone=asia-northeast1-a
-```
-
-#### 3. Docker 容器问题
-
-**SSH 到 VM 并检查:**
-```bash
-# SSH 到 VM
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-
-# 查看容器状态
-sudo docker ps -a
-
-# 查看容器日志
-sudo docker logs classarranger-backend-1 --tail 100
-sudo docker logs classarranger-frontend-1 --tail 100
-sudo docker logs classarranger-mongodb-1 --tail 100
-
-# 查看实时日志
-sudo docker logs -f classarranger-backend-1
-
-# 重启特定容器
-sudo docker restart classarranger-backend-1
-
-# 重启所有服务
-cd /opt/classarranger
-sudo docker-compose -f docker-compose.prod.yml restart
-```
-
-#### 4. 应用错误调试
-
-**后端调试:**
 ```bash
 # 查看后端日志
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a \
-  --command="sudo docker logs classarranger-backend-1 --tail 200"
+gcloud run services logs read classarranger-backend --region $REGION --limit 50
 
-# 进入后端容器
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-sudo docker exec -it classarranger-backend-1 bash
-
-# 在容器内
-python
->>> # 测试数据库连接等
+# 查看前端日志
+gcloud run services logs read classarranger-frontend --region $REGION --limit 50
 ```
-
-**前端调试:**
-```bash
-# 查看 Nginx 日志
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a \
-  --command="sudo docker exec classarranger-frontend-1 cat /var/log/nginx/error.log"
-
-# 查看前端构建
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-sudo docker exec -it classarranger-frontend-1 ls -la /usr/share/nginx/html
-```
-
-#### 5. 数据库连接问题
-
-**检查 MongoDB:**
-```bash
-# SSH 到 VM
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-
-# 进入 MongoDB 容器
-sudo docker exec -it classarranger-mongodb-1 mongosh
-
-# 在 mongosh 中
-show dbs
-use classarranger
-show collections
-db.users.find()
-
-# 检查网络连接
-sudo docker network ls
-sudo docker network inspect classarranger_default
-```
-
-#### 6. 磁盘空间问题
-
-```bash
-# 检查磁盘使用
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a \
-  --command="df -h"
-
-# 查看 Docker 磁盘使用
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a \
-  --command="sudo docker system df"
-
-# 清理未使用的 Docker 资源
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a \
-  --command="sudo docker system prune -a --volumes -f"
-
-# 扩展磁盘（如果需要）
-gcloud compute disks resize classarranger-vm \
-  --size=40GB \
-  --zone=asia-northeast1-a
-```
-
-#### 7. 网络问题诊断
-
-```bash
-# 测试端口连接
-nc -zv 34.146.84.254 80
-nc -zv 34.146.84.254 8000
-
-# 检查防火墙规则
-gcloud compute firewall-rules describe classarranger-http
-gcloud compute firewall-rules describe classarranger-api
-
-# 查看网络流量
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-sudo tcpdump -i any port 80 -n
-```
-
-#### 8. 查看系统资源使用
-
-```bash
-# SSH 到 VM
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-
-# 查看 CPU 和内存
-top
-htop  # 如果已安装
-
-# 查看容器资源使用
-sudo docker stats --no-stream
-
-# 查看系统日志
-sudo journalctl -xe
-sudo tail -f /var/log/syslog
-```
-
-### GCP 日志和监控
-
-#### 使用 Cloud Logging
-
-```bash
-# 查看 VM 日志
-gcloud logging read "resource.type=gce_instance AND \
-  resource.labels.instance_id=classarranger-vm" \
-  --limit 50 \
-  --format json
-
-# 实时查看日志
-gcloud logging tail "resource.type=gce_instance"
-
-# 查看特定时间段
-gcloud logging read "resource.type=gce_instance" \
-  --freshness=1h
-```
-
-#### 设置告警
-
-在 GCP Console:
-1. **Monitoring** → **Alerting**
-2. 创建告警策略:
-   - CPU 使用率 > 80%
-   - 内存使用率 > 80%
-   - 磁盘使用率 > 80%
-   - HTTP 响应错误率 > 5%
 
 ---
 
-## CI/CD 自动化
+## 常见问题
 
-### GitHub Actions 配置
-
-项目已包含 CI/CD 配置: `.github/workflows/terraform-deploy.yml`
-
-#### 功能特性
-
-1. **Pull Request 时:**
-   - ✅ 运行测试
-   - ✅ 生成 Terraform plan
-   - ✅ 在 PR 中评论计划详情
-
-2. **合并到 main 时:**
-   - ✅ 自动部署基础设施
-   - ✅ 更新应用代码
-   - ✅ 运行健康检查
-
-3. **手动触发:**
-   - ✅ Deploy（部署）
-   - ✅ Plan（计划）
-   - ✅ Destroy（销毁）
-
-### 配置 GitHub Secrets
-
-#### 创建 GCP 服务账号
+### Q1: 构建镜像时提示权限错误？
 
 ```bash
-# 1. 创建服务账号
-gcloud iam service-accounts create github-actions \
-  --display-name="GitHub Actions Deployer"
-
-# 2. 授予权限
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/compute.admin"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/iam.serviceAccountUser"
-
-# 3. 创建密钥
-gcloud iam service-accounts keys create github-key.json \
-  --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
-
-# 4. 查看密钥内容
-cat github-key.json
+# 重新认证Docker
+gcloud auth configure-docker us-central1-docker.pkg.dev
 ```
 
-#### 在 GitHub 添加 Secrets
+### Q2: Cloud Run部署失败？
 
-1. GitHub 仓库 → **Settings** → **Secrets and variables** → **Actions**
-2. 点击 **New repository secret**
-3. 添加以下 secrets:
+检查：
+1. 是否启用了计费
+2. 是否启用了所有必需的API
+3. 查看日志：`gcloud run services logs read SERVICE_NAME`
 
-| Secret 名称 | 值 | 说明 |
-|------------|-----|------|
-| `GCP_PROJECT_ID` | `your-project-id` | GCP 项目 ID |
-| `GCP_SA_KEY` | `{...JSON content...}` | 服务账号密钥 |
-| `GCP_REGION` | `asia-northeast1` | GCP 区域 |
-| `GCP_ZONE` | `asia-northeast1-a` | GCP 可用区 |
-| `VM_MACHINE_TYPE` | `e2-medium` | VM 类型 |
+### Q3: 前端无法连接后端？
 
-⚠️ **重要:** 添加完成后删除本地密钥文件
-```bash
-rm github-key.json
-```
+检查：
+1. 后端URL是否正确
+2. CORS设置是否正确
+3. 后端是否允许公开访问
 
-### 触发 CI/CD
+### Q4: MongoDB连接失败？
 
-#### 自动触发（推送到 main）
+检查：
+1. 网络访问是否设置为 0.0.0.0/0
+2. 数据库用户密码是否正确
+3. 连接字符串格式是否正确
+
+### Q5: 如何更新应用？
 
 ```bash
-git add .
-git commit -m "feat: add new feature"
-git push origin main
+# 重新构建并推送镜像
+docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest .
+docker push us-central1-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest
 
-# GitHub Actions 会自动部署
+# Cloud Run会自动使用新镜像（或手动触发）
+gcloud run services update classarranger-backend --region $REGION
 ```
 
-#### 手动触发
+### Q6: 如何删除所有资源（省钱）？
 
-1. GitHub 仓库 → **Actions**
-2. 选择 **Terraform Deploy** workflow
-3. 点击 **Run workflow**
-4. 选择动作:
-   - `apply`: 部署
-   - `plan`: 仅查看计划
-   - `destroy`: 销毁资源
+```bash
+# 删除Cloud Run服务
+gcloud run services delete classarranger-backend --region $REGION
+gcloud run services delete classarranger-frontend --region $REGION
 
-#### 监控 CI/CD 状态
+# 删除镜像仓库
+gcloud artifacts repositories delete classarranger-images --location $REGION
 
-在 **Actions** 页面可以看到:
-- ✅ 每一步的执行状态
-- ✅ 详细日志
-- ✅ Terraform 输出
-- ✅ 部署的 URL
-- ✅ 测试结果
+# 删除Secrets
+gcloud secrets delete mongodb-url
+
+# 删除项目（会删除所有资源）
+gcloud projects delete $PROJECT_ID
+```
 
 ---
 
-## 生产环境优化
+## 🎯 快速部署脚本（一键部署）
 
-### 1. 使用静态 IP
-
-```hcl
-# terraform/vm/terraform.tfvars
-use_static_ip = true
-```
+保存为 `quick-deploy.sh`:
 
 ```bash
-cd terraform/vm
-terraform apply
-
-# 获取静态 IP
-terraform output static_ip
-```
-
-**优势:**
-- ✅ IP 不会因 VM 重启而改变
-- ✅ 可以配置 DNS
-- ✅ 更稳定
-
-**成本:** ~$3/月
-
-### 2. 配置自定义域名
-
-**使用 Cloud DNS:**
-```bash
-# 创建 DNS Zone
-gcloud dns managed-zones create classarranger \
-  --dns-name="yourdomain.com" \
-  --description="ClassArranger DNS zone"
-
-# 获取静态 IP
-STATIC_IP=$(terraform output -raw static_ip)
-
-# 添加 A 记录
-gcloud dns record-sets create yourdomain.com. \
-  --zone=classarranger \
-  --type=A \
-  --ttl=300 \
-  --rrdatas=$STATIC_IP
-
-# 添加 www 记录
-gcloud dns record-sets create www.yourdomain.com. \
-  --zone=classarranger \
-  --type=A \
-  --ttl=300 \
-  --rrdatas=$STATIC_IP
-```
-
-### 3. 配置 HTTPS (Let's Encrypt)
-
-```bash
-# SSH 到 VM
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-
-# 安装 Certbot
-sudo apt-get update
-sudo apt-get install -y certbot python3-certbot-nginx
-
-# 获取证书
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-
-# 测试自动续期
-sudo certbot renew --dry-run
-```
-
-### 4. 自动备份 MongoDB
-
-**创建备份脚本:**
-```bash
-# 在 VM 上
-cat > /opt/classarranger/backup-mongodb.sh << 'EOF'
 #!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/opt/backups"
-mkdir -p $BACKUP_DIR
 
-# 备份 MongoDB
-docker exec classarranger-mongodb-1 mongodump \
-  --out=/tmp/backup
+# 颜色输出
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-# 复制到宿主机
-docker cp classarranger-mongodb-1:/tmp/backup \
-  $BACKUP_DIR/mongodb_$DATE
+# 检查必需变量
+if [ -z "$PROJECT_ID" ] || [ -z "$MONGODB_URL" ]; then
+    echo -e "${RED}错误: 请先设置环境变量${NC}"
+    echo "export PROJECT_ID='your-project-id'"
+    echo "export MONGODB_URL='your-mongodb-connection-string'"
+    exit 1
+fi
 
-# 压缩
-tar -czf $BACKUP_DIR/mongodb_$DATE.tar.gz \
-  -C $BACKUP_DIR mongodb_$DATE
+REGION=${REGION:-us-central1}
 
-# 清理
-rm -rf $BACKUP_DIR/mongodb_$DATE
+echo -e "${GREEN}==================================="
+echo "ClassArranger 一键部署"
+echo "===================================${NC}"
+echo "项目ID: $PROJECT_ID"
+echo "区域: $REGION"
+echo ""
 
-# 上传到 GCS（可选）
-gsutil cp $BACKUP_DIR/mongodb_$DATE.tar.gz \
-  gs://your-backup-bucket/
+# 1. 设置项目
+echo -e "${YELLOW}[1/8] 设置GCP项目...${NC}"
+gcloud config set project $PROJECT_ID
 
-# 删除 7 天前的备份
-find $BACKUP_DIR -name "mongodb_*.tar.gz" -mtime +7 -delete
+# 2. 启用API
+echo -e "${YELLOW}[2/8] 启用必要的API...${NC}"
+gcloud services enable \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  cloudbuild.googleapis.com \
+  secretmanager.googleapis.com
 
-echo "Backup completed: mongodb_$DATE.tar.gz"
-EOF
+# 3. 创建Artifact Registry
+echo -e "${YELLOW}[3/8] 创建镜像仓库...${NC}"
+gcloud artifacts repositories create classarranger-images \
+  --repository-format=docker \
+  --location=$REGION \
+  --description="Docker images for ClassArranger" \
+  2>/dev/null || echo "仓库已存在，跳过"
 
-chmod +x /opt/classarranger/backup-mongodb.sh
+# 4. 配置Docker
+echo -e "${YELLOW}[4/8] 配置Docker认证...${NC}"
+gcloud auth configure-docker $REGION-docker.pkg.dev
+
+# 5. 创建Secret
+echo -e "${YELLOW}[5/8] 创建MongoDB Secret...${NC}"
+echo -n "$MONGODB_URL" | gcloud secrets create mongodb-url \
+  --data-file=- \
+  --replication-policy="automatic" \
+  2>/dev/null || gcloud secrets versions add mongodb-url --data-file=-
+
+# 6. 构建并部署后端
+echo -e "${YELLOW}[6/8] 构建并部署后端...${NC}"
+cd backend
+docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest -f Dockerfile.prod .
+docker push $REGION-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest
+
+gcloud run deploy classarranger-backend \
+  --image $REGION-docker.pkg.dev/$PROJECT_ID/classarranger-images/backend:latest \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars DEV_MODE=true,USE_MOCK_AUTH=true,USE_MOCK_AI=true,MONGODB_DB_NAME=xdf_class_arranger \
+  --set-secrets MONGODB_URL=mongodb-url:latest \
+  --memory 512Mi \
+  --cpu 1 \
+  --min-instances 0 \
+  --max-instances 10
+
+BACKEND_URL=$(gcloud run services describe classarranger-backend --region $REGION --format='value(status.url)')
+echo -e "${GREEN}后端URL: $BACKEND_URL${NC}"
+
+# 7. 构建并部署前端
+echo -e "${YELLOW}[7/8] 构建并部署前端...${NC}"
+cd ../frontend
+docker build \
+  --build-arg VITE_API_URL=$BACKEND_URL \
+  --build-arg VITE_USE_MOCK_AUTH=true \
+  -t $REGION-docker.pkg.dev/$PROJECT_ID/classarranger-images/frontend:latest \
+  -f Dockerfile.prod .
+docker push $REGION-docker.pkg.dev/$PROJECT_ID/classarranger-images/frontend:latest
+
+gcloud run deploy classarranger-frontend \
+  --image $REGION-docker.pkg.dev/$PROJECT_ID/classarranger-images/frontend:latest \
+  --region $REGION \
+  --platform managed \
+  --allow-unauthenticated \
+  --memory 256Mi \
+  --cpu 1 \
+  --min-instances 0 \
+  --max-instances 5
+
+FRONTEND_URL=$(gcloud run services describe classarranger-frontend --region $REGION --format='value(status.url)')
+
+# 8. 完成
+echo -e "${GREEN}==================================="
+echo "🎉 部署成功！"
+echo "===================================${NC}"
+echo "后端API: $BACKEND_URL"
+echo "前端应用: $FRONTEND_URL"
+echo ""
+echo "测试后端: curl $BACKEND_URL/health"
+echo "访问应用: open $FRONTEND_URL"
+echo -e "${GREEN}===================================${NC}"
 ```
 
-**设置定时任务:**
+使用方法：
+
 ```bash
-# 添加到 crontab（每天凌晨 3 点）
-sudo crontab -e
+# 设置环境变量
+export PROJECT_ID="your-project-id"
+export MONGODB_URL="your-mongodb-connection-string"
 
-# 添加这行
-0 3 * * * /opt/classarranger/backup-mongodb.sh >> /var/log/mongodb-backup.log 2>&1
-```
-
-### 5. 监控和告警
-
-**安装监控代理:**
-```bash
-# SSH 到 VM
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a
-
-# 安装 Cloud Monitoring agent
-curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-sudo bash add-google-cloud-ops-agent-repo.sh --also-install
-```
-
-**配置告警策略（在 GCP Console）:**
-1. **Monitoring** → **Alerting** → **Create Policy**
-2. 添加条件:
-   - CPU 使用率 > 80%（5 分钟）
-   - 内存使用率 > 85%（5 分钟）
-   - 磁盘使用率 > 90%
-   - HTTP 5xx 错误率 > 1%
-3. 配置通知渠道（Email/Slack/PagerDuty）
-
-### 6. 性能优化
-
-**前端优化:**
-```javascript
-// vite.config.js
-export default {
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom'],
-          'calendar': ['@fullcalendar/react'],
-        }
-      }
-    },
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-      }
-    }
-  }
-}
-```
-
-**后端优化:**
-```python
-# backend/app/core/config.py
-class Settings(BaseSettings):
-    # 生产环境配置
-    ENVIRONMENT: str = "production"
-    DEBUG: bool = False
-    
-    # MongoDB 连接池
-    MONGODB_MAX_POOL_SIZE: int = 50
-    MONGODB_MIN_POOL_SIZE: int = 10
-    
-    # 日志级别
-    LOG_LEVEL: str = "INFO"
-```
-
-**Nginx 缓存配置:**
-```nginx
-# frontend/nginx.prod.conf
-server {
-    # 静态资源缓存
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    # Gzip 压缩
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript;
-    gzip_comp_level 6;
-}
-```
-
-### 7. 安全加固
-
-**防火墙限制:**
-```bash
-# 只允许特定 IP 访问 MongoDB 端口
-gcloud compute firewall-rules create mongodb-restricted \
-  --action=ALLOW \
-  --rules=tcp:27017 \
-  --source-ranges=YOUR_OFFICE_IP/32 \
-  --target-tags=classarranger
-
-# 限制 SSH 访问
-gcloud compute firewall-rules create ssh-restricted \
-  --action=ALLOW \
-  --rules=tcp:22 \
-  --source-ranges=YOUR_IP/32
-```
-
-**环境变量安全:**
-```bash
-# 使用 Secret Manager（推荐生产环境）
-# 创建 secret
-echo -n "your-secret-value" | \
-  gcloud secrets create mongodb-password \
-  --data-file=-
-
-# 在应用中读取
-gcloud secrets versions access latest \
-  --secret=mongodb-password
+# 运行脚本
+chmod +x quick-deploy.sh
+./quick-deploy.sh
 ```
 
 ---
 
-## 最佳实践总结
+## 📚 下一步
 
-### ✅ 开发流程
+部署成功后，你可以：
 
-1. **本地开发** → 使用 `docker-compose up` 启动本地环境
-2. **编写代码** → 功能开发和测试
-3. **提交代码** → 使用规范的 commit 消息
-4. **推送分支** → 推送到 GitHub
-5. **创建 PR** → 请求代码审查
-6. **合并代码** → 审查通过后合并到 main
-7. **自动部署** → GitHub Actions 自动部署到生产环境
+1. **设置自定义域名**
+   - 在Cloud Run控制台添加自定义域名
+   - 配置DNS记录
 
-### ✅ 部署流程
+2. **启用HTTPS**
+   - Cloud Run自动提供HTTPS证书
 
-1. **首次部署** → 使用 Terraform 创建基础设施
-2. **日常更新** → 使用 Git-based deployment
-3. **紧急回滚** → 使用 rollback 脚本
-4. **监控告警** → 配置 Cloud Monitoring
+3. **监控和日志**
+   - 使用Cloud Logging查看日志
+   - 使用Cloud Monitoring监控性能
 
-### ✅ 安全检查清单
+4. **扩展功能**
+   - 替换Mock认证为真实的JWT认证
+   - 集成真实的AI API
+   - 添加更多业务功能
 
-- [ ] 启用 HTTPS
-- [ ] 配置防火墙规则
-- [ ] 使用 Secret Manager 管理敏感信息
-- [ ] 启用 Cloud Armor（DDoS 防护）
-- [ ] 定期更新依赖
-- [ ] 配置自动备份
-- [ ] 设置访问日志
-- [ ] 启用 2FA 认证
-
-### ✅ 性能检查清单
-
-- [ ] 启用 CDN（Cloud CDN）
-- [ ] 配置缓存策略
-- [ ] 优化 Docker 镜像大小
-- [ ] 使用连接池
-- [ ] 启用 Gzip 压缩
-- [ ] 配置静态资源缓存
-- [ ] 数据库索引优化
+5. **优化成本**
+   - 设置合理的min-instances和max-instances
+   - 使用Cloud Scheduler定期唤醒服务（避免冷启动）
 
 ---
 
-## 快速命令参考
+## 💡 小贴士
 
-### 本地开发
-```bash
-docker-compose up                  # 启动所有服务
-docker-compose down                # 停止所有服务
-docker-compose logs -f             # 查看日志
-docker-compose restart backend     # 重启后端
-```
-
-### Git 操作
-```bash
-git checkout -b feature/xxx        # 创建功能分支
-git add .                          # 暂存更改
-git commit -m "feat: xxx"          # 提交
-git push origin feature/xxx        # 推送分支
-```
-
-### 部署操作
-```bash
-./scripts/frequently-used/deploy-git.sh           # Git 部署
-./scripts/frequently-used/rollback-git.sh HEAD~1  # 回滚
-```
-
-### GCP 操作
-```bash
-gcloud compute ssh classarranger-vm --zone=asia-northeast1-a  # SSH 到 VM
-gcloud compute instances list                      # 列出 VM
-gcloud compute firewall-rules list                 # 列出防火墙
-```
-
-### Terraform 操作
-```bash
-terraform plan      # 查看计划
-terraform apply     # 应用更改
-terraform destroy   # 销毁资源
-terraform output    # 查看输出
-```
+1. **第一次部署需要10-15分钟**，不要着急
+2. **Cloud Run的镜像构建可能比较慢**，耐心等待
+3. **保存好所有的URL和密码**，建议用密码管理器
+4. **定期查看账单**，避免意外费用
+5. **使用min-instances=0可以节省成本**，但会有冷启动延迟
 
 ---
 
-## 相关文档
+## 🆘 需要帮助？
 
-- **[✨ Git 部署指南](./git-deployment-guide.md)** - Git 部署详细说明
-- **[🧪 Mock 模式指南](./mock-mode-guide.md)** - 本地开发和测试
-- **[💻 本地运行指南](./local-run.md)** - 本地环境设置
-- **[📊 部署方案对比](./deployment-comparison.md)** - 选择合适的部署方案
+如果遇到问题：
 
----
-
-## 获取帮助
-
-### 遇到问题？
-
-1. **查看日志**
-   ```bash
-   gcloud compute ssh classarranger-vm --zone=asia-northeast1-a \
-     --command="sudo docker logs classarranger-backend-1 --tail 100"
-   ```
-
-2. **检查状态**
-   ```bash
-   gcloud compute instances describe classarranger-vm --zone=asia-northeast1-a
-   ```
-
-3. **查看文档**
-   - [本项目文档](./INDEX.md)
-   - [Terraform 文档](https://www.terraform.io/docs)
-   - [GCP 文档](https://cloud.google.com/docs)
-
-4. **提交 Issue**
-   - GitHub Issues: https://github.com/YOUR_USERNAME/ClassArranger/issues
+1. 查看本文档的"常见问题"部分
+2. 查看Cloud Run日志
+3. 在GitHub Issues提问
+4. 联系项目维护者
 
 ---
 
-**🎉 恭喜！你已经掌握了从零到生产环境的完整部署流程！**
+**祝你部署成功！🚀**
 
-**总结:**
-- ✅ **Infrastructure as Code** - Terraform 管理基础设施
-- ✅ **Git-based Deployment** - 版本控制的部署方式
-- ✅ **团队协作** - GitHub Flow 工作流
-- ✅ **CI/CD 自动化** - GitHub Actions 自动部署
-- ✅ **故障排查** - 完整的 debug 指南
-- ✅ **生产环境优化** - HTTPS、备份、监控
-- ✅ **Best Practice** - 行业标准的开发和部署流程
