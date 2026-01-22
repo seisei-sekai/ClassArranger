@@ -60,3 +60,10 @@
 - Do not document non-best-practice operations in any markdown file.
 - Evaluate actions for adherence to current best practices before proceeding.
 
+## Rule 6: Context Relevance Filtering for AI Agent
+
+**If the context is too large, prioritize and filter context dynamically.**
+
+- The AI Agent must evaluate which parts of the context are essential and which are non-essential.
+- Irrelevant or unnecessary context should be excluded from processing.
+- Always use dynamic and intelligent strategies to determine relevance based on the current task.

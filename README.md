@@ -214,9 +214,9 @@ npm run dev                    # 启动前端
 make dev                       # 使用 Docker Compose 启动全栈
 
 # GCP 部署
-./scripts/setup-gcp.sh         # 初始化 GCP（首次）
-./scripts/deploy-git.sh        # Git部署（推荐）
-./scripts/rollback-git.sh HEAD~1 # 回滚到上一版本
+./scripts/other/setup-gcp.sh             # 初始化 GCP（首次）
+./scripts/frequently-used/deploy-git.sh  # Git部署（推荐）⭐
+./scripts/frequently-used/rollback-git.sh HEAD~1  # 回滚到上一版本
 
 # 查看日志
 gcloud run logs read classarranger-frontend --limit=50
