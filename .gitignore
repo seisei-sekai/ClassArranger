@@ -76,6 +76,3 @@ tsconfig.node.json
 *.bak
 *~
 
-# XdfClassArranger - excluded from repository
-frontend/src/XdfClassArranger/
-
