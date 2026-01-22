@@ -11,7 +11,7 @@ cd frontend
 npm install
 npm run dev
 ```
-
+1
 访问：http://localhost:5173/xdf-class-arranger
 
 详细说明请查看 [本地运行指南](./docs/local-run.md)

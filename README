@@ -2,3 +2,6 @@ gcloud compute ssh classarranger-vm --zone=asia-northeast1-a --project=project-2
 
 cd /opt/classarranger
 ls -la
+
+
+test
