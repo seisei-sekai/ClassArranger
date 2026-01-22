@@ -3,12 +3,10 @@ uvicorn[standard]==0.27.0
 pydantic==2.5.3
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
-firebase-admin==6.4.0
-openai==1.7.2
-weaviate-client==3.26.2
-python-jose[cryptography]==3.3.0
+motor==3.6.0
+pymongo==4.9.1
 python-multipart==0.0.6
 httpx==0.26.0
-
-
-
+PyJWT==2.8.0
+passlib[bcrypt]==1.7.4
+email-validator==2.1.0

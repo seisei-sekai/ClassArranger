@@ -1,0 +1,548 @@
+# Cursor Rules Examples - Reference Guide
+
+这个文件包含一些示例规则，你可以参考这些模式来扩展 `.cursorrules` 文件。
+
+---
+
+## Example 1: 代码生成规则
+
+### 创建新组件时的规则
+```
+When creating a new React component:
+1. Use functional component with hooks
+2. Add PropTypes or TypeScript types
+3. Include error boundaries
+4. Write unit tests (minimum 3 test cases)
+5. Add JSDoc comments
+6. Export as default export
+7. Place in appropriate directory structure
+```
+
+### 创建 API 端点时的规则
+```
+When creating a new FastAPI endpoint:
+1. Define request/response models using Pydantic
+2. Add authentication dependency
+3. Implement proper error handling
+4. Add OpenAPI documentation
+5. Write unit tests (test success and error cases)
+6. Write integration tests
+7. Add rate limiting if needed
+```
+
+---
+
+## Example 2: 代码审查规则
+
+### 提交代码前的检查清单
+```
+Before committing code:
+- [ ] All tests pass locally
+- [ ] Code follows style guidelines
+- [ ] No console.log or debug statements
+- [ ] Error handling implemented
+- [ ] Documentation updated
+- [ ] No hardcoded values
+- [ ] Environment variables used correctly
+- [ ] Security considerations addressed
+```
+
+### PR 审查检查清单
+```
+When reviewing a Pull Request:
+1. Check test coverage (should be > 80%)
+2. Verify error handling
+3. Check for security vulnerabilities
+4. Verify performance implications
+5. Ensure documentation is updated
+6. Check for breaking changes
+7. Verify CI/CD passes
+```
+
+---
+
+## Example 3: 特定场景规则
+
+### 处理用户输入
+```
+When processing user input:
+1. Always validate input
+2. Sanitize to prevent XSS
+3. Use parameterized queries for database
+4. Validate on both client and server
+5. Return clear error messages
+6. Log validation failures
+7. Test with malicious input
+```
+
+### 处理异步操作
+```
+When handling async operations:
+1. Use async/await instead of promises
+2. Handle errors with try/catch
+3. Add loading states
+4. Implement timeout handling
+5. Show user feedback
+6. Log errors appropriately
+7. Test error scenarios
+```
+
+### 处理状态管理
+```
+When managing application state:
+1. Use Zustand for global state
+2. Use local state for component-specific state
+3. Avoid prop drilling
+4. Use context for deeply nested props
+5. Keep state normalized
+6. Avoid unnecessary re-renders
+7. Test state changes
+```
+
+---
+
+## Example 4: 测试规则
+
+### 编写单元测试
+```
+When writing unit tests:
+1. Test happy path first
+2. Test edge cases
+3. Test error conditions
+4. Test boundary values
+5. Use descriptive test names
+6. Keep tests independent
+7. Mock external dependencies
+8. Aim for > 80% coverage
+```
+
+### 编写集成测试
+```
+When writing integration tests:
+1. Test complete user flows
+2. Use real database (test environment)
+3. Clean up test data
+4. Test error scenarios
+5. Test performance
+6. Use fixtures for test data
+7. Keep tests fast (< 5s each)
+```
+
+---
+
+## Example 5: 性能优化规则
+
+### 前端性能
+```
+When optimizing frontend performance:
+1. Lazy load routes
+2. Code split large bundles
+3. Optimize images (WebP format)
+4. Use React.memo for expensive components
+5. Debounce/throttle event handlers
+6. Use virtual scrolling for long lists
+7. Monitor bundle size
+```
+
+### 后端性能
+```
+When optimizing backend performance:
+1. Use database indexes
+2. Implement caching (Redis)
+3. Use connection pooling
+4. Optimize queries (avoid N+1)
+5. Use async operations
+6. Implement pagination
+7. Monitor query performance
+```
+
+---
+
+## Example 6: 安全规则
+
+### 认证和授权
+```
+When implementing authentication:
+1. Use Firebase Auth
+2. Verify tokens on backend
+3. Implement proper session management
+4. Use HTTPS in production
+5. Implement rate limiting
+6. Log authentication events
+7. Handle token expiration
+```
+
+### 数据保护
+```
+When handling sensitive data:
+1. Never log sensitive information
+2. Encrypt data at rest
+3. Use HTTPS for data in transit
+4. Implement proper access controls
+5. Validate and sanitize input
+6. Use parameterized queries
+7. Regular security audits
+```
+
+---
+
+## Example 7: 错误处理规则
+
+### 前端错误处理
+```
+When handling errors in frontend:
+1. Use error boundaries for React
+2. Show user-friendly messages
+3. Log errors to monitoring service
+4. Provide retry mechanisms
+5. Handle network errors gracefully
+6. Validate before submission
+7. Test error scenarios
+```
+
+### 后端错误处理
+```
+When handling errors in backend:
+1. Use appropriate HTTP status codes
+2. Return consistent error format
+3. Log errors with context
+4. Don't expose sensitive information
+5. Implement error recovery
+6. Monitor error rates
+7. Set up alerts for critical errors
+```
+
+---
+
+## Example 8: 数据库规则
+
+### Firestore 查询
+```
+When writing Firestore queries:
+1. Create indexes for compound queries
+2. Use pagination for large datasets
+3. Limit query results
+4. Use transactions for atomic operations
+5. Handle offline scenarios
+6. Cache frequently accessed data
+7. Monitor query performance
+```
+
+### 数据建模
+```
+When designing data models:
+1. Normalize data structure
+2. Avoid deep nesting (> 3 levels)
+3. Use subcollections for related data
+4. Denormalize for read performance
+5. Consider query patterns
+6. Plan for scalability
+7. Document data relationships
+```
+
+---
+
+## Example 9: API 设计规则
+
+### RESTful API
+```
+When designing RESTful APIs:
+1. Use proper HTTP methods
+2. Use plural nouns for resources
+3. Return consistent response format
+4. Use proper status codes
+5. Version APIs (/api/v1/)
+6. Document with OpenAPI
+7. Implement pagination
+```
+
+### 响应格式
+```
+API Response Format:
+{
+  "success": boolean,
+  "data": object | array,
+  "message": string (optional),
+  "errors": array (optional),
+  "meta": {
+    "timestamp": string,
+    "request_id": string
+  }
+}
+```
+
+---
+
+## Example 10: Git 工作流规则
+
+### 提交消息格式
+```
+Commit Message Format:
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+
+Types:
+- feat: New feature
+- fix: Bug fix
+- docs: Documentation
+- style: Code style changes
+- refactor: Code refactoring
+- test: Adding tests
+- chore: Maintenance tasks
+```
+
+### 分支策略
+```
+Branch Strategy:
+- main: Production-ready code
+- develop: Integration branch
+- feature/*: New features
+- fix/*: Bug fixes
+- hotfix/*: Critical fixes
+- release/*: Release preparation
+```
+
+---
+
+## Example 11: 文档规则
+
+### 代码注释
+```
+When writing code comments:
+1. Explain "why" not "what"
+2. Use JSDoc for functions
+3. Use docstrings for Python
+4. Keep comments up to date
+5. Remove commented-out code
+6. Use Chinese for business logic
+7. Use English for technical details
+```
+
+### README 更新
+```
+When updating README:
+1. Update installation steps
+2. Update environment variables
+3. Add usage examples
+4. Update API documentation
+5. Add troubleshooting section
+6. Update deployment guide
+7. Add contribution guidelines
+```
+
+---
+
+## Example 12: 依赖管理规则
+
+### 添加依赖
+```
+When adding a new dependency:
+1. Check if it's necessary
+2. Verify it's maintained
+3. Check for security issues
+4. Check bundle size impact
+5. Read documentation
+6. Test thoroughly
+7. Document why it's needed
+```
+
+### 更新依赖
+```
+When updating dependencies:
+1. Read changelog
+2. Check for breaking changes
+3. Update related code
+4. Run all tests
+5. Test manually
+6. Check for security updates
+7. Update lock files
+```
+
+---
+
+## Example 13: 部署规则
+
+### 部署前检查
+```
+Before deploying:
+1. Run all tests
+2. Check environment variables
+3. Verify Docker builds
+4. Review Terraform changes
+5. Test in staging
+6. Check database migrations
+7. Backup production data
+```
+
+### 部署后检查
+```
+After deploying:
+1. Run smoke tests
+2. Check application logs
+3. Monitor error rates
+4. Check performance metrics
+5. Verify all services running
+6. Test critical paths
+7. Monitor for 30 minutes
+```
+
+---
+
+## Example 14: 监控和日志规则
+
+### 日志记录
+```
+When logging:
+1. Use appropriate log levels
+2. Include context information
+3. Don't log sensitive data
+4. Use structured logging
+5. Set up log aggregation
+6. Monitor log volume
+7. Set up alerts
+```
+
+### 监控指标
+```
+Monitor these metrics:
+- API response times
+- Error rates
+- User activity
+- Resource usage
+- Database performance
+- Cache hit rates
+- Queue lengths
+```
+
+---
+
+## Example 15: 可访问性规则
+
+### 无障碍设计
+```
+Accessibility requirements:
+1. Use semantic HTML
+2. Provide alt text for images
+3. Ensure keyboard navigation
+4. Maintain color contrast (WCAG AA)
+5. Test with screen readers
+6. Provide focus indicators
+7. Support keyboard shortcuts
+```
+
+---
+
+## Example 16: 国际化规则
+
+### 多语言支持
+```
+When adding internationalization:
+1. Extract all user-facing strings
+2. Use i18n library
+3. Support RTL languages
+4. Test with different languages
+5. Handle date/time formatting
+6. Handle number formatting
+7. Test text overflow
+```
+
+---
+
+## Example 17: 移动端规则
+
+### 响应式设计
+```
+Mobile considerations:
+1. Test on real devices
+2. Use touch-friendly targets (44x44px)
+3. Optimize images for mobile
+4. Test on slow networks
+5. Consider offline functionality
+6. Optimize for battery usage
+7. Test on various screen sizes
+```
+
+---
+
+## Example 18: CI/CD 规则
+
+### 流水线配置
+```
+CI/CD Pipeline Rules:
+1. Run tests on every commit
+2. Run security scans
+3. Build Docker images
+4. Deploy to staging automatically
+5. Require manual approval for production
+6. Run smoke tests after deployment
+7. Rollback on failure
+```
+
+---
+
+## Example 19: 代码重构规则
+
+### 重构步骤
+```
+When refactoring code:
+1. Write tests first
+2. Make small incremental changes
+3. Keep tests passing
+4. Update documentation
+5. Review with team
+6. Monitor for regressions
+7. Measure performance impact
+```
+
+---
+
+## Example 20: 调试规则
+
+### 调试流程
+```
+When debugging:
+1. Reproduce the issue
+2. Check logs first
+3. Add logging if needed
+4. Write a test case
+5. Fix the root cause
+6. Verify the fix
+7. Document the solution
+```
+
+---
+
+## 如何使用这些示例
+
+1. **选择相关规则**：根据你的需求选择适用的规则
+2. **自定义**：根据项目特点修改规则
+3. **添加到 .cursorrules**：将规则添加到主配置文件
+4. **定期更新**：随着项目发展更新规则
+5. **团队共享**：确保团队成员都了解规则
+
+---
+
+## 规则优先级
+
+1. **必须遵守**：安全、测试、错误处理
+2. **强烈推荐**：代码风格、性能优化
+3. **建议**：文档、注释、命名
+
+---
+
+## 规则验证
+
+定期检查：
+- [ ] 规则是否仍然适用
+- [ ] 是否有新规则需要添加
+- [ ] 是否有规则需要更新
+- [ ] 团队是否遵守规则
+- [ ] 规则是否帮助提高代码质量
+
+---
+
+这些示例规则可以作为参考，根据你的项目需求进行调整和扩展。
+

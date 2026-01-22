@@ -7,11 +7,6 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
-  backend "gcs" {
-    bucket = "ai-diary-terraform-state"
-    prefix = "terraform/state"
-  }
 }
 
 provider "google" {
@@ -19,82 +14,44 @@ provider "google" {
   region  = var.region
 }
 
-# Enable required APIs
-resource "google_project_service" "cloud_run" {
-  service = "run.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "cloud_build" {
-  service = "cloudbuild.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "firestore" {
-  service = "firestore.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "firebase" {
-  service = "firebase.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_project_service" "artifact_registry" {
-  service = "artifactregistry.googleapis.com"
-  disable_on_destroy = false
-}
-
-# Artifact Registry for Docker images
-resource "google_artifact_registry_repository" "docker_repo" {
-  location      = var.region
-  repository_id = "ai-diary-images"
-  description   = "Docker repository for AI Diary application"
-  format        = "DOCKER"
-  
-  depends_on = [google_project_service.artifact_registry]
-}
-
-# Cloud Run service for backend
+# Backend Cloud Run Service
 resource "google_cloud_run_service" "backend" {
-  name     = "ai-diary-backend"
+  name     = "classarranger-backend"
   location = var.region
 
   template {
     spec {
       containers {
-        image = "${var.region}-docker.pkg.dev/${var.project_id}/ai-diary-images/backend:latest"
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/classarranger-images/backend:latest"
         
-        env {
-          name  = "OPENAI_API_KEY"
-          value = var.openai_api_key
+        ports {
+          container_port = 8000
         }
-        
+
         env {
           name  = "FIREBASE_PROJECT_ID"
           value = var.project_id
         }
-        
+
         env {
-          name  = "WEAVIATE_URL"
-          value = google_cloud_run_service.weaviate.status[0].url
+          name  = "OPENAI_API_KEY"
+          value = var.openai_api_key
         }
-        
+
+        env {
+          name  = "GOOGLE_APPLICATION_CREDENTIALS"
+          value = "/app/service-account.json"
+        }
+
         resources {
           limits = {
             cpu    = "1000m"
             memory = "512Mi"
           }
         }
-        
-        ports {
-          container_port = 8000
-        }
       }
-      
-      service_account_name = google_service_account.backend_sa.email
     }
-    
+
     metadata {
       annotations = {
         "autoscaling.knative.dev/maxScale" = "10"
@@ -107,112 +64,66 @@ resource "google_cloud_run_service" "backend" {
     percent         = 100
     latest_revision = true
   }
-  
-  depends_on = [google_project_service.cloud_run]
 }
 
-# Cloud Run service for Weaviate
-resource "google_cloud_run_service" "weaviate" {
-  name     = "ai-diary-weaviate"
-  location = var.region
-
-  template {
-    spec {
-      containers {
-        image = "semitechnologies/weaviate:1.23.0"
-        
-        env {
-          name  = "AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED"
-          value = "true"
-        }
-        
-        env {
-          name  = "PERSISTENCE_DATA_PATH"
-          value = "/var/lib/weaviate"
-        }
-        
-        env {
-          name  = "DEFAULT_VECTORIZER_MODULE"
-          value = "none"
-        }
-        
-        env {
-          name  = "ENABLE_MODULES"
-          value = "text2vec-openai"
-        }
-        
-        resources {
-          limits = {
-            cpu    = "1000m"
-            memory = "1Gi"
-          }
-        }
-        
-        ports {
-          container_port = 8080
-        }
-      }
-    }
-    
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale" = "5"
-        "autoscaling.knative.dev/minScale" = "1"
-      }
-    }
-  }
-
-  traffic {
-    percent         = 100
-    latest_revision = true
-  }
-  
-  depends_on = [google_project_service.cloud_run]
-}
-
-# Cloud Run service for frontend
+# Frontend Cloud Run Service
 resource "google_cloud_run_service" "frontend" {
-  name     = "ai-diary-frontend"
+  name     = "classarranger-frontend"
   location = var.region
 
   template {
     spec {
       containers {
-        image = "${var.region}-docker.pkg.dev/${var.project_id}/ai-diary-images/frontend:latest"
-        
-        env {
-          name  = "VITE_API_URL"
-          value = google_cloud_run_service.backend.status[0].url
-        }
-        
-        env {
-          name  = "VITE_FIREBASE_API_KEY"
-          value = var.firebase_api_key
-        }
-        
-        env {
-          name  = "VITE_FIREBASE_AUTH_DOMAIN"
-          value = "${var.project_id}.firebaseapp.com"
-        }
-        
-        env {
-          name  = "VITE_FIREBASE_PROJECT_ID"
-          value = var.project_id
-        }
-        
-        resources {
-          limits = {
-            cpu    = "1000m"
-            memory = "256Mi"
-          }
-        }
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/classarranger-images/frontend:latest"
         
         ports {
           container_port = 5173
         }
+
+        env {
+          name  = "VITE_API_URL"
+          value = google_cloud_run_service.backend.status[0].url
+        }
+
+        env {
+          name  = "VITE_FIREBASE_API_KEY"
+          value = var.firebase_api_key
+        }
+
+        env {
+          name  = "VITE_FIREBASE_AUTH_DOMAIN"
+          value = var.firebase_auth_domain
+        }
+
+        env {
+          name  = "VITE_FIREBASE_PROJECT_ID"
+          value = var.project_id
+        }
+
+        env {
+          name  = "VITE_FIREBASE_STORAGE_BUCKET"
+          value = var.firebase_storage_bucket
+        }
+
+        env {
+          name  = "VITE_FIREBASE_MESSAGING_SENDER_ID"
+          value = var.firebase_messaging_sender_id
+        }
+
+        env {
+          name  = "VITE_FIREBASE_APP_ID"
+          value = var.firebase_app_id
+        }
+
+        resources {
+          limits = {
+            cpu    = "1000m"
+            memory = "512Mi"
+          }
+        }
       }
     }
-    
+
     metadata {
       annotations = {
         "autoscaling.knative.dev/maxScale" = "10"
@@ -225,17 +136,9 @@ resource "google_cloud_run_service" "frontend" {
     percent         = 100
     latest_revision = true
   }
-  
-  depends_on = [google_project_service.cloud_run]
 }
 
-# Service account for backend
-resource "google_service_account" "backend_sa" {
-  account_id   = "ai-diary-backend-sa"
-  display_name = "AI Diary Backend Service Account"
-}
-
-# IAM binding for Cloud Run services (allow public access)
+# Allow public access to backend
 resource "google_cloud_run_service_iam_member" "backend_public" {
   service  = google_cloud_run_service.backend.name
   location = google_cloud_run_service.backend.location
@@ -243,40 +146,11 @@ resource "google_cloud_run_service_iam_member" "backend_public" {
   member   = "allUsers"
 }
 
+# Allow public access to frontend
 resource "google_cloud_run_service_iam_member" "frontend_public" {
   service  = google_cloud_run_service.frontend.name
   location = google_cloud_run_service.frontend.location
   role     = "roles/run.invoker"
   member   = "allUsers"
-}
-
-resource "google_cloud_run_service_iam_member" "weaviate_backend" {
-  service  = google_cloud_run_service.weaviate.name
-  location = google_cloud_run_service.weaviate.location
-  role     = "roles/run.invoker"
-  member   = "serviceAccount:${google_service_account.backend_sa.email}"
-}
-
-# Firestore database
-resource "google_firestore_database" "database" {
-  project     = var.project_id
-  name        = "(default)"
-  location_id = var.firestore_location
-  type        = "FIRESTORE_NATIVE"
-  
-  depends_on = [google_project_service.firestore]
-}
-
-# IAM roles for backend service account
-resource "google_project_iam_member" "backend_firestore" {
-  project = var.project_id
-  role    = "roles/datastore.user"
-  member  = "serviceAccount:${google_service_account.backend_sa.email}"
-}
-
-resource "google_project_iam_member" "backend_storage" {
-  project = var.project_id
-  role    = "roles/storage.objectViewer"
-  member  = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 

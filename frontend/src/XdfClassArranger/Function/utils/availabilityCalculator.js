@@ -13,7 +13,7 @@ import { STANDARD_START, STANDARD_END, SLOTS_PER_DAY } from './constants';
  */
 const getAvailabilityColor = (ratio) => {
   // 日系传统渐变色：浅葱色 → 若竹色 → 若草色 → 柑子色 → 紅梅色
-  
+
   if (ratio <= 0.2) {
     // 0-20%: 浅葱色 (淡青蓝) - 很少学生
     const intensity = ratio / 0.2;
@@ -61,7 +61,7 @@ const parseTimeToHours = (timeStr) => {
  */
 export const parseStudentAvailability = (rawData) => {
   if (!rawData) return null;
-  
+
   const values = rawData.split('\t');
   // 索引: 5=上课频次, 6=上课时长, 13=起止时间, 14=学生希望时间段, 15=希望具体时间, 16=每周频次
   const frequency = values[5] || '';
@@ -70,16 +70,16 @@ export const parseStudentAvailability = (rawData) => {
   const preferredDays = values[14] || '';
   const specificTime = values[15] || '';
   const weeklyFrequency = values[16] || '';
-  
+
   // 初始化：默认全部可用（最大 tolerance）
   // availability[day][slot] = true/false
   // day: 0=周日, 1=周一, ..., 6=周六
   // slot: 每30分钟一个slot，从9:00开始，共25个slot (9:00-21:30)
   const availability = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(true));
-  
+
   // 解析希望时间段（如：周一到周五、都可以、周末等）
   const dayText = preferredDays.toLowerCase();
-  
+
   // 如果明确指定了某些天
   if (dayText.includes('周一') && dayText.includes('周五') && (dayText.includes('到') || dayText.includes('-'))) {
     // 周一到周五
@@ -91,23 +91,23 @@ export const parseStudentAvailability = (rawData) => {
       availability[d] = Array(SLOTS_PER_DAY).fill(false);
     }
   }
-  
+
   // 解析具体时间约束（如：除了下午语校之外都可以（13:30-16:45））
   const timeText = specificTime;
   if (timeText) {
     // 查找时间范围
     const timeRangeMatch = timeText.match(/(\d{1,2})[:\uff1a]?(\d{2})?\s*[-~到]\s*(\d{1,2})[:\uff1a]?(\d{2})?/);
-    
+
     if (timeRangeMatch) {
       const startHour = parseInt(timeRangeMatch[1]) + (timeRangeMatch[2] ? parseInt(timeRangeMatch[2]) / 60 : 0);
       const endHour = parseInt(timeRangeMatch[3]) + (timeRangeMatch[4] ? parseInt(timeRangeMatch[4]) / 60 : 0);
-      
+
       // 判断是排除还是指定
       const isExclusion = timeText.includes('除') || timeText.includes('不') || timeText.includes('之外');
-      
+
       const startSlot = Math.floor((startHour - STANDARD_START) / 0.5);
       const endSlot = Math.ceil((endHour - STANDARD_START) / 0.5);
-      
+
       if (isExclusion) {
         // 排除这个时间段
         for (let d = 0; d < 7; d++) {
@@ -126,7 +126,7 @@ export const parseStudentAvailability = (rawData) => {
         }
       }
     }
-    
+
     // 处理"上午"、"下午"、"晚上"等关键词
     if (timeText.includes('上午') && !timeText.includes('除') && !timeText.includes('不')) {
       // 只有上午可用 (9:00-12:00)
@@ -154,7 +154,7 @@ export const parseStudentAvailability = (rawData) => {
       }
     }
   }
-  
+
   return availability;
 };
 
@@ -166,16 +166,16 @@ export const parseStudentAvailability = (rawData) => {
 export const calculateOverlappingAvailability = (studentsWithData) => {
   // overlap[day][slot] = 可用学生数量
   const overlap = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(0));
-  
+
   let totalStudentsWithAvailability = 0;
-  
+
   studentsWithData.forEach(student => {
     if (!student.rawData) return;
     const availability = parseStudentAvailability(student.rawData);
     if (!availability) return;
-    
+
     totalStudentsWithAvailability++;
-    
+
     for (let d = 0; d < 7; d++) {
       for (let s = 0; s < SLOTS_PER_DAY; s++) {
         if (availability[d][s]) {
@@ -184,7 +184,7 @@ export const calculateOverlappingAvailability = (studentsWithData) => {
       }
     }
   });
-  
+
   return { overlap, totalStudents: totalStudentsWithAvailability };
 };
 
@@ -197,32 +197,32 @@ export const calculateOverlappingAvailability = (studentsWithData) => {
 export const generateAvailabilityEvents = (students, calendarRef) => {
   const studentsWithData = students.filter(s => s.rawData);
   if (studentsWithData.length === 0) return [];
-  
+
   const { overlap, totalStudents } = calculateOverlappingAvailability(studentsWithData);
   if (totalStudents === 0) return [];
-  
+
   const events = [];
-  
+
   // 获取当前周的日期
   const calendarApi = calendarRef.current?.getApi();
   const currentDate = calendarApi ? calendarApi.getDate() : new Date();
-  
+
   // 找到当前周的周日
   const weekStart = new Date(currentDate);
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-  
+
   for (let d = 0; d < 7; d++) {
     const dayDate = new Date(weekStart);
     dayDate.setDate(dayDate.getDate() + d);
     const dateStr = dayDate.toISOString().split('T')[0];
-    
+
     // 合并连续的时间段
     let segmentStart = null;
     let segmentCount = 0;
-    
+
     for (let s = 0; s <= SLOTS_PER_DAY; s++) {
       const count = s < SLOTS_PER_DAY ? overlap[d][s] : 0;
-      
+
       if (count > 0 && segmentStart === null) {
         // 开始新段
         segmentStart = s;
@@ -231,11 +231,11 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
         // 结束当前段
         const startHour = STANDARD_START + segmentStart * 0.5;
         const endHour = STANDARD_START + s * 0.5;
-        
+
         // 计算学生比例并获取对应颜色
         const ratio = segmentCount / totalStudents;
         const color = getAvailabilityColor(ratio);
-        
+
         events.push({
           id: `avail-${d}-${segmentStart}`,
           start: `${dateStr}T${String(Math.floor(startHour)).padStart(2, '0')}:${startHour % 1 === 0.5 ? '30' : '00'}:00`,
@@ -249,7 +249,7 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
             ratio: ratio
           }
         });
-        
+
         // 如果当前格子有新的数量，开始新段
         if (count > 0) {
           segmentStart = s;
@@ -260,7 +260,7 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
       }
     }
   }
-  
+
   return events;
 };
 
@@ -273,7 +273,7 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
  */
 export const getStudentsForTimeSlot = (students, dayOfWeek, slotIndex) => {
   const availableStudents = [];
-  
+
   students.filter(s => s.rawData).forEach(student => {
     const availability = parseStudentAvailability(student.rawData);
     if (availability && availability[dayOfWeek] && availability[dayOfWeek][slotIndex]) {
@@ -286,7 +286,7 @@ export const getStudentsForTimeSlot = (students, dayOfWeek, slotIndex) => {
         specificTime: values[15] || '-',
         weeklyFrequency: values[16] || '-'
       };
-      
+
       availableStudents.push({
         name: student.name,
         color: student.color,
@@ -294,7 +294,7 @@ export const getStudentsForTimeSlot = (students, dayOfWeek, slotIndex) => {
       });
     }
   });
-  
+
   return availableStudents;
 };
 

@@ -1,8 +1,7 @@
 /* Dashboard 页面样式 - 日系性冷淡风格 */
 .dashboard-container {
   padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   font-family: 'Noto Sans', 'Noto Sans JP', 'Noto Sans SC', sans-serif;
   height: 100%;
   overflow-y: auto;

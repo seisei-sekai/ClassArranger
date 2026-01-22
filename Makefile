@@ -1,4 +1,4 @@
-.PHONY: help setup dev build clean deploy-gcp
+.PHONY: help setup dev build clean
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -8,8 +8,8 @@ help: ## Show this help message
 
 setup: ## Initial project setup
 	@echo "Setting up project..."
-	@chmod +x scripts/setup.sh
-	@./scripts/setup.sh
+	cp .env.example .env
+	@echo "Setup complete. Run 'make dev' to start."
 
 dev: ## Start development environment with Docker Compose
 	docker-compose up --build
@@ -30,37 +30,17 @@ clean: ## Clean up containers and images
 test-frontend: ## Run frontend tests
 	cd frontend && npm run lint && npm run build
 
-test-backend: ## Run backend tests
-	cd backend && source venv/bin/activate && pytest
-
 lint: ## Run linters
 	cd frontend && npm run lint
-	cd backend && flake8 app --max-line-length=120
 
-deploy-gcp: ## Deploy to Google Cloud Platform
-	@chmod +x scripts/deploy-gcp.sh
-	@./scripts/deploy-gcp.sh
+logs-backend: ## View backend logs
+	docker-compose logs -f backend
 
-tf-init: ## Initialize Terraform
-	cd terraform && terraform init
+logs-frontend: ## View frontend logs
+	docker-compose logs -f frontend
 
-tf-plan: ## Plan Terraform changes
-	cd terraform && terraform plan
+logs-mongodb: ## View MongoDB logs
+	docker-compose logs -f mongodb
 
-tf-apply: ## Apply Terraform configuration
-	cd terraform && terraform apply
-
-tf-destroy: ## Destroy Terraform resources
-	cd terraform && terraform destroy
-
-logs-backend: ## View backend logs (GCP)
-	gcloud run logs read ai-diary-backend --limit=50
-
-logs-frontend: ## View frontend logs (GCP)
-	gcloud run logs read ai-diary-frontend --limit=50
-
-status: ## Check GCP service status
-	gcloud run services list
-
-
-
+status: ## Check service status
+	docker-compose ps

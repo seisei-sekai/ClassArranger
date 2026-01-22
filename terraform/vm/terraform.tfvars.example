@@ -1,0 +1,40 @@
+# GCP Project Configuration
+project_id = "your-gcp-project-id"
+region     = "asia-northeast1"  # 东京区域
+zone       = "asia-northeast1-a"  # 东京可用区A
+
+# VM Instance Configuration
+instance_name  = "classarranger-vm"
+machine_type   = "e2-medium"  # Options: e2-micro, e2-small, e2-medium, e2-standard-2
+boot_disk_size = 20           # Size in GB (10-100)
+
+# Network Configuration
+use_static_ip = false  # Set to true if you want a fixed IP address
+
+# Deployment Configuration
+git_repo_url         = ""     # Optional: Git repository URL to auto-clone
+wait_for_deployment  = true   # Wait for deployment and run health checks
+
+# ==========================================
+# Machine Type Guide
+# ==========================================
+# e2-micro      : 0.25-2 vCPU, 1GB RAM  (~$6/month)   - For testing only
+# e2-small      : 0.5-2 vCPU,  2GB RAM  (~$13/month)  - Light usage
+# e2-medium     : 2 vCPU,      4GB RAM  (~$25/month)  - Recommended
+# e2-standard-2 : 2 vCPU,      8GB RAM  (~$49/month)  - High load
+
+# ==========================================
+# Static IP
+# ==========================================
+# use_static_ip = false : IP changes on restart (free)
+# use_static_ip = true  : Fixed IP (~$3/month, even when VM is stopped)
+
+# ==========================================
+# Cost Estimation (monthly)
+# ==========================================
+# e2-medium VM:        $25
+# 20GB Disk:           $2
+# Static IP (optional):$3
+# Network:             $0-5
+# Total:               ~$27-35/month
+

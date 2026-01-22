@@ -4,26 +4,41 @@ variable "project_id" {
 }
 
 variable "region" {
-  description = "GCP region"
+  description = "GCP Region"
   type        = string
-  default     = "us-central1"
-}
-
-variable "firestore_location" {
-  description = "Firestore location"
-  type        = string
-  default     = "us-central"
-}
-
-variable "openai_api_key" {
-  description = "OpenAI API key"
-  type        = string
-  sensitive   = true
+  default     = "asia-northeast1"  # 东京区域
 }
 
 variable "firebase_api_key" {
-  description = "Firebase API key"
+  description = "Firebase API Key"
   type        = string
   sensitive   = true
+}
+
+variable "firebase_auth_domain" {
+  description = "Firebase Auth Domain"
+  type        = string
+}
+
+variable "firebase_storage_bucket" {
+  description = "Firebase Storage Bucket"
+  type        = string
+}
+
+variable "firebase_messaging_sender_id" {
+  description = "Firebase Messaging Sender ID"
+  type        = string
+}
+
+variable "firebase_app_id" {
+  description = "Firebase App ID"
+  type        = string
+}
+
+variable "openai_api_key" {
+  description = "OpenAI API Key"
+  type        = string
+  sensitive   = true
+  default     = "sk-placeholder"
 }
 

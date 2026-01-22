@@ -1,34 +1,50 @@
-# 构建阶段
-FROM node:20-alpine AS builder
+# 生产环境 Dockerfile
+FROM node:20-alpine as builder
 
 WORKDIR /app
 
-# 复制 package 文件
+# 复制依赖文件
 COPY package*.json ./
 
-# 安装依赖（仅生产依赖）
-RUN npm ci --only=production
+# 安装依赖（包括 devDependencies，构建时需要）
+# Install dependencies (including devDependencies, needed for build)
+RUN npm install
 
 # 复制源代码
 COPY . .
 
-# 构建生产版本
+# 构建参数（从环境变量传入）
+ARG VITE_API_URL
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_STORAGE_BUCKET
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID
+ARG VITE_FIREBASE_APP_ID
+
+# 设置环境变量
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY
+ENV VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN
+ENV VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID
+ENV VITE_FIREBASE_STORAGE_BUCKET=$VITE_FIREBASE_STORAGE_BUCKET
+ENV VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID
+ENV VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
+
+# 构建应用
 RUN npm run build
 
-# 生产阶段 - 使用 nginx 服务静态文件
+# 生产环境
 FROM nginx:alpine
 
 # 复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 复制 nginx 配置
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
 
 # 暴露端口
 EXPOSE 80
 
 # 启动 nginx
 CMD ["nginx", "-g", "daemon off;"]
-
-
-

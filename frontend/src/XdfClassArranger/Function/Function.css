@@ -1,8 +1,7 @@
 /* 排课功能页面样式 - 日系性冷淡风格 */
 .function-page {
   padding: 32px;
-  max-width: 1600px;
-  margin: 0 auto;
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -114,7 +113,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 教程面板 */
@@ -344,6 +345,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -501,13 +503,15 @@
   opacity: 0.9;
 }
 
-/* 主内容区域：学生面板 + 日历 */
+/* 主内容区域：学生面板 + 日历 + 教师面板 */
 .main-content-area {
   display: flex;
-  flex: 1;
+  flex: 0 1 auto;
   gap: 20px;
   min-height: 0;
   overflow: hidden;
+  height: 60vh;
+  /* 限制高度，为下方的教室面板留出空间 */
 }
 
 /* 左侧学生面板 */
@@ -1163,7 +1167,7 @@
   box-shadow: 0 2px 6px rgba(90, 108, 125, 0.3);
 }
 
-/* 右侧日历容器 */
+/* 中间日历容器 */
 .calendar-wrapper {
   flex: 1;
   background: #FFFFFF;
@@ -1174,20 +1178,348 @@
   min-width: 0;
 }
 
+/* 右侧教师面板 */
+.teacher-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border-radius: 8px;
+  border: 1px solid #E8E8E8;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.teacher-panel-header {
+  padding: 16px;
+  border-bottom: 1px solid #E8E8E8;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.teacher-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+}
+
+.teacher-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #94A3B1;
+}
+
+.teacher-empty p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+.teacher-empty .hint {
+  font-size: 12px;
+  color: #B8C4CE;
+}
+
+.teacher-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #FAFAFA;
+  border-radius: 6px;
+  border: 1px solid #E8E8E8;
+  border-left: 3px solid #5A6C7D;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.teacher-card:hover {
+  background: #F5F5F0;
+  border-color: #D8D8D8;
+}
+
+/* 教师可用性显示toggle按钮 */
+.teacher-visibility-toggle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #E8E8E8;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #94A3B1;
+}
+
+.teacher-visibility-toggle:hover {
+  background: #D8D8D8;
+  color: #5A6C7D;
+}
+
+.teacher-visibility-toggle.active {
+  background: #6B7C6E;
+  color: #FFFFFF;
+}
+
+.teacher-visibility-toggle.active:hover {
+  background: #5A6C7D;
+}
+
+.teacher-visibility-toggle svg {
+  flex-shrink: 0;
+}
+
+.teacher-card-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.teacher-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2D3748;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-meta {
+  font-size: 11px;
+  color: #94A3B1;
+}
+
+.teacher-card.has-data {
+  border-left-width: 3px;
+}
+
+.teacher-card.has-data .teacher-meta {
+  color: #6B7C6E;
+}
+
+/* 教师卡片操作按钮组 */
+.teacher-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.teacher-card:hover .teacher-card-actions {
+  opacity: 1;
+}
+
+.teacher-edit-btn,
+.teacher-delete-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #5A6C7D;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.teacher-edit-btn:hover {
+  background: #E8E8E8;
+  color: #2D3748;
+}
+
+.teacher-delete-btn:hover {
+  background: #FFE8E8;
+  color: #E53E3E;
+}
+
+/* 教师编辑弹窗 */
+.teacher-edit-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10001;
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  height: 85vh;
+  max-height: 800px;
+  width: 650px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.teacher-edit-modal .modal-body {
+  overflow-y: scroll;
+  flex: 1;
+  min-height: 0;
+}
+
+.teacher-data-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border: 1px solid #E8E8E8;
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+
+.teacher-data-input:focus {
+  outline: none;
+  border-color: #6B7C6E;
+  box-shadow: 0 0 0 3px rgba(107, 124, 110, 0.1);
+}
+
+.teacher-data-input::placeholder {
+  color: #B8C4CE;
+}
+
+.teacher-preview-section {
+  margin-bottom: 16px;
+}
+
+.teacher-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #F5F5F0;
+  border-radius: 6px;
+  border-left: 3px solid #6B7C6E;
+}
+
+.teacher-number {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7C6E;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.teacher-preview-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2D3748;
+}
+
+.multi-teacher-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 教室可用性面板 */
+.classroom-panel {
+  width: calc(100% - 620px);
+  /* 减去左右两个侧边栏的宽度 (280px * 2 + 间距 40px) + 外边距 */
+  margin: 20px 310px 32px;
+  /* 左右对齐与日历 */
+  background: #FFFFFF;
+  border-radius: 8px;
+  border: 1px solid #E8E8E8;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.classroom-panel-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #E8E8E8;
+  background: #FAFAFA;
+  flex-shrink: 0;
+}
+
+.classroom-panel-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2D3748;
+  display: flex;
+  align-items: center;
+}
+
+.classroom-panel-title svg {
+  color: #5A6C7D;
+  opacity: 0.8;
+}
+
+.classroom-panel-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B1;
+  font-size: 14px;
+}
+
 /* FullCalendar 样式覆盖 */
 .function-page .fc {
   font-family: inherit;
-  font-size: 14px;
+  font-size: 11px;
+  /* 缩小基础字体 */
   height: 100%;
 }
 
 .function-page .fc .fc-toolbar {
-  padding: 0 0 20px 0;
-  gap: 16px;
+  padding: 0 0 16px 0;
+  /* 减小内边距 */
+  gap: 12px;
 }
 
 .function-page .fc .fc-toolbar-title {
-  font-size: 20px;
+  font-size: 9px;
+  /* 缩小标题字体 */
   font-weight: 500;
   color: #2D3748;
 }
@@ -1197,10 +1529,13 @@
   background: #FFFFFF;
   border: 1px solid #E8E8E8;
   color: #5A6C7D;
-  padding: 6px 14px;
-  font-size: 13px;
+  padding: 4px 10px;
+  /* 减小内边距 */
+  font-size: 10px;
+  /* 缩小字体 */
   font-weight: 400;
-  border-radius: 6px;
+  border-radius: 4px;
+  /* 减小圆角 */
   transition: all 0.2s;
 }
 
@@ -1236,18 +1571,22 @@
   background: #FAFAFA;
   font-weight: 500;
   color: #718096;
-  font-size: 11px;
+  font-size: 9px;
+  /* 缩小字体 */
   text-transform: uppercase;
-  padding: 12px 8px;
+  padding: 6px 4px;
+  /* 减小内边距 */
   border-bottom: 1px solid #E8E8E8;
 }
 
 /* 日期单元格 */
 .function-page .fc .fc-daygrid-day-number {
   color: #2D3748;
-  font-size: 13px;
+  font-size: 10px;
+  /* 缩小字体 */
   font-weight: 400;
-  padding: 8px;
+  padding: 4px;
+  /* 减小内边距 */
 }
 
 .function-page .fc .fc-day-today {
@@ -1257,20 +1596,27 @@
 .function-page .fc .fc-day-today .fc-daygrid-day-number {
   background: #5A6C7D;
   color: white;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  /* 缩小今天标记 */
+  height: 20px;
+  /* 缩小今天标记 */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 9px;
+  /* 确保字体适配 */
 }
 
-/* 事件样式 */
+/* 事件样式 - 紧凑布局 */
 .function-page .fc-event {
   border: none !important;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
+  border-radius: 3px;
+  /* 稍微减小圆角 */
+  padding: 2px 4px;
+  /* 大幅减小内边距 */
+  font-size: 9px;
+  /* 缩小字体 */
   font-weight: 400;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1284,59 +1630,94 @@
 }
 
 .function-page .fc-timegrid-event {
-  border-radius: 6px;
-  border-left: 3px solid currentColor !important;
+  border-radius: 4px;
+  /* 减小圆角 */
+  border-left: 2px solid currentColor !important;
+  /* 细一点 */
 }
 
 .function-page .apple-event-content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  /* 减小间距 */
+  line-height: 1.2;
 }
 
 .function-page .event-time {
-  font-size: 11px;
+  font-size: 8px;
+  /* 缩小字体 */
   font-weight: 600;
   opacity: 0.9;
 }
 
 .function-page .event-title {
-  font-size: 13px;
+  font-size: 9px;
+  /* 缩小字体 */
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .function-page .event-location {
-  font-size: 11px;
+  font-size: 8px;
+  /* 缩小字体 */
   opacity: 0.8;
 }
 
-/* 时间网格 */
+/* 时间网格 - 紧凑布局 */
 .function-page .fc-timegrid-slot {
-  height: 48px;
+  height: 14px !important;
+  /* 30% 的原始高度 (48px * 0.3 ≈ 14px) */
+  min-height: 14px !important;
   border-color: #F5F5F0;
 }
 
 /* 加强小时分割线 */
 .function-page .fc-timegrid-slot[data-time$=":00:00"] {
-  border-top: 2px solid #5A6C7D !important;
+  border-top: 1.5px solid #5A6C7D !important;
+  /* 稍微细一点 */
 }
 
 .function-page .fc-timegrid-slot-label {
-  font-size: 11px;
+  font-size: 9px !important;
+  /* 缩小时间标签字体 */
   color: #718096;
   font-weight: 400;
+  padding: 2px 4px !important;
+  /* 减小内边距 */
+  line-height: 1.2 !important;
 }
 
 /* 小时标签加粗 */
 .function-page .fc-timegrid-slot-label-frame {
-  font-weight: 600;
+  font-weight: 500;
+  /* 稍微减轻 */
+  font-size: 9px !important;
+}
+
+/* 时间轴列宽度 */
+.function-page .fc .fc-timegrid-axis {
+  width: 40px !important;
+  /* 减小时间轴宽度 */
+}
+
+/* 时间网格列 */
+.function-page .fc .fc-timegrid-col {
+  min-width: 0;
+  /* 允许更紧凑的列 */
+}
+
+/* 确保半小时槽也是紧凑的 */
+.function-page .fc-timegrid-slot-minor {
+  height: 14px !important;
+  min-height: 14px !important;
 }
 
 /* 当前时间指示器 */
 .function-page .fc .fc-timegrid-now-indicator-line {
   border-color: #9E7676;
-  border-width: 2px;
+  border-width: 1.5px;
+  /* 稍微细一点 */
 }
 
 /* 弹窗样式 */
@@ -1353,8 +1734,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .function-page .apple-event-modal {
@@ -1375,6 +1761,7 @@
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
@@ -1525,6 +1912,8 @@
   .main-content-area {
     flex-direction: column;
     gap: 16px;
+    height: auto;
+    /* 移动端允许自动高度 */
   }
 
   .student-panel {
@@ -1607,6 +1996,26 @@
     min-width: 280px;
     max-width: 90vw;
   }
+
+  /* 教室面板移动端 */
+  .classroom-panel {
+    width: 100%;
+    margin: 20px 0 0;
+  }
+
+  .classroom-panel-header {
+    padding: 12px 16px;
+  }
+
+  .classroom-panel-title {
+    font-size: 14px;
+  }
+
+  .classroom-panel-content {
+    padding: 16px;
+    min-height: 120px;
+    font-size: 13px;
+  }
 }
 
 /* ========== 时间可用性样式 ========== */
@@ -1653,11 +2062,10 @@
 .legend-bar {
   width: 100px;
   height: 16px;
-  background: linear-gradient(to right, 
-    rgba(90, 108, 125, 0.1) 0%, 
-    rgba(90, 108, 125, 0.35) 50%, 
-    rgba(90, 108, 125, 0.6) 100%
-  );
+  background: linear-gradient(to right,
+      rgba(90, 108, 125, 0.1) 0%,
+      rgba(90, 108, 125, 0.35) 50%,
+      rgba(90, 108, 125, 0.6) 100%);
   border-radius: 3px;
   border: 1px solid #E8E8E8;
 }
@@ -1721,6 +2129,7 @@
     opacity: 0;
     transform: translateY(-50%) translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
@@ -1860,4 +2269,3 @@
     max-height: 70vh;
   }
 }
-

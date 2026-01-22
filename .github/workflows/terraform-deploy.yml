@@ -1,0 +1,242 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action to perform'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+env:
+  TF_VERSION: '1.6.0'
+  WORKING_DIR: './terraform/vm'
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        working-directory: ${{ env.WORKING_DIR }}
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request' || github.event.inputs.action == 'plan'
+        run: |
+          terraform plan -no-color \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="region=${{ secrets.GCP_REGION }}" \
+            -var="zone=${{ secrets.GCP_ZONE }}" \
+            -var="machine_type=${{ secrets.VM_MACHINE_TYPE }}" \
+            -var="use_static_ip=${{ secrets.USE_STATIC_IP }}" \
+            -out=tfplan
+        working-directory: ${{ env.WORKING_DIR }}
+        continue-on-error: true
+
+      - name: Update Pull Request
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: |
+          (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+          github.event.inputs.action == 'apply'
+        run: |
+          terraform apply -auto-approve \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="region=${{ secrets.GCP_REGION }}" \
+            -var="zone=${{ secrets.GCP_ZONE }}" \
+            -var="machine_type=${{ secrets.VM_MACHINE_TYPE }}" \
+            -var="use_static_ip=${{ secrets.USE_STATIC_IP }}"
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Get Terraform Outputs
+        if: |
+          (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+          github.event.inputs.action == 'apply'
+        id: outputs
+        run: |
+          echo "external_ip=$(terraform output -raw external_ip)" >> $GITHUB_OUTPUT
+          echo "frontend_url=$(terraform output -raw frontend_url)" >> $GITHUB_OUTPUT
+          echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Upload Application Code
+        if: |
+          (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+          github.event.inputs.action == 'apply'
+        run: |
+          # Wait for VM to be ready
+          sleep 60
+          
+          INSTANCE_NAME=$(terraform output -raw instance_name)
+          ZONE=$(terraform output -json deployment_info | jq -r '.zone')
+          
+          # Create deployment package
+          tar -czf /tmp/app.tar.gz \
+            --exclude='node_modules' \
+            --exclude='.git' \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='.env' \
+            --exclude='mongodb_data' \
+            .
+          
+          # Upload to VM
+          gcloud compute scp /tmp/app.tar.gz $INSTANCE_NAME:/tmp/app.tar.gz --zone=$ZONE
+          
+          # Deploy on VM
+          gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command='
+            set -e
+            cd /opt/classarranger
+            
+            # Extract new code
+            tar -xzf /tmp/app.tar.gz -C /opt/classarranger
+            rm /tmp/app.tar.gz
+            
+            # Get external IP
+            EXTERNAL_IP=$(curl -s http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip -H "Metadata-Flavor: Google")
+            export VITE_API_URL=http://$EXTERNAL_IP:8000
+            
+            # Deploy
+            docker-compose -f docker-compose.prod.yml down || true
+            docker-compose -f docker-compose.prod.yml up -d --build
+            
+            echo "Deployment complete!"
+          '
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Run Health Checks
+        if: |
+          (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+          github.event.inputs.action == 'apply'
+        run: |
+          echo "Waiting for services to start (30 seconds)..."
+          sleep 30
+          
+          BACKEND_URL="${{ steps.outputs.outputs.backend_url }}"
+          FRONTEND_URL="${{ steps.outputs.outputs.frontend_url }}"
+          
+          echo "Testing backend health..."
+          curl -f "$BACKEND_URL/health" || echo "⚠️ Backend health check failed"
+          
+          echo "Testing frontend..."
+          curl -f "$FRONTEND_URL" || echo "⚠️ Frontend health check failed"
+          
+          echo "✅ Deployment successful!"
+          echo "Frontend: $FRONTEND_URL"
+          echo "Backend: $BACKEND_URL"
+
+      - name: Comment Deployment Info
+        if: |
+          github.event_name == 'push' && 
+          github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `### 🚀 Deployment Successful!
+            
+            **Frontend:** ${{ steps.outputs.outputs.frontend_url }}
+            **Backend:** ${{ steps.outputs.outputs.backend_url }}
+            **API Docs:** ${{ steps.outputs.outputs.backend_url }}/docs
+            
+            **Test Accounts:**
+            - Email: test@example.com / Password: password
+            - Email: admin@example.com / Password: admin123
+            
+            *Deployed at: ${new Date().toISOString()}*`;
+            
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: output
+            });
+
+      - name: Terraform Destroy
+        if: github.event.inputs.action == 'destroy'
+        run: |
+          terraform destroy -auto-approve \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="region=${{ secrets.GCP_REGION }}" \
+            -var="zone=${{ secrets.GCP_ZONE }}" \
+            -var="machine_type=${{ secrets.VM_MACHINE_TYPE }}" \
+            -var="use_static_ip=${{ secrets.USE_STATIC_IP }}"
+        working-directory: ${{ env.WORKING_DIR }}
+

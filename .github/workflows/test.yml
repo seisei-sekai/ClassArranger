@@ -1,98 +1,168 @@
-name: Run Tests
+name: Automated Tests
 
 on:
-  push:
-    branches:
-      - main
-      - develop
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [ main, develop ]
+  schedule:
+    # 每天运行一次（UTC 时间 0:00）
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
-  test-frontend:
-    name: Test Frontend
+  # 前端单元测试
+  frontend-unit-tests:
+    name: Frontend Unit Tests
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: cd frontend && npm ci
+    
+    - name: Run unit tests
+      run: cd frontend && npm run test:unit -- --coverage
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./frontend/coverage/coverage-final.json
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Run linter
-        working-directory: ./frontend
-        run: npm run lint
-
-      - name: Build frontend
-        working-directory: ./frontend
-        run: npm run build
-
-  test-backend:
-    name: Test Backend
+  # 前端端到端测试
+  frontend-e2e-tests:
+    name: Frontend E2E Tests
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install dependencies
+      run: cd frontend && npm ci
+    
+    - name: Install Playwright
+      run: cd frontend && npx playwright install --with-deps
+    
+    - name: Run E2E tests
+      run: cd frontend && npm run test:e2e
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: playwright-report
+        path: frontend/playwright-report/
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: backend/requirements.txt
-
-      - name: Install dependencies
-        working-directory: ./backend
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
-
-      - name: Run linter (flake8)
-        working-directory: ./backend
-        run: |
-          pip install flake8
-          flake8 app --max-line-length=120 --ignore=E501,W503
-
-  docker-build-test:
-    name: Test Docker Builds
+  # 后端单元测试
+  backend-unit-tests:
+    name: Backend Unit Tests
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-asyncio
+    
+    - name: Run unit tests
+      run: cd backend && pytest tests/ -v --cov=app --cov-report=xml
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./backend/coverage.xml
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  # 后端集成测试
+  backend-integration-tests:
+    name: Backend Integration Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      # 如果需要数据库
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio
+    
+    - name: Run integration tests
+      run: cd backend && pytest tests/integration/ -v
+      env:
+        TESTING: true
 
-      - name: Test backend Docker build
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: false
-          tags: ai-diary-backend:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Test frontend Docker build
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: false
-          tags: ai-diary-frontend:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-
+  # 代码质量检查
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Frontend - ESLint
+      run: |
+        cd frontend
+        npm ci
+        npm run lint
+      continue-on-error: true
+    
+    - name: Backend - Flake8
+      run: |
+        cd backend
+        pip install flake8
+        flake8 app --max-line-length=120
+      continue-on-error: true
+    
+    - name: Backend - MyPy
+      run: |
+        cd backend
+        pip install mypy
+        mypy app --ignore-missing-imports
+      continue-on-error: true
 

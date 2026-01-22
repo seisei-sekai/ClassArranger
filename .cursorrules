@@ -1,0 +1,62 @@
+# Cursor Rules for ClassArranger Project
+
+## Rule 1: Markdown Files Management
+
+**NEVER create markdown files in the root directory.**
+
+- All markdown documentation files MUST be placed in the `docs/` folder
+- When creating a new markdown file, include a header with:
+  - Creation date
+  - Last updated date
+  - Purpose/description
+- Format:
+  ```markdown
+  # Document Title
+  
+  **Created:** YYYY-MM-DD
+  **Last Updated:** YYYY-MM-DD
+  **Purpose:** Brief description
+  
+  ---
+  
+  [Content]
+  ```
+- Update `docs/INDEX.md` when creating new documentation files
+- Only create markdown files when explicitly requested or necessary for documentation
+
+## Rule 2: Domain Driven Design (DDD)
+
+**Always follow Domain Driven Design principles when writing code.**
+
+- Organize code by business domains (bounded contexts)
+- Use domain entities, value objects, and aggregates
+- Separate domain logic from infrastructure and presentation layers
+- Structure:
+  - `domain/` - Business logic and domain models
+  - `application/` - Use cases and application services
+  - `infrastructure/` - External integrations and data access
+  - `api/` or `presentation/` - API routes and UI components
+
+## Rule 3: Keep Rules Concise
+
+**Keep cursor rules brief and focused.**
+
+- Avoid verbose explanations
+- Focus on essential guidelines only
+- Let code patterns emerge from practice
+
+## Rule 4: All the Annotation should be in English
+
+**All the Annotation should be in English**
+
+- If there is Adding Chinese or Japanese Annotation, Please also add a english version in the following place.
+
+
+## Rule 5: Operate by Best Practices
+
+**All operations must follow best practices.**
+
+- Do not automatically execute or implement any operation if it does not adhere to best practices.
+- Do not document non-best-practice operations in any markdown file.
+- Evaluate actions for adherence to current best practices before proceeding.
+
