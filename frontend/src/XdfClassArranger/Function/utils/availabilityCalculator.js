@@ -1,11 +1,14 @@
 /**
- * Availability Calculator Module
- * 可用性计算模块
+ * Availability Calculator Module (Refactored)
+ * 可用性计算模块（重构版）
  * 
- * Calculate student time availability and generate visualization events
- * 负责计算学生的时间可用性并生成可视化事件
+ * Architecture:
+ * 1. Pure functions for date parsing and validation
+ * 2. Clear separation of concerns
+ * 3. Comprehensive test coverage
  * 
- * Updated to use 5-minute granularity (更新为5分钟粒度)
+ * Key principle: Students should ONLY appear on or after their entry date
+ * 核心原则：学生只应在录入日期当天或之后显示
  */
 
 import {
@@ -20,56 +23,100 @@ import {
 } from './constants';
 
 /**
+ * Parse entry date from rawData
+ * 从原始数据解析录入日期
+ * 
+ * @param {string} rawData - Tab-separated student data
+ * @returns {Date|null} Parsed date or null if invalid
+ */
+export const parseEntryDate = (rawData) => {
+  if (!rawData) return null;
+  
+  const values = rawData.split('\t');
+  const entryDateStr = values[4] ? values[4].trim() : ''; // Index 4 = 录入日期
+  
+  if (!entryDateStr) return null;
+  
+  // Support formats: 12/1/25, 2025/12/1, 2025-12-01
+  const parts = entryDateStr.split(/[\/\-\.]/);
+  if (parts.length < 3) return null;
+  
+  let year, month, day;
+  
+  if (parts[0].length === 4) {
+    // YYYY/MM/DD or YYYY-MM-DD format
+    year = parseInt(parts[0]);
+    month = parseInt(parts[1]);
+    day = parseInt(parts[2]);
+  } else if (parts[2].length === 2 || parts[2].length === 4) {
+    // MM/DD/YY format (e.g., 12/1/25) or MM/DD/YYYY
+    month = parseInt(parts[0]);
+    day = parseInt(parts[1]);
+    year = parseInt(parts[2]);
+    if (year < 100) {
+      year += 2000;
+    }
+  } else {
+    return null;
+  }
+  
+  // Validate
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+  
+  const date = new Date(year, month - 1, day);
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+/**
+ * Check if a specific date is on or after the student's entry date
+ * 检查指定日期是否在学生录入日期当天或之后
+ * 
+ * @param {Date} targetDate - The date to check
+ * @param {Date|null} entryDate - Student's entry date
+ * @returns {boolean} True if target date is valid for this student
+ */
+export const isDateAfterEntry = (targetDate, entryDate) => {
+  if (!entryDate) return true; // No entry date means always available
+  if (!targetDate) return false;
+  
+  // Normalize both dates to midnight for comparison
+  const target = new Date(targetDate);
+  target.setHours(0, 0, 0, 0);
+  
+  const entry = new Date(entryDate);
+  entry.setHours(0, 0, 0, 0);
+  
+  return target >= entry;
+};
+
+/**
  * Get availability color with 256-level depth
  * 获取256级色深的可用性颜色
- * 
- * Based on PRD requirements:
- * 根据PRD要求：
- * - Color depth = normalize(overlap count) * 256
- * - 颜色深度 = 归一化(重叠学生数) * 256
- * - Uses Japanese traditional color gradient
- * - 使用日系传统色彩渐变
- * 
- * @param {number} ratio - Availability ratio (0-1) (可用学生比例 0-1)
- * @param {number} overlapCount - Number of overlapping students (重叠学生数)
- * @param {number} maxOverlap - Maximum overlap in current view (当前视图最大重叠数)
- * @returns {string} RGBA color string (RGBA颜色字符串)
  */
 const getAvailabilityColor = (ratio, overlapCount = 0, maxOverlap = 1) => {
-  // Calculate 256-level depth (计算256级深度)
   const depth = Math.round((overlapCount / maxOverlap) * 256);
-  
   return interpolateJapaneseColor(depth);
 };
 
 /**
  * Interpolate Japanese traditional colors with 256 levels
  * 256级日系传统色彩插值
- * 
- * Color gradient (色彩渐变):
- * 浅葱色(#84A9A9) → 若竹色(#689B89) → 若草色(#889963) →
- * 柑子色(#B78F5D) → 紅梅色(#AA6D5B)
- * 
- * @param {number} depth - Color depth 0-256 (色深 0-256)
- * @returns {string} RGBA color string (RGBA颜色字符串)
  */
 const interpolateJapaneseColor = (depth) => {
-  // Clamp depth to 0-256 (限制深度在0-256之间)
   depth = Math.max(0, Math.min(256, depth));
   
-  // Color stops with depth ranges (色彩停止点及深度范围)
-  // Each range represents approximately 51-52 depth levels (每个范围约51-52个深度级别)
   const colorStops = [
-    { depth: 0, rgb: [132, 169, 169], alpha: 0.3, name: '浅葱色' },   // Asagi (light blue-green)
-    { depth: 51, rgb: [132, 169, 169], alpha: 0.5, name: '浅葱色' },  // Asagi transition
-    { depth: 102, rgb: [104, 155, 137], alpha: 0.6, name: '若竹色' }, // Wakatake (young bamboo)
-    { depth: 153, rgb: [136, 153, 99], alpha: 0.7, name: '若草色' },  // Wakakusa (young grass)
-    { depth: 204, rgb: [183, 143, 93], alpha: 0.8, name: '柑子色' },  // Kouji (mandarin)
-    { depth: 256, rgb: [170, 109, 91], alpha: 0.9, name: '紅梅色' }   // Koubai (red plum)
+    { depth: 0, rgb: [132, 169, 169], alpha: 0.3, name: '浅葱色' },
+    { depth: 51, rgb: [132, 169, 169], alpha: 0.5, name: '浅葱色' },
+    { depth: 102, rgb: [104, 155, 137], alpha: 0.6, name: '若竹色' },
+    { depth: 153, rgb: [136, 153, 99], alpha: 0.7, name: '若草色' },
+    { depth: 204, rgb: [183, 143, 93], alpha: 0.8, name: '柑子色' },
+    { depth: 256, rgb: [170, 109, 91], alpha: 0.9, name: '紅梅色' }
   ];
   
-  // Find the two color stops to interpolate between
-  // 找到需要插值的两个色彩停止点
   let lowerStop = colorStops[0];
   let upperStop = colorStops[colorStops.length - 1];
   
@@ -81,11 +128,9 @@ const interpolateJapaneseColor = (depth) => {
     }
   }
   
-  // Calculate interpolation factor (计算插值因子)
   const range = upperStop.depth - lowerStop.depth;
   const factor = range > 0 ? (depth - lowerStop.depth) / range : 0;
   
-  // Interpolate RGB and alpha (插值RGB和透明度)
   const r = Math.round(lowerStop.rgb[0] + (upperStop.rgb[0] - lowerStop.rgb[0]) * factor);
   const g = Math.round(lowerStop.rgb[1] + (upperStop.rgb[1] - lowerStop.rgb[1]) * factor);
   const b = Math.round(lowerStop.rgb[2] + (upperStop.rgb[2] - lowerStop.rgb[2]) * factor);
@@ -95,143 +140,88 @@ const interpolateJapaneseColor = (depth) => {
 };
 
 /**
- * Get color depth value (0-256) for a given ratio
- * 获取给定比例的色深值(0-256)
- * 
- * @param {number} overlapCount - Number of overlapping students (重叠学生数)
- * @param {number} maxOverlap - Maximum overlap count (最大重叠数)
- * @returns {number} Depth value 0-256 (深度值 0-256)
+ * Get color depth value (0-256)
  */
-export const getColorDepth = (overlapCount, maxOverlap) => {
+const getColorDepth = (overlapCount, maxOverlap) => {
   if (maxOverlap === 0) return 0;
   return Math.round((overlapCount / maxOverlap) * 256);
 };
 
 /**
- * Parse time string to hours (for legacy compatibility)
- * 解析时间字符串为小时数（用于向后兼容）
+ * Parse student availability from NLP-parsed data (PRIORITY)
+ * 从NLP解析的数据生成可用性矩阵（优先级最高）
  * 
- * @param {string} timeStr - Time string (时间字符串)
- * @returns {number|null} Hours with decimal (小时数含小数)
- * @deprecated Use parseTimeToSlotIndex instead for 5-minute granularity
+ * @param {Object} parsedData - NLP parsed constraint data
+ * @returns {Array<Array<boolean>>|null} 7x150 availability matrix or null
  */
-const parseTimeToHours = (timeStr) => {
-  if (!timeStr) return null;
-  const match = timeStr.match(/(\d{1,2})[:\uff1a]?(\d{2})?/);
-  if (match) {
-    const hours = parseInt(match[1]);
-    const minutes = match[2] ? parseInt(match[2]) : 0;
-    return hours + minutes / 60;
-  }
-  return null;
-};
+export const parseStudentAvailabilityFromParsedData = (parsedData) => {
+  if (!parsedData || !parsedData.success) return null;
 
-/**
- * 解析学生的时间约束，返回可用性矩阵
- * 最大 tolerance：默认所有时间都可用，除非明确禁止
- * @param {string} rawData - 学生的原始Excel数据
- * @returns {Array|null} 7x25的二维数组，availability[day][slot] = true/false
- */
-export const parseStudentAvailability = (rawData) => {
-  if (!rawData) return null;
+  // Initialize: Default all UNAVAILABLE (conservative approach)
+  // 初始化：默认全部不可用（保守策略）
+  const availability = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(false));
 
-  const values = rawData.split('\t');
-  // 索引: 5=上课频次, 6=上课时长, 13=起止时间, 14=学生希望时间段, 15=希望具体时间, 16=每周频次
-  const frequency = values[5] || '';
-  const duration = values[6] || '';
-  const deadline = values[13] || '';
-  const preferredDays = values[14] || '';
-  const specificTime = values[15] || '';
-  const weeklyFrequency = values[16] || '';
+  const allowedDays = parsedData.allowedDays || [];
+  const allowedRanges = parsedData.allowedTimeRanges || [];
+  const excludedRanges = parsedData.excludedTimeRanges || [];
 
-  // Initialize: Default all available (maximum tolerance)
-  // 初始化：默认全部可用（最大 tolerance）
-  // availability[day][slot] = true/false
-  // day: 0=Sunday, 1=Monday, ..., 6=Saturday (0=周日, 1=周一, ..., 6=周六)
-  // slot: 5-minute slots from 9:00, total 150 slots (9:00-21:30)
-  //       (每5分钟一个slot，从9:00开始，共150个slot (9:00-21:30))
-  const availability = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(true));
+  // Logic: 
+  // 1. If allowedTimeRanges is specified, ONLY those ranges are available
+  // 2. If allowedTimeRanges is empty, use allowedDays (entire days available)
+  // 3. Finally apply excludedTimeRanges to remove specific slots
 
-  // 解析希望时间段（如：周一到周五、都可以、周末等）
-  const dayText = preferredDays.toLowerCase();
-
-  // 如果明确指定了某些天
-  if (dayText.includes('周一') && dayText.includes('周五') && (dayText.includes('到') || dayText.includes('-'))) {
-    // 周一到周五
-    availability[0] = Array(SLOTS_PER_DAY).fill(false); // 周日不可用
-    availability[6] = Array(SLOTS_PER_DAY).fill(false); // 周六不可用
-  } else if (dayText.includes('周末') && !dayText.includes('不') && !dayText.includes('除')) {
-    // 只有周末
-    for (let d = 1; d <= 5; d++) {
-      availability[d] = Array(SLOTS_PER_DAY).fill(false);
+  if (allowedRanges.length > 0) {
+    // Step 1: Apply specific allowedTimeRanges
+    // 步骤1：应用具体的允许时间段
+    for (const range of allowedRanges) {
+      const startSlot = range.start;
+      const endSlot = range.end;
+      
+      if (startSlot !== undefined && endSlot !== undefined) {
+        if (range.day === null) {
+          // Apply to all allowed days
+          const targetDays = allowedDays.length > 0 ? allowedDays : [0, 1, 2, 3, 4, 5, 6];
+          for (const day of targetDays) {
+            for (let s = startSlot; s < endSlot && s < SLOTS_PER_DAY; s++) {
+              availability[day][s] = true;
+            }
+          }
+        } else if (range.day >= 0 && range.day <= 6) {
+          // Apply to specific day
+          for (let s = startSlot; s < endSlot && s < SLOTS_PER_DAY; s++) {
+            availability[range.day][s] = true;
+          }
+        }
+      }
+    }
+  } else {
+    // Step 2: No specific time ranges, use allowedDays (entire days available)
+    // 步骤2：没有具体时间段，使用允许的天数（整天可用）
+    for (const day of allowedDays) {
+      if (day >= 0 && day <= 6) {
+        availability[day] = Array(SLOTS_PER_DAY).fill(true);
+      }
     }
   }
 
-  // 解析具体时间约束（如：除了下午语校之外都可以（13:30-16:45））
-  const timeText = specificTime;
-  if (timeText) {
-    // Find time range (查找时间范围)
-    const timeRangeMatch = timeText.match(/(\d{1,2})[:\uff1a]?(\d{2})?\s*[-~到]\s*(\d{1,2})[:\uff1a]?(\d{2})?/);
-
-    if (timeRangeMatch) {
-      const startHour = parseInt(timeRangeMatch[1]);
-      const startMin = timeRangeMatch[2] ? parseInt(timeRangeMatch[2]) : 0;
-      const endHour = parseInt(timeRangeMatch[3]);
-      const endMin = timeRangeMatch[4] ? parseInt(timeRangeMatch[4]) : 0;
-
-      // Determine if exclusion or specification (判断是排除还是指定)
-      const isExclusion = timeText.includes('除') || timeText.includes('不') || timeText.includes('之外');
-
-      const startSlot = timeToSlotIndex(startHour, startMin);
-      const endSlot = timeToSlotIndex(endHour, endMin);
-
-      if (isExclusion) {
-        // 排除这个时间段
+  // Step 3: Apply excludedTimeRanges - mark specific slots as unavailable
+  // 步骤3：应用排除的时间段
+  for (const range of excludedRanges) {
+    const startSlot = range.start;
+    const endSlot = range.end;
+    
+    if (startSlot !== undefined && endSlot !== undefined) {
+      if (range.day === null) {
+        // Apply to all days
         for (let d = 0; d < 7; d++) {
-          for (let s = Math.max(0, startSlot); s < Math.min(SLOTS_PER_DAY, endSlot); s++) {
+          for (let s = startSlot; s < endSlot && s < SLOTS_PER_DAY; s++) {
             availability[d][s] = false;
           }
         }
-      } else {
-        // 只有这个时间段可用
-        for (let d = 0; d < 7; d++) {
-          for (let s = 0; s < SLOTS_PER_DAY; s++) {
-            if (s < startSlot || s >= endSlot) {
-              availability[d][s] = false;
-            }
-          }
-        }
-      }
-    }
-
-    // Process time keywords like "morning", "afternoon", "evening"
-    // 处理"上午"、"下午"、"晚上"等关键词
-    if (timeText.includes('上午') && !timeText.includes('除') && !timeText.includes('不')) {
-      // Morning only (9:00-12:00) (只有上午可用 9:00-12:00)
-      const noonSlot = timeToSlotIndex(12, 0);
-      for (let d = 0; d < 7; d++) {
-        for (let s = noonSlot; s < SLOTS_PER_DAY; s++) {
-          availability[d][s] = false;
-        }
-      }
-    } else if (timeText.includes('下午') && !timeText.includes('除') && !timeText.includes('不')) {
-      // Afternoon only (12:00-18:00) (只有下午可用 12:00-18:00)
-      const noonSlot = timeToSlotIndex(12, 0);
-      const eveningSlot = timeToSlotIndex(18, 0);
-      for (let d = 0; d < 7; d++) {
-        for (let s = 0; s < noonSlot; s++) {
-          availability[d][s] = false;
-        }
-        for (let s = eveningSlot; s < SLOTS_PER_DAY; s++) {
-          availability[d][s] = false;
-        }
-      }
-    } else if (timeText.includes('晚上') && !timeText.includes('除') && !timeText.includes('不')) {
-      // Evening only (18:00-21:30) (只有晚上可用 18:00-21:30)
-      const eveningSlot = timeToSlotIndex(18, 0);
-      for (let d = 0; d < 7; d++) {
-        for (let s = 0; s < eveningSlot; s++) {
-          availability[d][s] = false;
+      } else if (range.day >= 0 && range.day <= 6) {
+        // Apply to specific day
+        for (let s = startSlot; s < endSlot && s < SLOTS_PER_DAY; s++) {
+          availability[range.day][s] = false;
         }
       }
     }
@@ -241,17 +231,133 @@ export const parseStudentAvailability = (rawData) => {
 };
 
 /**
- * Calculate overlapping availability for all students with 256-level depth
- * 计算所有学生的重叠可用性（256级深度）
+ * Parse student time availability from rawData (FALLBACK)
+ * 从原始数据解析学生的时间可用性（回退方案）
  * 
- * @param {Array} studentsWithData - Students with data (有数据的学生数组)
- * @returns {Object} { overlap, totalStudents, maxOverlap, depthMatrix }
+ * @param {string} rawData - Tab-separated student data
+ * @returns {Array<Array<boolean>>|null} 7x150 availability matrix or null
  */
-export const calculateOverlappingAvailability = (studentsWithData) => {
-  // overlap[day][slot] = number of available students (可用学生数量)
+export const parseStudentAvailabilityFromRawData = (rawData) => {
+  if (!rawData) return null;
+
+  const values = rawData.split('\t');
+  const frequency = values[5] || '';
+  const duration = values[6] || '';
+  const deadline = values[13] || '';
+  const preferredDays = values[14] || '';
+  const specificTime = values[15] || '';
+  const weeklyFrequency = values[16] || '';
+
+  // Initialize: Default all available (maximum tolerance)
+  const availability = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(true));
+
+  // Parse preferred days
+  const dayText = preferredDays.toLowerCase();
+
+  if (dayText.includes('周一') && dayText.includes('周五') && (dayText.includes('到') || dayText.includes('-'))) {
+    // Weekdays only (Monday-Friday)
+    availability[0] = Array(SLOTS_PER_DAY).fill(false); // Sunday
+    availability[6] = Array(SLOTS_PER_DAY).fill(false); // Saturday
+  } else if (dayText.includes('周末') && !dayText.includes('不') && !dayText.includes('除')) {
+    // Weekends only
+    for (let d = 1; d <= 5; d++) {
+      availability[d] = Array(SLOTS_PER_DAY).fill(false);
+    }
+  }
+
+  // Parse specific time constraints
+  const timeText = specificTime;
+  if (timeText) {
+    const timeRangeMatch = timeText.match(/(\d{1,2})[:\uff1a]?(\d{2})?\s*[-~到]\s*(\d{1,2})[:\uff1a]?(\d{2})?/);
+
+    if (timeRangeMatch) {
+      const startHour = parseInt(timeRangeMatch[1]);
+      const startMin = timeRangeMatch[2] ? parseInt(timeRangeMatch[2]) : 0;
+      const endHour = parseInt(timeRangeMatch[3]);
+      const endMin = timeRangeMatch[4] ? parseInt(timeRangeMatch[4]) : 0;
+
+      const isExclusion = timeText.includes('除') || timeText.includes('不') || timeText.includes('之外');
+
+      const startSlot = timeToSlotIndex(startHour, startMin);
+      const endSlot = timeToSlotIndex(endHour, endMin);
+
+      if (startSlot !== null && endSlot !== null) {
+        for (let d = 0; d < 7; d++) {
+          if (isExclusion) {
+            // Mark these slots as unavailable
+            for (let s = startSlot; s < endSlot; s++) {
+              availability[d][s] = false;
+            }
+          } else {
+            // Only these slots are available
+            for (let s = 0; s < SLOTS_PER_DAY; s++) {
+              availability[d][s] = (s >= startSlot && s < endSlot);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return availability;
+};
+
+/**
+ * Parse student availability (UNIFIED ENTRY POINT)
+ * 解析学生可用性（统一入口）
+ * 
+ * Priority:
+ * 1. Use parsedData (from NLP) if available and valid
+ * 2. Fallback to rawData parsing
+ * 
+ * @param {Object} student - Full student object
+ * @returns {Array<Array<boolean>>|null} 7x150 availability matrix or null
+ */
+export const parseStudentAvailability = (student) => {
+  if (!student) return null;
+
+  // Priority 1: Use NLP-parsed data if available
+  if (student.parsedData && student.parsedData.success) {
+    console.log(`[ParseAvailability] ${student.name}: Using NLP parsedData`);
+    const availability = parseStudentAvailabilityFromParsedData(student.parsedData);
+    if (availability) return availability;
+  }
+
+  // Priority 2: Use constraint data (alternative structure)
+  if (student.constraint && student.constraint.success) {
+    console.log(`[ParseAvailability] ${student.name}: Using constraint data`);
+    const availability = parseStudentAvailabilityFromParsedData(student.constraint);
+    if (availability) return availability;
+  }
+
+  // Fallback: Parse from rawData
+  if (student.rawData) {
+    console.log(`[ParseAvailability] ${student.name}: Fallback to rawData parsing`);
+    return parseStudentAvailabilityFromRawData(student.rawData);
+  }
+
+  console.warn(`[ParseAvailability] ${student.name}: No valid data source found`);
+  return null;
+};
+
+/**
+ * Calculate overlapping availability for all students (REFACTORED)
+ * 计算所有学生的重叠可用性（重构版）
+ * 
+ * Core Logic:
+ * 1. Parse each student's entry date
+ * 2. For each day in the week, check if day >= entry date
+ * 3. Only count students who pass the date check
+ * 
+ * @param {Array} studentsWithData - Students with rawData
+ * @param {Date} weekStart - Start of the week (Sunday at 00:00:00)
+ * @returns {Object} Availability data structure
+ */
+export const calculateOverlappingAvailability = (studentsWithData, weekStart) => {
+  // Initialize overlap matrix
   const overlap = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(0));
   
-  // Store student references for each slot (存储每个时间槽的学生引用)
+  // Store student references for each slot
   const studentRefs = Array(7).fill(null).map(() => 
     Array(SLOTS_PER_DAY).fill(null).map(() => [])
   );
@@ -259,14 +365,57 @@ export const calculateOverlappingAvailability = (studentsWithData) => {
   let totalStudentsWithAvailability = 0;
   let maxOverlap = 0;
 
-  studentsWithData.forEach(student => {
-    if (!student.rawData) return;
-    const availability = parseStudentAvailability(student.rawData);
-    if (!availability) return;
+  // Pre-parse all student data for clarity
+  const studentAvailabilityData = studentsWithData.map(student => {
+    // Parse availability using UNIFIED function (prioritizes parsedData)
+    const availability = parseStudentAvailability(student);
+    if (!availability) {
+      console.warn(`[AvailabilityCalc] ${student.name}: Failed to parse availability`);
+      return null;
+    }
+    
+    // Parse entry date from rawData
+    const entryDate = student.rawData ? parseEntryDate(student.rawData) : null;
+    
+    return {
+      student,
+      availability,
+      entryDate
+    };
+  }).filter(data => data !== null);
 
-    totalStudentsWithAvailability++;
+  console.log(`[AvailabilityCalc] Processing ${studentAvailabilityData.length} students`);
+  if (weekStart) {
+    console.log(`[AvailabilityCalc] Week starts: ${weekStart.toISOString().split('T')[0]}`);
+  }
 
+  // Process each student
+  studentAvailabilityData.forEach(({ student, availability, entryDate }) => {
+    let studentAddedToAnySlot = false;
+    
+    if (entryDate) {
+      console.log(`[AvailabilityCalc] ${student.name}: entry date = ${entryDate.toISOString().split('T')[0]}`);
+    } else {
+      console.log(`[AvailabilityCalc] ${student.name}: no entry date (always available)`);
+    }
+
+    // Check each day of the week
     for (let d = 0; d < 7; d++) {
+      // Calculate the actual date for this day
+      let dayDate = null;
+      if (weekStart) {
+        dayDate = new Date(weekStart);
+        dayDate.setDate(dayDate.getDate() + d);
+        dayDate.setHours(0, 0, 0, 0);
+      }
+
+      // CRITICAL CHECK: Is this day on or after the entry date?
+      if (dayDate && !isDateAfterEntry(dayDate, entryDate)) {
+        console.log(`  [Skip] ${student.name} on ${dayDate.toISOString().split('T')[0]} (before entry ${entryDate.toISOString().split('T')[0]})`);
+        continue; // Skip this entire day
+      }
+
+      // Process time slots for this day
       for (let s = 0; s < SLOTS_PER_DAY; s++) {
         if (availability[d][s]) {
           overlap[d][s]++;
@@ -276,12 +425,17 @@ export const calculateOverlappingAvailability = (studentsWithData) => {
             color: student.color
           });
           maxOverlap = Math.max(maxOverlap, overlap[d][s]);
+          studentAddedToAnySlot = true;
         }
       }
     }
+
+    if (studentAddedToAnySlot) {
+      totalStudentsWithAvailability++;
+    }
   });
   
-  // Calculate depth matrix (计算深度矩阵)
+  // Calculate depth matrix
   const depthMatrix = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(0));
   
   for (let d = 0; d < 7; d++) {
@@ -292,10 +446,13 @@ export const calculateOverlappingAvailability = (studentsWithData) => {
     }
   }
 
+  console.log(`[AvailabilityCalc] Total students with availability: ${totalStudentsWithAvailability}`);
+  console.log(`[AvailabilityCalc] Max overlap: ${maxOverlap}`);
+
   return {
     overlap,
     totalStudents: totalStudentsWithAvailability,
-    maxOverlap: maxOverlap || 1, // Avoid division by zero (避免除零)
+    maxOverlap: maxOverlap || 1,
     depthMatrix,
     studentRefs
   };
@@ -303,36 +460,43 @@ export const calculateOverlappingAvailability = (studentsWithData) => {
 
 /**
  * Generate availability background events with 256-level color depth
- * 生成256级色深的可用性背景事件（用于FullCalendar显示）
+ * 生成256级色深的可用性背景事件
  * 
- * @param {Array} students - Student array (学生数组)
+ * @param {Array} students - Student array
  * @param {Object} calendarRef - FullCalendar ref
- * @returns {Array} FullCalendar event array (事件数组)
+ * @returns {Array} FullCalendar event array
  */
 export const generateAvailabilityEvents = (students, calendarRef) => {
   const studentsWithData = students.filter(s => s.rawData);
   if (studentsWithData.length === 0) return [];
 
-  const { overlap, totalStudents, maxOverlap, depthMatrix, studentRefs } = 
-    calculateOverlappingAvailability(studentsWithData);
-  if (totalStudents === 0) return [];
-
   const events = [];
 
-  // 获取当前周的日期
+  // Get current week dates
   const calendarApi = calendarRef.current?.getApi();
   const currentDate = calendarApi ? calendarApi.getDate() : new Date();
 
-  // 找到当前周的周日
+  // Find Sunday of current week
   const weekStart = new Date(currentDate);
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  weekStart.setHours(0, 0, 0, 0);
 
+  console.log(`[GenerateEvents] Current date: ${currentDate.toISOString().split('T')[0]}`);
+  console.log(`[GenerateEvents] Week start (Sunday): ${weekStart.toISOString().split('T')[0]}`);
+
+  // Calculate availability with entry date filtering
+  const { overlap, totalStudents, maxOverlap, depthMatrix, studentRefs } = 
+    calculateOverlappingAvailability(studentsWithData, weekStart);
+  
+  if (totalStudents === 0) return [];
+
+  // Generate events for each day
   for (let d = 0; d < 7; d++) {
     const dayDate = new Date(weekStart);
     dayDate.setDate(dayDate.getDate() + d);
     const dateStr = dayDate.toISOString().split('T')[0];
 
-    // 合并连续的时间段
+    // Merge consecutive time slots
     let segmentStart = null;
     let segmentCount = 0;
 
@@ -340,20 +504,18 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
       const count = s < SLOTS_PER_DAY ? overlap[d][s] : 0;
 
       if (count > 0 && segmentStart === null) {
-        // Start new segment (开始新段)
+        // Start new segment
         segmentStart = s;
         segmentCount = count;
       } else if ((count === 0 || count !== segmentCount) && segmentStart !== null) {
-        // End current segment (结束当前段)
+        // End current segment
         const startTime = slotIndexToTime(segmentStart);
         const endTime = slotIndexToTime(s);
 
-        // Calculate ratio and color depth (计算比例和色深)
         const ratio = segmentCount / totalStudents;
         const depth = getColorDepth(segmentCount, maxOverlap);
         const color = getAvailabilityColor(ratio, segmentCount, maxOverlap);
 
-        // Get students for this segment (获取该时间段的学生)
         const segmentStudents = studentRefs[d][segmentStart] || [];
 
         events.push({
@@ -370,13 +532,13 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
             ratio: ratio,
             startSlot: segmentStart,
             endSlot: s,
-            depth: depth, // 256-level color depth (256级色深)
-            students: segmentStudents, // Students available in this slot (该时间槽可用的学生)
+            depth: depth,
+            students: segmentStudents,
             day: d
           }
         });
 
-        // 如果当前格子有新的数量，开始新段
+        // Start new segment if current slot has count
         if (count > 0) {
           segmentStart = s;
           segmentCount = count;
@@ -387,24 +549,43 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
     }
   }
 
+  console.log(`[GenerateEvents] Generated ${events.length} availability events`);
   return events;
 };
 
 /**
- * 获取特定时间槽的可用学生列表
- * @param {Array} students - 学生数组
- * @param {number} dayOfWeek - 星期几 (0=周日, 1=周一, ...)
- * @param {number} slotIndex - 时间槽索引
- * @returns {Array} 可用学生数组，每个元素包含 {name, color, constraints}
+ * Get students available for a specific time slot
+ * 获取特定时间槽的可用学生
+ * 
+ * @param {Array} students - All students
+ * @param {number} dayOfWeek - Day (0=Sun, 6=Sat)
+ * @param {number} slotIndex - Time slot index
+ * @returns {Array} Available students with constraints
  */
 export const getStudentsForTimeSlot = (students, dayOfWeek, slotIndex) => {
   const availableStudents = [];
 
-  students.filter(s => s.rawData).forEach(student => {
-    const availability = parseStudentAvailability(student.rawData);
-    if (availability && availability[dayOfWeek] && availability[dayOfWeek][slotIndex]) {
+  students.forEach(student => {
+    // Use unified parsing function
+    const availability = parseStudentAvailability(student);
+    if (!availability || !availability[dayOfWeek] || !availability[dayOfWeek][slotIndex]) {
+      return;
+    }
+
+    // Extract constraints from parsedData or rawData
+    let constraints;
+    if (student.parsedData || student.constraint) {
+      const data = student.parsedData || student.constraint;
+      constraints = {
+        allowedDays: data.allowedDays || [],
+        allowedTimeRanges: data.allowedTimeRanges || [],
+        excludedTimeRanges: data.excludedTimeRanges || [],
+        strictness: data.strictness || '-',
+        confidence: data.confidence || 0
+      };
+    } else if (student.rawData) {
       const values = student.rawData.split('\t');
-      const constraints = {
+      constraints = {
         frequency: values[5] || '-',
         duration: values[6] || '-',
         deadline: values[13] || '-',
@@ -412,15 +593,16 @@ export const getStudentsForTimeSlot = (students, dayOfWeek, slotIndex) => {
         specificTime: values[15] || '-',
         weeklyFrequency: values[16] || '-'
       };
-
-      availableStudents.push({
-        name: student.name,
-        color: student.color,
-        constraints: constraints
-      });
+    } else {
+      constraints = {};
     }
+
+    availableStudents.push({
+      name: student.name,
+      color: student.color,
+      constraints: constraints
+    });
   });
 
   return availableStudents;
 };
-

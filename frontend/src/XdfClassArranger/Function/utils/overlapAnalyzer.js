@@ -65,9 +65,8 @@ export class OverlapAnalyzer {
     
     // Process each student (处理每个学生)
     this.students.forEach(student => {
-      if (!student.rawData) return;
-      
-      const availability = parseStudentAvailability(student.rawData);
+      // Parse student availability (using parsedData if available)
+      const availability = parseStudentAvailability(student);
       if (!availability) return;
       
       totalStudentsWithData++;

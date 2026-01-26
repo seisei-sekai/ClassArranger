@@ -70,6 +70,10 @@ const Function = () => {
   const [cleaningProgress, setCleaningProgress] = useState({ current: 0, total: 0, name: '' });
   const [showCleaningModal, setShowCleaningModal] = useState(false);
   const [showScheduleResult, setShowScheduleResult] = useState(false);
+
+  // Debug Log状态 (Debug Log state)
+  const [showDebugLog, setShowDebugLog] = useState(false);
+  const [copiedSection, setCopiedSection] = useState(null); // 追踪哪个区域被复制了
   const [scheduleResultData, setScheduleResultData] = useState(null);
 
   // 添加学生
@@ -478,9 +482,9 @@ const Function = () => {
         try {
           console.log(`[OneClickSchedule] Processing student ${i + 1}/${selectedStudents.length}: ${student.name}`);
           
-          // Parse student availability from rawData
+          // Parse student availability (using parsedData if available)
           const { parseStudentAvailability } = await import('./utils/availabilityCalculator');
-          const studentAvailability = parseStudentAvailability(student.rawData);
+          const studentAvailability = parseStudentAvailability(student);
           
           if (!studentAvailability) {
             throw new Error('无法解析学生可用时间');
@@ -2720,6 +2724,18 @@ const Function = () => {
         </div>
       )}
 
+      {/* Debug Log悬浮按钮 (Floating Debug Log Button) */}
+      <button
+        className="floating-debug-btn"
+        onClick={() => setShowDebugLog(true)}
+        title="查看调试数据"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        <span className="debug-btn-text">Debug Log</span>
+      </button>
+
       {/* 悬浮一键排课按钮 (Floating One-Click Schedule Button) */}
       <button
         className={`floating-schedule-btn ${
@@ -2785,6 +2801,171 @@ const Function = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Debug Log 弹窗 (Debug Log Modal) */}
+      {showDebugLog && (
+        <>
+          <div className="modal-backdrop" onClick={() => setShowDebugLog(false)}></div>
+          <div className="debug-log-modal">
+            <div className="debug-modal-header">
+              <h3>Debug Log - 数据快照</h3>
+              <button className="modal-close" onClick={() => setShowDebugLog(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="debug-modal-content">
+              {/* Schedule Data - 完整日历数据 */}
+              <div className="debug-section">
+                <div className="debug-section-header">
+                  <h4>📅 Calendar Events (完整日历数据)</h4>
+                  <button 
+                    className={`copy-btn ${copiedSection === 'events' ? 'copied' : ''}`}
+                    onClick={() => {
+                      const allCalendarEvents = {
+                        scheduledEvents: events,
+                        availabilityEvents: availabilityEvents,
+                        combined: [...events, ...availabilityEvents],
+                        summary: {
+                          scheduledCount: events.length,
+                          availabilityCount: availabilityEvents.length,
+                          totalCount: events.length + availabilityEvents.length
+                        }
+                      };
+                      navigator.clipboard.writeText(JSON.stringify(allCalendarEvents, null, 2));
+                      setCopiedSection('events');
+                      setTimeout(() => setCopiedSection(null), 2000);
+                    }}
+                    title="复制全部"
+                  >
+                    {copiedSection === 'events' ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <textarea 
+                  className="debug-textarea"
+                  value={JSON.stringify({
+                    scheduledEvents: events,
+                    availabilityEvents: availabilityEvents,
+                    combined: [...events, ...availabilityEvents],
+                    summary: {
+                      scheduledCount: events.length,
+                      availabilityCount: availabilityEvents.length,
+                      totalCount: events.length + availabilityEvents.length
+                    }
+                  }, null, 2)}
+                  readOnly
+                />
+              </div>
+
+              {/* Students Data */}
+              <div className="debug-section">
+                <div className="debug-section-header">
+                  <h4>👨‍🎓 Students (学生列表)</h4>
+                  <button 
+                    className={`copy-btn ${copiedSection === 'students' ? 'copied' : ''}`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(students, null, 2));
+                      setCopiedSection('students');
+                      setTimeout(() => setCopiedSection(null), 2000);
+                    }}
+                    title="复制全部"
+                  >
+                    {copiedSection === 'students' ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <textarea 
+                  className="debug-textarea"
+                  value={JSON.stringify(students, null, 2)}
+                  readOnly
+                />
+              </div>
+
+              {/* Teachers Data */}
+              <div className="debug-section">
+                <div className="debug-section-header">
+                  <h4>👨‍🏫 Teachers (教师列表)</h4>
+                  <button 
+                    className={`copy-btn ${copiedSection === 'teachers' ? 'copied' : ''}`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(teachers, null, 2));
+                      setCopiedSection('teachers');
+                      setTimeout(() => setCopiedSection(null), 2000);
+                    }}
+                    title="复制全部"
+                  >
+                    {copiedSection === 'teachers' ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <textarea 
+                  className="debug-textarea"
+                  value={JSON.stringify(teachers, null, 2)}
+                  readOnly
+                />
+              </div>
+
+              {/* Classrooms Data */}
+              <div className="debug-section">
+                <div className="debug-section-header">
+                  <h4>🏫 Classrooms (教室列表)</h4>
+                  <button 
+                    className={`copy-btn ${copiedSection === 'classrooms' ? 'copied' : ''}`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(classrooms, null, 2));
+                      setCopiedSection('classrooms');
+                      setTimeout(() => setCopiedSection(null), 2000);
+                    }}
+                    title="复制全部"
+                  >
+                    {copiedSection === 'classrooms' ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <textarea 
+                  className="debug-textarea"
+                  value={JSON.stringify(classrooms, null, 2)}
+                  readOnly
+                />
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

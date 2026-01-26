@@ -93,9 +93,8 @@ class TripleMatchingEngine {
     const combinations = [];
     
     this.students.forEach(student => {
-      if (!student.rawData) return;
-      
-      const studentAvailability = parseStudentAvailability(student.rawData);
+      // Parse student availability (using parsedData if available)
+      const studentAvailability = parseStudentAvailability(student);
       if (!studentAvailability) return;
       
       // Get course information (获取课程信息)
