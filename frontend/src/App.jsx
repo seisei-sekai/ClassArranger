@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import XdfLayout from "./XdfClassArranger/XdfLayout.jsx";
 import XdfDashboard from "./XdfClassArranger/Dashboard/Dashboard.jsx";
 import XdfFunction from "./XdfClassArranger/Function/Function.jsx";
+import XdfFinalSchedule from "./XdfClassArranger/FinalSchedule/FinalSchedule.jsx";
 import XdfMyPage from "./XdfClassArranger/MyPage/MyPage.jsx";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<XdfDashboard />} />
             <Route path="function" element={<XdfFunction />} />
+            <Route path="finalschedule" element={<XdfFinalSchedule />} />
             <Route path="mypage" element={<XdfMyPage />} />
           </Route>
         </Routes>

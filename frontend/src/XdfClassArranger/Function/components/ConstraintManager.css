@@ -1,0 +1,457 @@
+/* Constraint Manager Styles (约束管理器样式) */
+
+.constraint-manager {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.constraint-manager-header {
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #E5E8EB;
+}
+
+.manager-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1A1D1F;
+  margin: 0 0 8px 0;
+}
+
+.manager-title svg {
+  color: #5A6C7D;
+}
+
+.manager-subtitle {
+  font-size: 14px;
+  color: #6F767E;
+  margin: 0;
+}
+
+/* Constraint Section (约束区域) */
+.constraint-section {
+  margin-bottom: 32px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #F5F7FA;
+  border-radius: 8px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1A1D1F;
+  margin: 0;
+}
+
+.title-badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.title-badge.hard {
+  background: #FF3B3020;
+  color: #FF3B30;
+}
+
+.title-badge.soft {
+  background: #34C75920;
+  color: #34C759;
+}
+
+.title-badge.custom {
+  background: #007AFF20;
+  color: #007AFF;
+}
+
+.section-count {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6F767E;
+  background: var(--bg-secondary);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* Add Custom Button (添加自定义按钮) */
+.add-custom-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-custom-btn:hover {
+  background: #0066DD;
+  transform: translateY(-1px);
+}
+
+.add-custom-btn:active {
+  transform: translateY(0);
+}
+
+/* Add Custom Form (添加自定义表单) */
+.add-custom-form {
+  padding: 20px;
+  background: #F9FAFB;
+  border: 1px solid #E5E8EB;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.custom-name-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.custom-name-input:focus {
+  outline: none;
+  border-color: #007AFF;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.custom-type-select,
+.custom-weight-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  transition: border-color 0.2s ease;
+}
+
+.custom-type-select:focus,
+.custom-weight-input:focus {
+  outline: none;
+  border-color: #007AFF;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #007AFF;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0066DD;
+}
+
+.btn-secondary {
+  background: #E5E8EB;
+  color: #6F767E;
+}
+
+.btn-secondary:hover {
+  background: #D1D5DB;
+}
+
+/* Constraint List (约束列表) */
+.constraint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Constraint Item (约束项) */
+.constraint-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #F9FAFB;
+  border: 1px solid #E5E8EB;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.constraint-item:hover {
+  background: #F5F7FA;
+  border-color: #D1D5DB;
+}
+
+.constraint-item.disabled {
+  opacity: 0.6;
+}
+
+/* Toggle Switch (切换开关) */
+.constraint-toggle {
+  flex-shrink: 0;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #D1D5DB;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #34C759;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Constraint Info (约束信息) */
+.constraint-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.constraint-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1A1D1F;
+  margin-bottom: 4px;
+}
+
+.type-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+
+.type-badge.hard {
+  background: #FF3B3020;
+  color: #FF3B30;
+}
+
+.type-badge.soft {
+  background: #34C75920;
+  color: #34C759;
+}
+
+.constraint-description {
+  font-size: 13px;
+  color: #6F767E;
+  line-height: 1.5;
+}
+
+/* Constraint Weight (约束权重) */
+.constraint-weight {
+  flex-shrink: 0;
+  width: 80px;
+}
+
+.weight-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid #E5E8EB;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.weight-display:hover {
+  border-color: #007AFF;
+}
+
+.weight-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1D1F;
+}
+
+.edit-icon {
+  color: #6F767E;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.weight-display:hover .edit-icon {
+  opacity: 1;
+}
+
+.weight-editor {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.weight-input {
+  width: 50px;
+  padding: 6px 8px;
+  font-size: 14px;
+  border: 1px solid #007AFF;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.weight-input:focus {
+  outline: none;
+  border-color: #0066DD;
+}
+
+.weight-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #34C759;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.weight-save:hover {
+  background: #2DB04A;
+}
+
+/* Remove Custom Button (移除自定义按钮) */
+.remove-custom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: #FF3B30;
+  border: 1px solid #FF3B3030;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.remove-custom-btn:hover {
+  background: #FF3B3010;
+  border-color: #FF3B30;
+}
+
+/* Empty Custom (空自定义) */
+.empty-custom {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9CA3AF;
+}
+
+.empty-custom p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.empty-hint {
+  font-size: 12px;
+  color: #D1D5DB;
+}
+
+/* Responsive Design (响应式设计) */
+@media (max-width: 768px) {
+  .constraint-manager {
+    padding: 16px;
+  }
+  
+  .constraint-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .constraint-weight {
+    width: 100%;
+  }
+  
+  .weight-display {
+    justify-content: flex-start;
+  }
+}
+

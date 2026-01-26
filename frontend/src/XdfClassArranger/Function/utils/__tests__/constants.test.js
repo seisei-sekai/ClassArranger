@@ -71,12 +71,13 @@ describe('constants.js', () => {
     });
 
     it('should have valid SLOTS_PER_DAY', () => {
-      expect(SLOTS_PER_DAY).toBe(25);
+      expect(SLOTS_PER_DAY).toBe(150); // 5-minute granularity: 12.5 hours * 60 / 5 = 150 slots
       expect(typeof SLOTS_PER_DAY).toBe('number');
     });
 
     it('should have correct calculation', () => {
-      const calculatedSlots = (STANDARD_END - STANDARD_START) / 0.5;
+      // With 5-minute granularity: (21.5 - 9.0) hours * 60 minutes / 5 = 150 slots
+      const calculatedSlots = (STANDARD_END - STANDARD_START) * 60 / 5;
       expect(SLOTS_PER_DAY).toBe(calculatedSlots);
     });
   });

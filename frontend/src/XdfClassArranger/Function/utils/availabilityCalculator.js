@@ -1,46 +1,119 @@
 /**
+ * Availability Calculator Module
  * 可用性计算模块
+ * 
+ * Calculate student time availability and generate visualization events
  * 负责计算学生的时间可用性并生成可视化事件
+ * 
+ * Updated to use 5-minute granularity (更新为5分钟粒度)
  */
 
-import { STANDARD_START, STANDARD_END, SLOTS_PER_DAY } from './constants';
+import {
+  STANDARD_START,
+  STANDARD_END,
+  SLOTS_PER_DAY,
+  TIME_GRANULARITY,
+  SLOTS_PER_HOUR,
+  timeToSlotIndex,
+  slotIndexToTime,
+  parseTimeToSlotIndex
+} from './constants';
 
 /**
- * 根据学生可用比例返回渐变色
- * 使用日系传统色彩，从冷色调（少学生）到暖色调（多学生）
- * @param {number} ratio - 可用学生比例 (0-1)
- * @returns {string} RGBA颜色字符串
+ * Get availability color with 256-level depth
+ * 获取256级色深的可用性颜色
+ * 
+ * Based on PRD requirements:
+ * 根据PRD要求：
+ * - Color depth = normalize(overlap count) * 256
+ * - 颜色深度 = 归一化(重叠学生数) * 256
+ * - Uses Japanese traditional color gradient
+ * - 使用日系传统色彩渐变
+ * 
+ * @param {number} ratio - Availability ratio (0-1) (可用学生比例 0-1)
+ * @param {number} overlapCount - Number of overlapping students (重叠学生数)
+ * @param {number} maxOverlap - Maximum overlap in current view (当前视图最大重叠数)
+ * @returns {string} RGBA color string (RGBA颜色字符串)
  */
-const getAvailabilityColor = (ratio) => {
-  // 日系传统渐变色：浅葱色 → 若竹色 → 若草色 → 柑子色 → 紅梅色
-
-  if (ratio <= 0.2) {
-    // 0-20%: 浅葱色 (淡青蓝) - 很少学生
-    const intensity = ratio / 0.2;
-    return `rgba(132, 169, 169, ${0.3 + intensity * 0.3})`;
-  } else if (ratio <= 0.4) {
-    // 20-40%: 若竹色 (青绿)
-    const intensity = (ratio - 0.2) / 0.2;
-    return `rgba(104, 155, 137, ${0.4 + intensity * 0.2})`;
-  } else if (ratio <= 0.6) {
-    // 40-60%: 若草色 (黄绿)
-    const intensity = (ratio - 0.4) / 0.2;
-    return `rgba(136, 153, 99, ${0.5 + intensity * 0.2})`;
-  } else if (ratio <= 0.8) {
-    // 60-80%: 柑子色 (橙黄)
-    const intensity = (ratio - 0.6) / 0.2;
-    return `rgba(183, 143, 93, ${0.6 + intensity * 0.15})`;
-  } else {
-    // 80-100%: 紅梅色 (橙红) - 很多学生
-    const intensity = (ratio - 0.8) / 0.2;
-    return `rgba(170, 109, 91, ${0.7 + intensity * 0.2})`;
-  }
+const getAvailabilityColor = (ratio, overlapCount = 0, maxOverlap = 1) => {
+  // Calculate 256-level depth (计算256级深度)
+  const depth = Math.round((overlapCount / maxOverlap) * 256);
+  
+  return interpolateJapaneseColor(depth);
 };
 
 /**
- * 解析时间字符串为小时数（如 "13:30" -> 13.5）
- * @param {string} timeStr - 时间字符串
- * @returns {number|null} 小时数（含小数）
+ * Interpolate Japanese traditional colors with 256 levels
+ * 256级日系传统色彩插值
+ * 
+ * Color gradient (色彩渐变):
+ * 浅葱色(#84A9A9) → 若竹色(#689B89) → 若草色(#889963) →
+ * 柑子色(#B78F5D) → 紅梅色(#AA6D5B)
+ * 
+ * @param {number} depth - Color depth 0-256 (色深 0-256)
+ * @returns {string} RGBA color string (RGBA颜色字符串)
+ */
+const interpolateJapaneseColor = (depth) => {
+  // Clamp depth to 0-256 (限制深度在0-256之间)
+  depth = Math.max(0, Math.min(256, depth));
+  
+  // Color stops with depth ranges (色彩停止点及深度范围)
+  // Each range represents approximately 51-52 depth levels (每个范围约51-52个深度级别)
+  const colorStops = [
+    { depth: 0, rgb: [132, 169, 169], alpha: 0.3, name: '浅葱色' },   // Asagi (light blue-green)
+    { depth: 51, rgb: [132, 169, 169], alpha: 0.5, name: '浅葱色' },  // Asagi transition
+    { depth: 102, rgb: [104, 155, 137], alpha: 0.6, name: '若竹色' }, // Wakatake (young bamboo)
+    { depth: 153, rgb: [136, 153, 99], alpha: 0.7, name: '若草色' },  // Wakakusa (young grass)
+    { depth: 204, rgb: [183, 143, 93], alpha: 0.8, name: '柑子色' },  // Kouji (mandarin)
+    { depth: 256, rgb: [170, 109, 91], alpha: 0.9, name: '紅梅色' }   // Koubai (red plum)
+  ];
+  
+  // Find the two color stops to interpolate between
+  // 找到需要插值的两个色彩停止点
+  let lowerStop = colorStops[0];
+  let upperStop = colorStops[colorStops.length - 1];
+  
+  for (let i = 0; i < colorStops.length - 1; i++) {
+    if (depth >= colorStops[i].depth && depth <= colorStops[i + 1].depth) {
+      lowerStop = colorStops[i];
+      upperStop = colorStops[i + 1];
+      break;
+    }
+  }
+  
+  // Calculate interpolation factor (计算插值因子)
+  const range = upperStop.depth - lowerStop.depth;
+  const factor = range > 0 ? (depth - lowerStop.depth) / range : 0;
+  
+  // Interpolate RGB and alpha (插值RGB和透明度)
+  const r = Math.round(lowerStop.rgb[0] + (upperStop.rgb[0] - lowerStop.rgb[0]) * factor);
+  const g = Math.round(lowerStop.rgb[1] + (upperStop.rgb[1] - lowerStop.rgb[1]) * factor);
+  const b = Math.round(lowerStop.rgb[2] + (upperStop.rgb[2] - lowerStop.rgb[2]) * factor);
+  const a = lowerStop.alpha + (upperStop.alpha - lowerStop.alpha) * factor;
+  
+  return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
+};
+
+/**
+ * Get color depth value (0-256) for a given ratio
+ * 获取给定比例的色深值(0-256)
+ * 
+ * @param {number} overlapCount - Number of overlapping students (重叠学生数)
+ * @param {number} maxOverlap - Maximum overlap count (最大重叠数)
+ * @returns {number} Depth value 0-256 (深度值 0-256)
+ */
+export const getColorDepth = (overlapCount, maxOverlap) => {
+  if (maxOverlap === 0) return 0;
+  return Math.round((overlapCount / maxOverlap) * 256);
+};
+
+/**
+ * Parse time string to hours (for legacy compatibility)
+ * 解析时间字符串为小时数（用于向后兼容）
+ * 
+ * @param {string} timeStr - Time string (时间字符串)
+ * @returns {number|null} Hours with decimal (小时数含小数)
+ * @deprecated Use parseTimeToSlotIndex instead for 5-minute granularity
  */
 const parseTimeToHours = (timeStr) => {
   if (!timeStr) return null;
@@ -71,10 +144,12 @@ export const parseStudentAvailability = (rawData) => {
   const specificTime = values[15] || '';
   const weeklyFrequency = values[16] || '';
 
+  // Initialize: Default all available (maximum tolerance)
   // 初始化：默认全部可用（最大 tolerance）
   // availability[day][slot] = true/false
-  // day: 0=周日, 1=周一, ..., 6=周六
-  // slot: 每30分钟一个slot，从9:00开始，共25个slot (9:00-21:30)
+  // day: 0=Sunday, 1=Monday, ..., 6=Saturday (0=周日, 1=周一, ..., 6=周六)
+  // slot: 5-minute slots from 9:00, total 150 slots (9:00-21:30)
+  //       (每5分钟一个slot，从9:00开始，共150个slot (9:00-21:30))
   const availability = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(true));
 
   // 解析希望时间段（如：周一到周五、都可以、周末等）
@@ -95,18 +170,20 @@ export const parseStudentAvailability = (rawData) => {
   // 解析具体时间约束（如：除了下午语校之外都可以（13:30-16:45））
   const timeText = specificTime;
   if (timeText) {
-    // 查找时间范围
+    // Find time range (查找时间范围)
     const timeRangeMatch = timeText.match(/(\d{1,2})[:\uff1a]?(\d{2})?\s*[-~到]\s*(\d{1,2})[:\uff1a]?(\d{2})?/);
 
     if (timeRangeMatch) {
-      const startHour = parseInt(timeRangeMatch[1]) + (timeRangeMatch[2] ? parseInt(timeRangeMatch[2]) / 60 : 0);
-      const endHour = parseInt(timeRangeMatch[3]) + (timeRangeMatch[4] ? parseInt(timeRangeMatch[4]) / 60 : 0);
+      const startHour = parseInt(timeRangeMatch[1]);
+      const startMin = timeRangeMatch[2] ? parseInt(timeRangeMatch[2]) : 0;
+      const endHour = parseInt(timeRangeMatch[3]);
+      const endMin = timeRangeMatch[4] ? parseInt(timeRangeMatch[4]) : 0;
 
-      // 判断是排除还是指定
+      // Determine if exclusion or specification (判断是排除还是指定)
       const isExclusion = timeText.includes('除') || timeText.includes('不') || timeText.includes('之外');
 
-      const startSlot = Math.floor((startHour - STANDARD_START) / 0.5);
-      const endSlot = Math.ceil((endHour - STANDARD_START) / 0.5);
+      const startSlot = timeToSlotIndex(startHour, startMin);
+      const endSlot = timeToSlotIndex(endHour, endMin);
 
       if (isExclusion) {
         // 排除这个时间段
@@ -127,28 +204,33 @@ export const parseStudentAvailability = (rawData) => {
       }
     }
 
+    // Process time keywords like "morning", "afternoon", "evening"
     // 处理"上午"、"下午"、"晚上"等关键词
     if (timeText.includes('上午') && !timeText.includes('除') && !timeText.includes('不')) {
-      // 只有上午可用 (9:00-12:00)
+      // Morning only (9:00-12:00) (只有上午可用 9:00-12:00)
+      const noonSlot = timeToSlotIndex(12, 0);
       for (let d = 0; d < 7; d++) {
-        for (let s = 6; s < SLOTS_PER_DAY; s++) { // 12:00之后
+        for (let s = noonSlot; s < SLOTS_PER_DAY; s++) {
           availability[d][s] = false;
         }
       }
     } else if (timeText.includes('下午') && !timeText.includes('除') && !timeText.includes('不')) {
-      // 只有下午可用 (12:00-18:00)
+      // Afternoon only (12:00-18:00) (只有下午可用 12:00-18:00)
+      const noonSlot = timeToSlotIndex(12, 0);
+      const eveningSlot = timeToSlotIndex(18, 0);
       for (let d = 0; d < 7; d++) {
-        for (let s = 0; s < 6; s++) { // 12:00之前
+        for (let s = 0; s < noonSlot; s++) {
           availability[d][s] = false;
         }
-        for (let s = 18; s < SLOTS_PER_DAY; s++) { // 18:00之后
+        for (let s = eveningSlot; s < SLOTS_PER_DAY; s++) {
           availability[d][s] = false;
         }
       }
     } else if (timeText.includes('晚上') && !timeText.includes('除') && !timeText.includes('不')) {
-      // 只有晚上可用 (18:00-21:30)
+      // Evening only (18:00-21:30) (只有晚上可用 18:00-21:30)
+      const eveningSlot = timeToSlotIndex(18, 0);
       for (let d = 0; d < 7; d++) {
-        for (let s = 0; s < 18; s++) { // 18:00之前
+        for (let s = 0; s < eveningSlot; s++) {
           availability[d][s] = false;
         }
       }
@@ -159,15 +241,23 @@ export const parseStudentAvailability = (rawData) => {
 };
 
 /**
- * 计算所有学生的重叠可用性
- * @param {Array} studentsWithData - 有数据的学生数组
- * @returns {Object} {overlap: 二维数组, totalStudents: 总学生数}
+ * Calculate overlapping availability for all students with 256-level depth
+ * 计算所有学生的重叠可用性（256级深度）
+ * 
+ * @param {Array} studentsWithData - Students with data (有数据的学生数组)
+ * @returns {Object} { overlap, totalStudents, maxOverlap, depthMatrix }
  */
 export const calculateOverlappingAvailability = (studentsWithData) => {
-  // overlap[day][slot] = 可用学生数量
+  // overlap[day][slot] = number of available students (可用学生数量)
   const overlap = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(0));
+  
+  // Store student references for each slot (存储每个时间槽的学生引用)
+  const studentRefs = Array(7).fill(null).map(() => 
+    Array(SLOTS_PER_DAY).fill(null).map(() => [])
+  );
 
   let totalStudentsWithAvailability = 0;
+  let maxOverlap = 0;
 
   studentsWithData.forEach(student => {
     if (!student.rawData) return;
@@ -180,25 +270,51 @@ export const calculateOverlappingAvailability = (studentsWithData) => {
       for (let s = 0; s < SLOTS_PER_DAY; s++) {
         if (availability[d][s]) {
           overlap[d][s]++;
+          studentRefs[d][s].push({
+            id: student.id,
+            name: student.name,
+            color: student.color
+          });
+          maxOverlap = Math.max(maxOverlap, overlap[d][s]);
         }
       }
     }
   });
+  
+  // Calculate depth matrix (计算深度矩阵)
+  const depthMatrix = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(0));
+  
+  for (let d = 0; d < 7; d++) {
+    for (let s = 0; s < SLOTS_PER_DAY; s++) {
+      if (maxOverlap > 0) {
+        depthMatrix[d][s] = getColorDepth(overlap[d][s], maxOverlap);
+      }
+    }
+  }
 
-  return { overlap, totalStudents: totalStudentsWithAvailability };
+  return {
+    overlap,
+    totalStudents: totalStudentsWithAvailability,
+    maxOverlap: maxOverlap || 1, // Avoid division by zero (避免除零)
+    depthMatrix,
+    studentRefs
+  };
 };
 
 /**
- * 生成可用性背景事件（用于FullCalendar显示）
- * @param {Array} students - 学生数组
- * @param {Object} calendarRef - FullCalendar的ref
- * @returns {Array} FullCalendar事件数组
+ * Generate availability background events with 256-level color depth
+ * 生成256级色深的可用性背景事件（用于FullCalendar显示）
+ * 
+ * @param {Array} students - Student array (学生数组)
+ * @param {Object} calendarRef - FullCalendar ref
+ * @returns {Array} FullCalendar event array (事件数组)
  */
 export const generateAvailabilityEvents = (students, calendarRef) => {
   const studentsWithData = students.filter(s => s.rawData);
   if (studentsWithData.length === 0) return [];
 
-  const { overlap, totalStudents } = calculateOverlappingAvailability(studentsWithData);
+  const { overlap, totalStudents, maxOverlap, depthMatrix, studentRefs } = 
+    calculateOverlappingAvailability(studentsWithData);
   if (totalStudents === 0) return [];
 
   const events = [];
@@ -224,29 +340,39 @@ export const generateAvailabilityEvents = (students, calendarRef) => {
       const count = s < SLOTS_PER_DAY ? overlap[d][s] : 0;
 
       if (count > 0 && segmentStart === null) {
-        // 开始新段
+        // Start new segment (开始新段)
         segmentStart = s;
         segmentCount = count;
       } else if ((count === 0 || count !== segmentCount) && segmentStart !== null) {
-        // 结束当前段
-        const startHour = STANDARD_START + segmentStart * 0.5;
-        const endHour = STANDARD_START + s * 0.5;
+        // End current segment (结束当前段)
+        const startTime = slotIndexToTime(segmentStart);
+        const endTime = slotIndexToTime(s);
 
-        // 计算学生比例并获取对应颜色
+        // Calculate ratio and color depth (计算比例和色深)
         const ratio = segmentCount / totalStudents;
-        const color = getAvailabilityColor(ratio);
+        const depth = getColorDepth(segmentCount, maxOverlap);
+        const color = getAvailabilityColor(ratio, segmentCount, maxOverlap);
+
+        // Get students for this segment (获取该时间段的学生)
+        const segmentStudents = studentRefs[d][segmentStart] || [];
 
         events.push({
           id: `avail-${d}-${segmentStart}`,
-          start: `${dateStr}T${String(Math.floor(startHour)).padStart(2, '0')}:${startHour % 1 === 0.5 ? '30' : '00'}:00`,
-          end: `${dateStr}T${String(Math.floor(endHour)).padStart(2, '0')}:${endHour % 1 === 0.5 ? '30' : '00'}:00`,
+          start: `${dateStr}T${startTime.string}:00`,
+          end: `${dateStr}T${endTime.string}:00`,
           display: 'background',
           backgroundColor: color,
           extendedProps: {
             type: 'availability',
             studentCount: segmentCount,
             totalStudents: totalStudents,
-            ratio: ratio
+            maxOverlap: maxOverlap,
+            ratio: ratio,
+            startSlot: segmentStart,
+            endSlot: s,
+            depth: depth, // 256-level color depth (256级色深)
+            students: segmentStudents, // Students available in this slot (该时间槽可用的学生)
+            day: d
           }
         });
 

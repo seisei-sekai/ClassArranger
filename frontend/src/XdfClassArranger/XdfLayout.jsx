@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { TestDataProvider, useTestData } from './TestDataContext';
+import { ScheduleProvider } from './ScheduleContext';
+import { ThemeProvider, useTheme } from './ThemeContext';
 import './XdfLayout.css';
 
 const XdfLayoutContent = ({ children }) => {
@@ -9,6 +11,7 @@ const XdfLayoutContent = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { showTestData, toggleTestData } = useTestData();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const menuItems = [
     {
@@ -34,6 +37,18 @@ const XdfLayoutContent = ({ children }) => {
           <line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" strokeWidth="2"/>
           <line x1="8" y1="4" x2="8" y2="9" stroke="currentColor" strokeWidth="2"/>
           <line x1="16" y1="4" x2="16" y2="9" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      )
+    },
+    {
+      id: 'finalschedule',
+      name: '最终课表',
+      path: '/finalschedule',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+          <line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" strokeWidth="2"/>
+          <path d="M7 13h3M7 17h3M14 13h3M14 17h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
         </svg>
       )
     },
@@ -120,6 +135,32 @@ const XdfLayoutContent = ({ children }) => {
 
         {/* 底部用户信息 */}
         <div className="sidebar-footer">
+          {/* 主题切换按钮 */}
+          <button 
+            className={`theme-toggle ${isDark ? 'dark' : 'bright'}`}
+            onClick={toggleTheme}
+            title={isDark ? '切换到亮色模式' : '切换到暗色模式'}
+          >
+            <span className="toggle-icon">
+              {isDark ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 1v6M12 17v6M23 12h-6M7 12H1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M18.36 5.64l-4.24 4.24M9.88 14.12l-4.24 4.24M18.36 18.36l-4.24-4.24M9.88 9.88L5.64 5.64" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </span>
+            {sidebarOpen && (
+              <span className="toggle-text">
+                {isDark ? '暗色模式' : '亮色模式'}
+              </span>
+            )}
+          </button>
+          
           {/* 测试数据开关 */}
           <button 
             className={`test-data-toggle ${showTestData ? 'active' : ''}`}
@@ -175,12 +216,16 @@ const XdfLayoutContent = ({ children }) => {
   );
 };
 
-// 用 Provider 包裹
+// 用 Provider 包裹 (Wrap with Providers)
 const XdfLayout = ({ children }) => {
   return (
-    <TestDataProvider>
-      <XdfLayoutContent>{children}</XdfLayoutContent>
-    </TestDataProvider>
+    <ThemeProvider>
+      <TestDataProvider>
+        <ScheduleProvider>
+          <XdfLayoutContent>{children}</XdfLayoutContent>
+        </ScheduleProvider>
+      </TestDataProvider>
+    </ThemeProvider>
   );
 };
 

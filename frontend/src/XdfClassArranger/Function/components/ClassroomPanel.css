@@ -1,0 +1,258 @@
+/* Classroom Panel Styles (教室资源面板样式) */
+
+.classroom-panel {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 2px solid #E5E8EB;
+  background: linear-gradient(135deg, #84FAB0 0%, #8FD3F4 100%);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1A1D1F;
+  margin: 0;
+}
+
+/* Statistics (统计) */
+.room-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E8EB;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 2px solid #E5E8EB;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: #84FAB0;
+  transform: translateY(-2px);
+}
+
+.stat-card.available {
+  border-color: #34C759;
+  background: #34C75910;
+}
+
+.stat-card.occupied {
+  border-color: #FF3B30;
+  background: #FF3B3010;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1A1D1F;
+  margin-bottom: 4px;
+}
+
+.stat-card.available .stat-value {
+  color: #34C759;
+}
+
+.stat-card.occupied .stat-value {
+  color: #FF3B30;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6F767E;
+  font-weight: 500;
+}
+
+/* Filters (过滤器) */
+.panel-filters {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid #E5E8EB;
+}
+
+.filter-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6F767E;
+}
+
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #84FAB0;
+}
+
+/* Room List (教室列表) */
+.room-list {
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.room-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.room-list::-webkit-scrollbar-track {
+  background: #F5F7FA;
+}
+
+.room-list::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+.room-list::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Room Card (教室卡片) */
+.room-card {
+  padding: 14px;
+  background: #F9FAFB;
+  border: 2px solid #E5E8EB;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.room-card:last-child {
+  margin-bottom: 0;
+}
+
+.room-card:hover {
+  background: var(--bg-secondary);
+  border-color: #84FAB0;
+  box-shadow: 0 4px 12px rgba(132, 250, 176, 0.2);
+  transform: translateX(4px);
+}
+
+.room-card.occupied {
+  border-color: #FF3B3040;
+  background: #FF3B3008;
+}
+
+.room-card.occupied:hover {
+  border-color: #FF3B30;
+}
+
+.room-card.available {
+  border-color: #34C75940;
+  background: #34C75908;
+}
+
+.room-card.available:hover {
+  border-color: #34C759;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.room-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1A1D1F;
+}
+
+.room-status {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.room-status.available {
+  background: #34C75920;
+  color: #34C759;
+}
+
+.room-status.occupied {
+  background: #FF3B3020;
+  color: #FF3B30;
+}
+
+.room-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.room-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6F767E;
+}
+
+.room-detail svg {
+  color: #9CA3AF;
+}
+
+/* Empty State (空状态) */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #9CA3AF;
+  margin: 0;
+}
+
+/* Responsive Design (响应式设计) */
+@media (max-width: 768px) {
+  .room-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .panel-filters {
+    flex-direction: column;
+  }
+  
+  .room-list {
+    max-height: 400px;
+  }
+}
+

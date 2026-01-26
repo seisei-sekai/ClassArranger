@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseStudentRows } from '../studentParser';
+import { parseStudentRows, calculateWeeklyCourseHours } from '../studentParser';
 
 describe('studentParser.js', () => {
   describe('parseStudentRows', () => {
@@ -65,12 +65,16 @@ describe('studentParser.js', () => {
     });
 
     it('should handle cell line breaks (multiline cells)', () => {
-      // 模拟 Excel 单元格内换行的情况
-      const input = '校区A\t张老师\t小明\n额外信息在下一行\t2024春季\t2024-01-01\t每周2次\t1小时\t线上\t数学\t中级\t10\t清华大学\t计算机科学\t2024-01-01 至 2024-06-30\t周一下午\t14:00-15:00\t2\t代数和几何\t无';
+      // 模拟 Excel 单元格内换行的情况 - 第二行tab数不足，应被合并
+      // 第一行完整数据，第二行是备注字段的延续（只有几个字段）
+      const input = '校区A\t张老师\t小明\t2024春季\t2024-01-01\t每周2次\t1小时\t线上\t数学\t中级\t10\t清华大学\t计算机科学\t2024-01-01 至 2024-06-30\t周一下午\t14:00-15:00\t2\t代数和几何\t备注第一行\n备注第二行内容';
       const result = parseStudentRows(input);
       
-      // 应该能正确处理并合并多行内容
+      // 应该能正确处理并合并多行内容（第二行tab不足，应合并到第一行）
       expect(result).toHaveLength(1);
+      // 验证多行内容被合并到备注字段中
+      expect(result[0].notes).toContain('备注第一行');
+      expect(result[0].notes).toContain('备注第二行内容');
     });
 
     it('should trim whitespace from fields', () => {
@@ -80,6 +84,67 @@ describe('studentParser.js', () => {
       expect(result[0].campus).toBe('校区A');
       expect(result[0].manager).toBe('张老师');
       expect(result[0].name).toBe('小明');
+    });
+
+    it('should calculate course hours based on frequency and duration', () => {
+      const input = '校区A\t张老师\t小明\t2024春季\t2024-01-01\t每周2次\t1小时\t线上\t数学\t中级\t10\t清华大学\t计算机科学\t2024-01-01 至 2024-06-30\t周一下午\t14:00-15:00\t2\t代数和几何\t无';
+      const result = parseStudentRows(input);
+      
+      expect(result[0].courseHours).toBeDefined();
+      expect(result[0].courseHours.weeklyHours).toBeGreaterThan(0);
+    });
+  });
+
+  describe('calculateWeeklyCourseHours', () => {
+    it('should calculate hours for numeric frequency and duration', () => {
+      const result = calculateWeeklyCourseHours('2次', '1小时');
+      
+      expect(result.timesPerWeek).toBe(2);
+      expect(result.hoursPerClass).toBe(1);
+      expect(result.weeklyHours).toBe(2);
+    });
+
+    it('should handle "多次" as 4 times per week', () => {
+      const result = calculateWeeklyCourseHours('多次', '1.5小时');
+      
+      expect(result.timesPerWeek).toBe(4);
+      expect(result.hoursPerClass).toBe(1.5);
+      expect(result.weeklyHours).toBe(6);
+    });
+
+    it('should convert minutes to hours', () => {
+      const result = calculateWeeklyCourseHours('2', '90分钟');
+      
+      expect(result.timesPerWeek).toBe(2);
+      expect(result.hoursPerClass).toBe(1.5);
+      expect(result.weeklyHours).toBe(3);
+    });
+
+    it('should handle various frequency formats', () => {
+      expect(calculateWeeklyCourseHours('每周2', '1h').timesPerWeek).toBe(2);
+      expect(calculateWeeklyCourseHours('2times', '1h').timesPerWeek).toBe(2);
+      expect(calculateWeeklyCourseHours('week 3', '1h').timesPerWeek).toBe(3);
+    });
+
+    it('should handle various duration formats', () => {
+      expect(calculateWeeklyCourseHours('2', '1.5小时').hoursPerClass).toBe(1.5);
+      expect(calculateWeeklyCourseHours('2', '2h').hoursPerClass).toBe(2);
+      expect(calculateWeeklyCourseHours('2', '90min').hoursPerClass).toBe(1.5);
+      expect(calculateWeeklyCourseHours('2', '2').hoursPerClass).toBe(2);
+    });
+
+    it('should estimate total hours based on 12 weeks', () => {
+      const result = calculateWeeklyCourseHours('2', '2小时');
+      
+      expect(result.weeklyHours).toBe(4);
+      expect(result.totalHours).toBe(48); // 4 * 12 weeks
+    });
+
+    it('should return zero for invalid input', () => {
+      const result = calculateWeeklyCourseHours('', '');
+      
+      expect(result.weeklyHours).toBe(0);
+      expect(result.totalHours).toBe(0);
     });
   });
 });

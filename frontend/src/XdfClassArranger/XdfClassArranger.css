@@ -648,3 +648,102 @@
     max-width: 90vw;
   }
 }
+
+/* ============================================
+   Dark Mode Support (暗色模式支持)
+============================================ */
+
+/* 暗色主题变量覆盖 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style {
+  /* 深色主题背景 */
+  --bg-primary: #1A1D1F;
+  --bg-secondary: #232629;
+  --bg-tertiary: #2A2D31;
+  
+  /* 深色主题文本 */
+  --text-primary: #E2E8F0;
+  --text-secondary: #94A3B8;
+  
+  /* 深色主题边框 */
+  --border-color: #3A3F45;
+  
+  /* 深色主题阴影 */
+  --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* 按钮样式调整 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .fc .fc-button {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .fc .fc-button:hover:not(:disabled) {
+  background: #2F3438;
+  border-color: #4A5059;
+}
+
+/* 日历项悬停样式 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .calendar-item:hover {
+  background: #2F3438;
+}
+
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .calendar-item.active {
+  background: #2F3438;
+}
+
+/* 日期单元格悬停 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .fc .fc-daygrid-day:hover {
+  background: #2F3438;
+}
+
+/* 时间网格槽 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .fc-timegrid-slot {
+  border-color: #3A3F45;
+}
+
+/* 其他月份的日期 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .fc .fc-day-other .fc-daygrid-day-number {
+  color: #6B7280;
+}
+
+/* 模态框关闭按钮 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .modal-close {
+  background: #2F3438;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .modal-close:hover {
+  background: #3A3F45;
+  color: var(--text-primary);
+}
+
+/* 滚动条 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .calendar-main::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .calendar-main::-webkit-scrollbar-thumb {
+  background: #4A5059;
+}
+
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .calendar-main::-webkit-scrollbar-thumb:hover {
+  background: #5A6069;
+}
+
+/* 列表视图 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .fc-list-event:hover {
+  background: #2F3438 !important;
+}
+
+/* 模态框背景 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .modal-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* 选择区域 */
+:root[data-theme="dark"] .xdf-class-arranger.apple-style .fc-highlight {
+  background: rgba(0, 122, 255, 0.15);
+}
