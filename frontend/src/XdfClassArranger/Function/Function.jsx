@@ -159,19 +159,32 @@ const Function = () => {
   // Handle approved constraints from NLP dialog (处理NLP对话框批准的约束)
   const handleNLPApproval = (approvedConstraints) => {
     const logger = getNLPLogger();
+    const columns = EXCEL_COLUMNS.split('\t');
     
-    approvedConstraints.forEach(({ studentName, campus, originalText, constraint, confidence }) => {
+    approvedConstraints.forEach(({ studentName, campus, originalText, originalRow, constraint, confidence }) => {
+      // Reconstruct tab-separated raw data from originalRow
+      // 从originalRow重建tab分隔的原始数据
+      let reconstructedRawData = originalText; // Fallback to original text
+      
+      if (originalRow) {
+        // Convert Excel row object back to tab-separated string
+        // 将Excel行对象转换回tab分隔的字符串
+        const rowValues = columns.map(col => originalRow[col] || '');
+        reconstructedRawData = rowValues.join('\t');
+      }
+      
       // Create a new student with the constraint
       const newStudent = {
         id: `student-nlp-${Date.now()}-${Math.random()}`,
         name: studentName,
         campus: campus,
         color: getRandomJapaneseColor(),
-        rawData: originalText,
+        rawData: reconstructedRawData, // Use reconstructed tab-separated data
         parsedData: constraint,
         constraint: constraint, // Store the constraint
         confidence: confidence,
-        showAvailability: true
+        showAvailability: true,
+        fromNLP: true // Mark this as from NLP for future reference
       };
       
       setStudents(prev => [...prev, newStudent]);
@@ -1777,8 +1790,10 @@ const Function = () => {
           </div>
         </div>
 
-        {/* 右侧日历区域 */}
-        <div className="calendar-wrapper">
+        {/* 中间列：日历 + 教室列表 */}
+        <div className="center-column">
+          {/* 日历区域 */}
+          <div className="calendar-wrapper">
           {/* 可用性图例 */}
           {showAvailability && students.filter(s => s.rawData).length > 0 && (
             <div className="availability-legend">
@@ -1873,6 +1888,82 @@ const Function = () => {
               );
             }}
           />
+          </div>
+
+          {/* 教室列表面板 */}
+          <div className="classroom-panel">
+            <div className="classroom-panel-header">
+              <h3 className="classroom-panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px' }}>
+                  <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
+                  <path d="M3 9h18M9 4v5M15 4v5" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="8" cy="14" r="1.5" fill="currentColor" />
+                  <circle cx="12" cy="14" r="1.5" fill="currentColor" />
+                  <circle cx="16" cy="14" r="1.5" fill="currentColor" />
+                </svg>
+                教室列表
+                <span className="classroom-count">({classrooms.length}间)</span>
+              </h3>
+              <button className="panel-action-btn add-btn" onClick={handleAddClassroom}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+                  <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M9 4v6M15 4v6" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M21 7v8M17 11h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                添加教室
+              </button>
+            </div>
+            <div className="classroom-panel-content">
+              {classrooms.length === 0 ? (
+                <div className="classroom-empty">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.3 }}>
+                    <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
+                    <path d="M3 9h18M9 4v5M15 4v5" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                  <p>暂无教室</p>
+                  <p className="hint">点击上方"添加教室"按钮导入</p>
+                </div>
+              ) : (
+                <div className="classroom-list">
+                  {classrooms.map((classroom, index) => (
+                    <div
+                      key={classroom.id}
+                      className="classroom-card"
+                    >
+                      <div className="classroom-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+                          <path d="M7 10h10M7 14h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <div className="classroom-content">
+                        <div className="classroom-name">{classroom.name}</div>
+                        <div className="classroom-meta">
+                          容纳 {classroom.capacity || 20} 人
+                        </div>
+                        {classroom.notes && (
+                          <div className="classroom-notes">{classroom.notes}</div>
+                        )}
+                      </div>
+                      <button
+                        className="classroom-delete-btn"
+                        onClick={() => {
+                          setClassrooms(prev => prev.filter(c => c.id !== classroom.id));
+                          scheduleContext.updateClassrooms(classrooms.filter(c => c.id !== classroom.id));
+                        }}
+                        title="删除教室"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* 右侧教师面板 */}
@@ -1965,85 +2056,6 @@ const Function = () => {
               ))
             )}
           </div>
-        </div>
-      </div>
-
-      {/* 教室列表面板 */}
-      <div className="classroom-panel">
-        <div className="classroom-panel-header">
-          <h3 className="classroom-panel-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px' }}>
-              <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
-              <path d="M3 9h18M9 4v5M15 4v5" stroke="currentColor" strokeWidth="2" />
-              <circle cx="8" cy="14" r="1.5" fill="currentColor" />
-              <circle cx="12" cy="14" r="1.5" fill="currentColor" />
-              <circle cx="16" cy="14" r="1.5" fill="currentColor" />
-            </svg>
-            教室列表
-            <span className="classroom-count">({classrooms.length}间)</span>
-          </h3>
-          <button className="panel-action-btn add-btn" onClick={handleAddClassroom}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
-              <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/>
-              <path d="M9 4v6M15 4v6" stroke="currentColor" strokeWidth="2"/>
-              <path d="M21 7v8M17 11h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            添加教室
-          </button>
-        </div>
-        <div className="classroom-panel-content">
-          {classrooms.length === 0 ? (
-            <div className="classroom-empty">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.3 }}>
-                <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
-                <path d="M3 9h18M9 4v5M15 4v5" stroke="currentColor" strokeWidth="2" />
-              </svg>
-              <p>暂无教室</p>
-              <p className="hint">点击上方"添加教室"按钮导入</p>
-            </div>
-          ) : (
-            <div className="classroom-list">
-              {classrooms.map((classroom, index) => (
-                <div
-                  key={classroom.id}
-                  className="classroom-card"
-                >
-                  <div className="classroom-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
-                      <path d="M7 10h10M7 14h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <div className="classroom-info">
-                    <div className="classroom-name">{classroom.name}</div>
-                    <div className="classroom-meta">
-                      <span className="classroom-campus">{classroom.campus}</span>
-                      <span className="classroom-capacity">· 容量{classroom.capacity}人</span>
-                      {classroom.priority && (
-                        <span className="classroom-priority">· 优先级{classroom.priority}</span>
-                      )}
-                    </div>
-                    {classroom.notes && (
-                      <div className="classroom-notes">{classroom.notes}</div>
-                    )}
-                  </div>
-                  <button
-                    className="classroom-delete-btn"
-                    onClick={() => {
-                      setClassrooms(prev => prev.filter(c => c.id !== classroom.id));
-                      scheduleContext.updateClassrooms(classrooms.filter(c => c.id !== classroom.id));
-                    }}
-                    title="删除教室"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 /* 排课功能页面样式 - 日系性冷淡风格 */
 .function-page {
-  padding: 32px;
+  padding: 2rem;
   width: 100%;
   height: 100%;
   display: flex;
@@ -12,11 +12,11 @@
 }
 
 .function-header {
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 20px;
+  gap: 1.25rem;
 }
 
 .header-left {
@@ -24,15 +24,15 @@
 }
 
 .function-title {
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 500;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 0.5rem 0;
   letter-spacing: 0.01em;
 }
 
 .function-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text-secondary);
   margin: 0;
   font-weight: 400;
@@ -40,7 +40,7 @@
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   flex-shrink: 0;
 }
 
@@ -49,11 +49,11 @@
 .clear-all-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -74,18 +74,18 @@
 .tutorial-btn.active {
   background: #5A6C7D;
   color: white;
-  box-shadow: 0 2px 6px rgba(90, 108, 125, 0.3);
+  box-shadow: 0 2px 0.375rem rgba(90, 108, 125, 0.3);
 }
 
 .ai-schedule-btn {
   background: linear-gradient(135deg, #5A6C7D 0%, #6B7C6E 100%);
   color: white;
-  box-shadow: 0 2px 6px rgba(90, 108, 125, 0.3);
+  box-shadow: 0 2px 0.375rem rgba(90, 108, 125, 0.3);
 }
 
 .ai-schedule-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(90, 108, 125, 0.4);
+  box-shadow: 0 0.25rem 0.625rem rgba(90, 108, 125, 0.4);
 }
 
 .ai-schedule-btn:disabled {
@@ -105,8 +105,8 @@
 }
 
 .spinner {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
@@ -122,9 +122,9 @@
 /* 教程面板 */
 .tutorial-panel {
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 2px solid var(--accent-secondary);
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
 }
@@ -133,42 +133,42 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 1.25rem 1.5rem;
   background: linear-gradient(135deg, #5A6C7D 0%, #6B7C6E 100%);
   color: white;
 }
 
 .tutorial-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 500;
 }
 
 .tutorial-badge {
-  padding: 4px 12px;
+  padding: 0.25rem 0.75rem;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  font-size: 11px;
+  border-radius: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.0313rem;
 }
 
 .tutorial-content {
-  padding: 24px;
+  padding: 1.5rem;
 }
 
 .tutorial-intro {
-  margin-bottom: 24px;
-  padding: 16px;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
   background: var(--bg-tertiary);
-  border-radius: 6px;
-  border-left: 3px solid var(--accent-secondary);
+  border-radius: 0.375rem;
+  border-left: 0.1875rem solid var(--accent-secondary);
 }
 
 .tutorial-intro p {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text-primary);
   line-height: 1.6;
 }
@@ -176,16 +176,16 @@
 .tutorial-steps {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .tutorial-step {
   display: flex;
-  gap: 16px;
-  padding: 20px;
+  gap: 1rem;
+  padding: 1.25rem;
   background: var(--bg-tertiary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid var(--border-primary);
   transition: all 0.2s;
 }
@@ -198,17 +198,17 @@
 
 .step-number {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   background: linear-gradient(135deg, #5A6C7D 0%, #6B7C6E 100%);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(90, 108, 125, 0.3);
+  box-shadow: 0 0.125rem 0.375rem rgba(90, 108, 125, 0.3);
 }
 
 .step-content {
@@ -216,37 +216,37 @@
 }
 
 .step-content h4 {
-  margin: 0 0 8px 0;
-  font-size: 15px;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .step-content p {
-  margin: 0 0 12px 0;
-  font-size: 13px;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .step-example {
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   background: var(--bg-secondary);
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
   color: var(--accent-secondary);
   border-left: 2px solid var(--accent-secondary);
   font-family: 'Monaco', 'Consolas', monospace;
 }
 
 .tutorial-footer {
-  padding: 16px;
+  padding: 1rem;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .tutorial-tip {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-primary);
   line-height: 1.6;
 }
@@ -259,9 +259,9 @@
 /* AI排课面板 */
 .ai-panel {
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid var(--border-primary);
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem;
   overflow: hidden;
   box-shadow: var(--shadow-md);
 }
@@ -270,14 +270,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 1rem 1.5rem;
   background: linear-gradient(135deg, #5A6C7D 0%, #6B7C6E 100%);
   color: white;
 }
 
 .ai-panel-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -285,15 +285,15 @@
   background: none;
   border: none;
   color: white;
-  font-size: 24px;
+  font-size: 1.5rem;
   cursor: pointer;
   padding: 0;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   transition: all 0.2s;
 }
 
@@ -302,39 +302,39 @@
 }
 
 .ai-panel-body {
-  padding: 24px;
+  padding: 1.5rem;
 }
 
 .generation-progress {
   text-align: center;
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .progress-label {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--accent-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
   font-weight: 500;
 }
 
 .progress-bar {
   width: 100%;
-  height: 8px;
+  height: 0.5rem;
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #5A6C7D 0%, #6B7C6E 100%);
   transition: width 0.3s ease;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .progress-text {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
@@ -345,7 +345,7 @@
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-0.625rem);
   }
 
   to {
@@ -358,15 +358,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-primary);
 }
 
 .result-badge {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -387,7 +387,7 @@
 }
 
 .result-fitness {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--accent-secondary);
 }
@@ -395,48 +395,48 @@
 .result-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   font-weight: 500;
 }
 
 .stat-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .conflicts-section h4 {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
-  margin: 0 0 12px 0;
+  margin: 0 0 0.75rem 0;
 }
 
 .conflicts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .conflict-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 6px;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
   background: var(--bg-tertiary);
 }
 
@@ -468,8 +468,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   flex-shrink: 0;
 }
 
@@ -480,25 +480,25 @@
 
 .conflict-label {
   flex: 1;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .conflict-count {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .ai-intro {
-  padding: 20px 0;
+  padding: 1.25rem 0;
 }
 
 .ai-intro p {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text-primary);
-  margin: 0 0 16px 0;
+  margin: 0 0 1rem 0;
   font-weight: 500;
 }
 
@@ -509,9 +509,9 @@
 }
 
 .ai-intro li {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
-  padding: 8px 0;
+  padding: 0.5rem 0;
   display: flex;
   align-items: center;
 }
@@ -522,50 +522,50 @@
   opacity: 0.9;
 }
 
-/* 主内容区域：学生面板 + 日历 + 教师面板 */
+/* 主内容区域：学生面板 + 中间列 + 教师面板 */
 .main-content-area {
   display: flex;
-  flex: 0 1 auto;
-  gap: 20px;
+  flex: 1;
+  gap: 1.25rem;
   min-height: 0;
   overflow: hidden;
-  height: 60vh;
-  /* 限制高度，为下方的教室面板留出空间 */
+  /* 三列布局：左侧学生，中间日历+教室，右侧教师 */
 }
 
 /* 左侧学生面板 */
 .student-panel {
-  width: 280px;
-  min-width: 280px;
+  width: 17.5rem;
+  min-width: 17.5rem;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* 自动填充main-content-area的整个高度 */
 }
 
 .student-panel-header {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px;
+  gap: 0.5rem;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--border-primary);
   background: var(--bg-tertiary);
 }
 
 .panel-action-btn {
-  flex: 1 1 calc(50% - 4px);
+  flex: 1 1 calc(50% - 0.25rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 8px 10px;
+  gap: 0.3125rem;
+  padding: 0.5rem 0.625rem;
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: var(--bg-secondary);
   font-family: 'Noto Sans', 'Noto Sans JP', 'Noto Sans SC', sans-serif;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-primary);
   cursor: pointer;
@@ -583,8 +583,8 @@
   background: var(--bg-secondary) !important;
   color: var(--text-tertiary) !important;
   border-color: var(--border-primary) !important;
-  padding: 8px 10px !important;
-  font-size: 12px !important;
+  padding: 0.5rem 0.625rem !important;
+  font-size: 0.75rem !important;
 }
 
 .panel-action-btn.add-btn:hover {
@@ -597,8 +597,8 @@
   background: var(--bg-secondary) !important;
   color: var(--text-tertiary) !important;
   border-color: var(--border-primary) !important;
-  padding: 8px 10px !important;
-  font-size: 12px !important;
+  padding: 0.5rem 0.625rem !important;
+  font-size: 0.75rem !important;
 }
 
 .panel-action-btn.batch-btn:hover {
@@ -654,40 +654,40 @@
 
 /* 可用性颜色图例 */
 .availability-legend {
-  padding: 12px;
-  margin: 0 12px;
+  padding: 0.75rem;
+  margin: 0 0.75rem;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   border: 1px solid var(--border-primary);
 }
 
 .legend-title {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--text-tertiary);
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.0313rem;
 }
 
 .legend-items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--text-primary);
 }
 
 .legend-color {
-  width: 24px;
-  height: 16px;
-  border-radius: 3px;
+  width: 1.5rem;
+  height: 1rem;
+  border-radius: 0.1875rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
@@ -696,7 +696,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px;
+  padding: 0.75rem;
 }
 
 .student-empty {
@@ -704,31 +704,31 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 2.5rem 1.25rem;
   text-align: center;
   color: var(--text-secondary);
 }
 
 .student-empty p {
-  margin: 8px 0 0 0;
-  font-size: 14px;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
 }
 
 .student-empty .hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
 .student-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   border: 1px solid var(--border-primary);
-  border-left: 3px solid var(--accent-secondary);
+  border-left: 0.1875rem solid var(--accent-secondary);
   transition: all 0.2s;
   position: relative;
 }
@@ -741,11 +741,11 @@
 /* 学生可用性显示toggle按钮 */
 .student-visibility-toggle {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
   background: var(--border-primary);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -775,20 +775,20 @@
 .student-card-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex: 1;
   min-width: 0;
 }
 
 .student-avatar {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   flex-shrink: 0;
 }
@@ -799,7 +799,7 @@
 }
 
 .student-name {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
@@ -808,20 +808,20 @@
 }
 
 .student-meta {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
   margin-top: 2px;
 }
 
 .student-delete-btn {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   color: var(--text-secondary);
   cursor: pointer;
   opacity: 0;
@@ -841,7 +841,7 @@
 .student-card-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -851,14 +851,14 @@
 }
 
 .student-edit-btn {
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
@@ -896,12 +896,12 @@
 /* 通用弹窗内容 */
 .modal-content {
   position: relative;
-  width: 600px;
+  width: 37.5rem;
   max-width: 90vw;
   max-height: 85vh;
   background: var(--bg-secondary);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   font-family: 'Noto Sans', 'Noto Sans JP', 'Noto Sans SC', sans-serif;
@@ -910,14 +910,14 @@
 
 /* 大型弹窗 */
 .modal-content.large-modal {
-  width: 900px;
+  width: 56.25rem;
   max-width: 95vw;
   max-height: 90vh;
 }
 
 /* 结果弹窗 */
 .modal-content.result-modal {
-  width: 700px;
+  width: 43.75rem;
 }
 
 /* 弹窗头部 */
@@ -925,28 +925,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-primary);
   flex-shrink: 0;
 }
 
 .modal-content .modal-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 /* 弹窗关闭按钮 */
 .modal-content .modal-close-btn {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
@@ -960,7 +960,7 @@
 
 /* 弹窗主体 */
 .modal-content .modal-body {
-  padding: 24px;
+  padding: 1.5rem;
   overflow: auto;
   flex: 1 1 auto;
   min-height: 0;
@@ -969,37 +969,37 @@
 
 /* 弹窗说明文字 */
 .modal-content .modal-instructions {
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .modal-content .modal-instructions p {
-  margin: 0 0 8px 0;
-  font-size: 14px;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .modal-content .modal-instructions ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 1.25rem;
 }
 
 .modal-content .modal-instructions li {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
   line-height: 1.5;
 }
 
 /* 数据输入文本框 */
 .modal-content .data-input-textarea {
   width: 100%;
-  min-height: 200px;
-  padding: 14px 16px;
+  min-height: 12.5rem;
+  padding: 0.875rem 1rem;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   font-family: 'Noto Sans Mono', 'Menlo', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-primary);
   resize: vertical;
   transition: all 0.2s;
@@ -1010,7 +1010,7 @@
 .modal-content .data-input-textarea:focus {
   outline: none;
   border-color: var(--text-tertiary);
-  box-shadow: 0 0 0 3px rgba(90, 108, 125, 0.1);
+  box-shadow: 0 0 0 0.1875rem rgba(90, 108, 125, 0.1);
 }
 
 .modal-content .data-input-textarea::placeholder {
@@ -1021,18 +1021,18 @@
 .modal-content .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-primary);
   flex-shrink: 0;
 }
 
 /* 弹窗按钮 */
 .modal-content .modal-btn {
-  padding: 10px 24px;
+  padding: 0.625rem 1.5rem;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -1051,23 +1051,23 @@
 .modal-content .modal-btn.save-btn {
   background: linear-gradient(135deg, #5A6C7D 0%, #6B7C6E 100%);
   color: white;
-  box-shadow: 0 2px 6px rgba(90, 108, 125, 0.3);
+  box-shadow: 0 2px 0.375rem rgba(90, 108, 125, 0.3);
 }
 
 .modal-content .modal-btn.save-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(90, 108, 125, 0.4);
+  box-shadow: 0 0.25rem 0.625rem rgba(90, 108, 125, 0.4);
 }
 
 .modal-content .modal-btn.primary-btn {
   background: linear-gradient(135deg, #5A6C7D 0%, #6B7C6E 100%);
   color: white;
-  box-shadow: 0 2px 6px rgba(90, 108, 125, 0.3);
+  box-shadow: 0 2px 0.375rem rgba(90, 108, 125, 0.3);
 }
 
 .modal-content .modal-btn.primary-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(90, 108, 125, 0.4);
+  box-shadow: 0 0.25rem 0.625rem rgba(90, 108, 125, 0.4);
 }
 
 /* 学生数据编辑弹窗 */
@@ -1076,13 +1076,13 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 650px;
+  width: 40.625rem;
   max-width: 90vw;
   height: 85vh;
-  max-height: 800px;
+  max-height: 50rem;
   background: var(--bg-secondary);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.15);
   z-index: 10001;
   display: flex;
   flex-direction: column;
@@ -1094,27 +1094,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-primary);
   flex-shrink: 0;
 }
 
 .student-edit-modal .modal-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .student-edit-modal .modal-close {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
@@ -1126,7 +1126,7 @@
 }
 
 .student-edit-modal .modal-body {
-  padding: 24px;
+  padding: 1.5rem;
   overflow: auto;
   flex: 1 1 auto;
   min-height: 0;
@@ -1136,13 +1136,13 @@
 .edit-instruction {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
   background: var(--bg-tertiary);
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
   color: var(--text-tertiary);
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
   line-height: 1.5;
 }
 
@@ -1152,39 +1152,39 @@
 }
 
 .column-reference {
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .column-title {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 }
 
 .column-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .column-tag {
-  padding: 4px 8px;
+  padding: 0.25rem 0.5rem;
   background: var(--bg-tertiary);
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: 0.25rem;
+  font-size: 0.6875rem;
   color: var(--text-tertiary);
   border: 1px solid var(--border-primary);
 }
 
 .student-data-input {
   width: 100%;
-  min-height: 120px;
-  padding: 14px 16px;
+  min-height: 7.5rem;
+  padding: 0.875rem 1rem;
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   font-family: 'Noto Sans Mono', 'Menlo', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-primary);
   resize: vertical;
   transition: all 0.2s;
@@ -1195,7 +1195,7 @@
 .student-data-input:focus {
   outline: none;
   border-color: var(--text-tertiary);
-  box-shadow: 0 0 0 3px rgba(90, 108, 125, 0.1);
+  box-shadow: 0 0 0 0.1875rem rgba(90, 108, 125, 0.1);
 }
 
 .student-data-input::placeholder {
@@ -1203,24 +1203,24 @@
 }
 
 .data-preview {
-  margin-top: 16px;
+  margin-top: 1rem;
   background: var(--bg-tertiary);
   border: 1px solid #D8E8D8;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .preview-error {
-  padding: 16px;
+  padding: 1rem;
   background: rgba(251, 191, 36, 0.1);
   border: 1px solid #f59e0b;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   color: #92400e;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .preview-error svg {
@@ -1232,43 +1232,43 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 0.75rem 1rem;
   background: var(--bg-tertiary);
   border-bottom: 1px solid #D8E8D8;
-  border-radius: 8px 8px 0 0;
+  border-radius: 0.5rem 0.5rem 0 0;
 }
 
 .preview-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--accent-tertiary);
 }
 
 .preview-count {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   background: var(--bg-secondary);
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.75rem;
   border: 1px solid var(--border-primary);
 }
 
 .preview-table {
-  padding: 8px 0;
+  padding: 0.5rem 0;
 }
 
 /* 多学生预览样式 */
 .multi-student-badge {
   background: #6B7C6E;
   color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.75rem;
   font-weight: 500;
 }
 
 .student-preview-section {
   border-bottom: 2px solid #E8E8E8;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .student-preview-section:last-child {
@@ -1279,28 +1279,28 @@
 .student-preview-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   background: linear-gradient(135deg, #5A6C7D 0%, #6B7C6E 100%);
   color: white;
 }
 
 .student-number {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.2);
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.25rem;
 }
 
 .student-preview-name {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
 .preview-row {
   display: flex;
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   border-bottom: 1px solid var(--border-primary);
   transition: background 0.15s;
 }
@@ -1318,17 +1318,17 @@
 }
 
 .preview-label {
-  width: 110px;
+  width: 6.875rem;
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-tertiary);
-  padding-right: 12px;
+  padding-right: 0.75rem;
 }
 
 .preview-value {
   flex: 1;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-primary);
   word-break: break-all;
   line-height: 1.4;
@@ -1342,21 +1342,21 @@
 .student-edit-modal .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-primary);
   background: var(--bg-tertiary);
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 0.75rem 0.75rem;
   flex-shrink: 0;
 }
 
 .modal-button {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 0.625rem 1.25rem;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -1381,39 +1381,52 @@
 .modal-button-primary:hover {
   background: #4A5C6D;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(90, 108, 125, 0.3);
+  box-shadow: 0 2px 0.375rem rgba(90, 108, 125, 0.3);
 }
 
-/* 中间日历容器 */
+/* 中间列：包含日历和教室列表 */
+.center-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* 日历容器 */
 .calendar-wrapper {
   flex: 1;
+  /* 约占90% */
   background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 24px;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
   border: 1px solid var(--border-primary);
   overflow: auto;
   min-width: 0;
+  min-height: 0;
 }
 
 /* 右侧教师面板 */
 .teacher-panel {
-  width: 280px;
+  width: 17.5rem;
   flex-shrink: 0;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  /* 自动填充main-content-area的整个高度 */
 }
 
 .teacher-panel-header {
-  padding: 16px;
+  padding: 1rem;
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -1421,7 +1434,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px;
+  padding: 0.75rem;
 }
 
 .teacher-empty {
@@ -1429,31 +1442,31 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 2.5rem 1.25rem;
   text-align: center;
   color: var(--text-secondary);
 }
 
 .teacher-empty p {
-  margin: 8px 0 0 0;
-  font-size: 14px;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
 }
 
 .teacher-empty .hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
 .teacher-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   border: 1px solid var(--border-primary);
-  border-left: 3px solid var(--accent-secondary);
+  border-left: 0.1875rem solid var(--accent-secondary);
   transition: all 0.2s;
   position: relative;
 }
@@ -1466,11 +1479,11 @@
 /* 教师可用性显示toggle按钮 */
 .teacher-visibility-toggle {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
   background: var(--border-primary);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1500,21 +1513,21 @@
 .teacher-card-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex: 1;
   min-width: 0;
 }
 
 .teacher-avatar {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #FFFFFF;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 0.875rem;
   flex-shrink: 0;
 }
 
@@ -1524,7 +1537,7 @@
 }
 
 .teacher-name {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 2px;
@@ -1534,12 +1547,12 @@
 }
 
 .teacher-meta {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
 }
 
 .teacher-card.has-data {
-  border-left-width: 3px;
+  border-left-width: 0.1875rem;
 }
 
 .teacher-card.has-data .teacher-meta {
@@ -1550,7 +1563,7 @@
 .teacher-card-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   opacity: 0.6;
   transition: opacity 0.2s;
 }
@@ -1561,9 +1574,9 @@
 
 .teacher-edit-btn,
 .teacher-delete-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.25rem;
   border: none;
   background: transparent;
   color: var(--text-tertiary);
@@ -1584,88 +1597,42 @@
   color: #E53E3E;
 }
 
-/* 教室面板 */
-.classroom-panel {
-  width: 100%;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-primary);
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  max-height: 400px;
-  overflow: hidden;
-}
-
-.classroom-panel-header {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-primary);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.classroom-panel-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-}
-
-.classroom-count {
-  margin-left: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-.classroom-panel-content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-}
+/* 教室面板相关样式 - 参见下方主要定义 */
 
 .classroom-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 2.5rem 1.25rem;
   text-align: center;
   color: var(--text-secondary);
 }
 
 .classroom-empty p {
-  margin: 8px 0 0 0;
-  font-size: 14px;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
 }
 
 .classroom-empty .hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
 .classroom-list {
-  padding: 12px;
+  padding: 0.75rem;
 }
 
 .classroom-card {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  margin-bottom: 8px;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   border: 1px solid var(--border-primary);
-  border-left: 3px solid #6B7C6E;
+  border-left: 0.1875rem solid #6B7C6E;
   transition: all 0.2s;
   position: relative;
 }
@@ -1681,9 +1648,9 @@
 
 .classroom-icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.375rem;
   background: var(--bg-tertiary);
   display: flex;
   align-items: center;
@@ -1697,19 +1664,19 @@
 }
 
 .classroom-name {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 .classroom-meta {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .classroom-campus {
@@ -1723,20 +1690,20 @@
 }
 
 .classroom-notes {
-  margin-top: 6px;
-  font-size: 11px;
+  margin-top: 0.375rem;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
   line-height: 1.4;
-  padding: 6px 8px;
+  padding: 0.375rem 0.5rem;
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .classroom-delete-btn {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.25rem;
   border: none;
   background: transparent;
   color: var(--text-tertiary);
@@ -1758,10 +1725,10 @@
 }
 
 .panel-header-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 }
 
 /* 教师编辑弹窗 */
@@ -1772,11 +1739,11 @@
   transform: translate(-50%, -50%);
   z-index: 10001;
   background: var(--bg-secondary);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  border-radius: 0.75rem;
+  box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.2);
   height: 85vh;
-  max-height: 800px;
-  width: 650px;
+  max-height: 50rem;
+  width: 40.625rem;
   max-width: 90vw;
   display: flex;
   flex-direction: column;
@@ -1791,22 +1758,22 @@
 
 .teacher-data-input {
   width: 100%;
-  min-height: 120px;
-  padding: 12px;
+  min-height: 7.5rem;
+  padding: 0.75rem;
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.6;
   resize: vertical;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
   transition: border-color 0.2s;
 }
 
 .teacher-data-input:focus {
   outline: none;
   border-color: var(--accent-tertiary);
-  box-shadow: 0 0 0 3px rgba(107, 124, 110, 0.1);
+  box-shadow: 0 0 0 0.1875rem rgba(107, 124, 110, 0.1);
 }
 
 .teacher-data-input::placeholder {
@@ -1814,73 +1781,72 @@
 }
 
 .teacher-preview-section {
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .teacher-preview-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  padding: 8px 12px;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: var(--bg-tertiary);
-  border-radius: 6px;
-  border-left: 3px solid #6B7C6E;
+  border-radius: 0.375rem;
+  border-left: 0.1875rem solid #6B7C6E;
 }
 
 .teacher-number {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--accent-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.0313rem;
 }
 
 .teacher-preview-name {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-primary);
 }
 
 .multi-teacher-badge {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 0.1875rem 0.5rem;
   background: #E8F5E9;
   color: #2E7D32;
-  border-radius: 12px;
-  font-size: 11px;
+  border-radius: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
 }
 
-/* 教室可用性面板 */
+/* 教室可用性面板（在center-column内，约占10%） */
 .classroom-panel {
-  width: calc(100% - 620px);
-  /* 减去左右两个侧边栏的宽度 (280px * 2 + 间距 40px) + 外边距 */
-  margin: 20px 310px 32px;
-  /* 左右对齐与日历 */
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 200px;
+  min-height: 10rem;
+  max-height: 15rem;
+  flex: 0 0 auto;
+  /* 固定高度，不随内容增长 */
 }
 
 .classroom-panel-header {
-  padding: 16px 24px;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-primary);
   background: var(--bg-tertiary);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .classroom-panel-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
   display: flex;
@@ -1894,34 +1860,37 @@
   opacity: 0.8;
 }
 
+.classroom-count {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
 .classroom-panel-content {
   flex: 1;
-  padding: 24px;
+  padding: 1rem;
   overflow-y: auto;
-  min-height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  font-size: 14px;
+  overflow-x: hidden;
+  min-height: 0;
 }
 
 /* FullCalendar 样式覆盖 */
 .function-page .fc {
   font-family: inherit;
-  font-size: 11px;
+  font-size: 0.6875rem;
   /* 缩小基础字体 */
   height: 100%;
 }
 
 .function-page .fc .fc-toolbar {
-  padding: 0 0 16px 0;
+  padding: 0 0 1rem 0;
   /* 减小内边距 */
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .function-page .fc .fc-toolbar-title {
-  font-size: 9px;
+  font-size: 0.5625rem;
   /* 缩小标题字体 */
   font-weight: 500;
   color: var(--text-primary);
@@ -1932,12 +1901,12 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   color: var(--text-tertiary);
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   /* 减小内边距 */
-  font-size: 10px;
+  font-size: 0.625rem;
   /* 缩小字体 */
   font-weight: 400;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   /* 减小圆角 */
   transition: all 0.2s;
 }
@@ -1955,7 +1924,7 @@
 
 .function-page .fc .fc-button-group {
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   overflow: hidden;
 }
 
@@ -1974,10 +1943,10 @@
   background: var(--bg-tertiary);
   font-weight: 500;
   color: var(--text-secondary);
-  font-size: 9px;
+  font-size: 0.5625rem;
   /* 缩小字体 */
   text-transform: uppercase;
-  padding: 6px 4px;
+  padding: 0.375rem 0.25rem;
   /* 减小内边距 */
   border-bottom: 1px solid var(--border-primary);
 }
@@ -1985,10 +1954,10 @@
 /* 日期单元格 */
 .function-page .fc .fc-daygrid-day-number {
   color: var(--text-primary);
-  font-size: 10px;
+  font-size: 0.625rem;
   /* 缩小字体 */
   font-weight: 400;
-  padding: 4px;
+  padding: 0.25rem;
   /* 减小内边距 */
 }
 
@@ -1999,26 +1968,26 @@
 .function-page .fc .fc-day-today .fc-daygrid-day-number {
   background: var(--accent-secondary);
   color: white;
-  width: 20px;
+  width: 1.25rem;
   /* 缩小今天标记 */
-  height: 20px;
+  height: 1.25rem;
   /* 缩小今天标记 */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 0.5625rem;
   /* 确保字体适配 */
 }
 
 /* 事件样式 - 紧凑布局 */
 .function-page .fc-event {
   border: none !important;
-  border-radius: 3px;
+  border-radius: 0.1875rem;
   /* 稍微减小圆角 */
-  padding: 2px 4px;
+  padding: 2px 0.25rem;
   /* 大幅减小内边距 */
-  font-size: 9px;
+  font-size: 0.5625rem;
   /* 缩小字体 */
   font-weight: 400;
   cursor: pointer;
@@ -2028,12 +1997,12 @@
 
 .function-page .fc-event:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 0.375rem rgba(0, 0, 0, 0.12);
   z-index: 10;
 }
 
 .function-page .fc-timegrid-event {
-  border-radius: 4px;
+  border-radius: 0.25rem;
   /* 减小圆角 */
   border-left: 2px solid currentColor !important;
   /* 细一点 */
@@ -2048,45 +2017,45 @@
 }
 
 .function-page .event-time {
-  font-size: 8px;
+  font-size: 0.5rem;
   /* 缩小字体 */
   font-weight: 600;
   opacity: 0.9;
 }
 
 .function-page .event-title {
-  font-size: 9px;
+  font-size: 0.5625rem;
   /* 缩小字体 */
   font-weight: 500;
   line-height: 1.2;
 }
 
 .function-page .event-location {
-  font-size: 8px;
+  font-size: 0.5rem;
   /* 缩小字体 */
   opacity: 0.8;
 }
 
 /* 时间网格 - 紧凑布局 */
 .function-page .fc-timegrid-slot {
-  height: 14px !important;
-  /* 30% 的原始高度 (48px * 0.3 ≈ 14px) */
-  min-height: 14px !important;
+  height: 0.875rem !important;
+  /* 30% 的原始高度 (3rem * 0.3 ≈ 0.875rem) */
+  min-height: 0.875rem !important;
   border-color: var(--border-primary);
 }
 
 /* 加强小时分割线 */
 .function-page .fc-timegrid-slot[data-time$=":00:00"] {
-  border-top: 1.5px solid var(--accent-secondary) !important;
+  border-top: 0.0938rem solid var(--accent-secondary) !important;
   /* 稍微细一点 */
 }
 
 .function-page .fc-timegrid-slot-label {
-  font-size: 9px !important;
+  font-size: 0.5625rem !important;
   /* 缩小时间标签字体 */
   color: var(--text-secondary);
   font-weight: 400;
-  padding: 2px 4px !important;
+  padding: 2px 0.25rem !important;
   /* 减小内边距 */
   line-height: 1.2 !important;
 }
@@ -2095,12 +2064,12 @@
 .function-page .fc-timegrid-slot-label-frame {
   font-weight: 500;
   /* 稍微减轻 */
-  font-size: 9px !important;
+  font-size: 0.5625rem !important;
 }
 
 /* 时间轴列宽度 */
 .function-page .fc .fc-timegrid-axis {
-  width: 40px !important;
+  width: 2.5rem !important;
   /* 减小时间轴宽度 */
 }
 
@@ -2112,14 +2081,14 @@
 
 /* 确保半小时槽也是紧凑的 */
 .function-page .fc-timegrid-slot-minor {
-  height: 14px !important;
-  min-height: 14px !important;
+  height: 0.875rem !important;
+  min-height: 0.875rem !important;
 }
 
 /* 当前时间指示器 */
 .function-page .fc .fc-timegrid-now-indicator-line {
   border-color: #9E7676;
-  border-width: 1.5px;
+  border-width: 0.0938rem;
   /* 稍微细一点 */
 }
 
@@ -2131,7 +2100,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem);
   z-index: 9998;
   animation: fadeIn 0.2s;
 }
@@ -2150,11 +2119,11 @@
   position: fixed;
   transform: translate(-50%, -50%);
   background: var(--bg-secondary);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.15);
   z-index: 9999;
-  min-width: 320px;
-  max-width: 420px;
+  min-width: 20rem;
+  max-width: 26.25rem;
   overflow: hidden;
   animation: modalSlideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -2173,7 +2142,7 @@
 
 .function-page .modal-header {
   position: relative;
-  padding: 24px 24px 16px;
+  padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid var(--border-primary);
 }
 
@@ -2182,23 +2151,23 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 0.1875rem;
 }
 
 .function-page .modal-header h3 {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 500;
   color: var(--text-primary);
   margin: 0;
-  padding-right: 32px;
+  padding-right: 2rem;
 }
 
 .function-page .modal-close {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 28px;
-  height: 28px;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
   background: var(--bg-tertiary);
   border-radius: 50%;
@@ -2216,21 +2185,21 @@
 }
 
 .function-page .modal-body {
-  padding: 20px 24px;
+  padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .function-page .modal-row {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   align-items: flex-start;
 }
 
 .function-page .modal-icon {
-  font-size: 18px;
-  width: 24px;
+  font-size: 1.125rem;
+  width: 1.5rem;
   text-align: center;
 }
 
@@ -2239,31 +2208,31 @@
 }
 
 .function-page .modal-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 .function-page .modal-value {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--text-primary);
   font-weight: 400;
 }
 
 .function-page .modal-footer {
-  padding: 16px 24px;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-primary);
   background: var(--bg-tertiary);
 }
 
 .function-page .modal-button {
   width: 100%;
-  padding: 10px 20px;
+  padding: 0.625rem 1.25rem;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -2281,19 +2250,19 @@
 /* 选择区域 */
 .function-page .fc-highlight {
   background: rgba(90, 108, 125, 0.08);
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 /* 响应式 */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .function-page {
-    padding: 20px;
+    padding: 1.25rem;
     height: 100%;
   }
 
   .function-header {
     flex-direction: column;
-    gap: 16px;
+    gap: 1rem;
   }
 
   .header-actions {
@@ -2308,77 +2277,78 @@
   }
 
   .function-title {
-    font-size: 24px;
+    font-size: 1.5rem;
   }
 
   /* 主内容区域移动端 */
   .main-content-area {
+    display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 1rem;
     height: auto;
-    /* 移动端允许自动高度 */
+    /* 移动端切换为 flex 布局，垂直排列 */
   }
 
   .student-panel {
     width: 100%;
     min-width: unset;
-    max-height: 250px;
+    max-height: 15.625rem;
   }
 
   .student-panel-header {
-    padding: 12px;
+    padding: 0.75rem;
   }
 
   .panel-action-btn {
-    padding: 7px 10px;
-    font-size: 11px;
+    padding: 0.4375rem 0.625rem;
+    font-size: 0.6875rem;
   }
 
   .student-list {
-    padding: 8px;
+    padding: 0.5rem;
   }
 
   .student-card {
-    padding: 10px;
+    padding: 0.625rem;
   }
 
   .student-avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
   }
 
   .calendar-wrapper {
-    padding: 16px;
+    padding: 1rem;
   }
 
   /* 教程面板移动端 */
   .tutorial-content {
-    padding: 16px;
+    padding: 1rem;
   }
 
   .tutorial-step {
     flex-direction: column;
-    gap: 12px;
-    padding: 16px;
+    gap: 0.75rem;
+    padding: 1rem;
   }
 
   .step-number {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.875rem;
   }
 
   .step-content h4 {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   .step-content p {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .ai-panel-body {
-    padding: 16px;
+    padding: 1rem;
   }
 
   .result-stats,
@@ -2387,37 +2357,42 @@
   }
 
   .calendar-wrapper {
-    padding: 16px;
+    padding: 1rem;
   }
 
   .function-page .fc .fc-toolbar {
     flex-direction: column;
-    gap: 12px;
+    gap: 0.75rem;
   }
 
   .function-page .apple-event-modal {
-    min-width: 280px;
+    min-width: 17.5rem;
     max-width: 90vw;
+  }
+
+  /* 中间列移动端 */
+  .center-column {
+    flex-direction: column;
+    gap: 1rem;
   }
 
   /* 教室面板移动端 */
   .classroom-panel {
-    width: 100%;
-    margin: 20px 0 0;
+    max-height: 12.5rem;
   }
 
   .classroom-panel-header {
-    padding: 12px 16px;
+    padding: 0.75rem 1rem;
   }
 
   .classroom-panel-title {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   .classroom-panel-content {
-    padding: 16px;
-    min-height: 120px;
-    font-size: 13px;
+    padding: 1rem;
+    min-height: 7.5rem;
+    font-size: 0.8125rem;
   }
 }
 
@@ -2442,12 +2417,12 @@
 .availability-legend {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
   background: var(--bg-tertiary);
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 12px;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
 }
 
@@ -2459,32 +2434,32 @@
 .legend-gradient {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .legend-bar {
-  width: 100px;
-  height: 16px;
+  width: 6.25rem;
+  height: 1rem;
   background: linear-gradient(to right,
       rgba(90, 108, 125, 0.1) 0%,
       rgba(90, 108, 125, 0.35) 50%,
       rgba(90, 108, 125, 0.6) 100%);
-  border-radius: 3px;
+  border-radius: 0.1875rem;
   border: 1px solid var(--border-primary);
 }
 
 .legend-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-secondary);
 }
 
 .legend-count {
   background: #E8F0E9;
   color: var(--accent-tertiary);
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.75rem;
   font-weight: 500;
 }
 
@@ -2492,34 +2467,34 @@
 .student-availability-indicator {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
 }
 
 .availability-dot {
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   background: #6B7C6E;
 }
 
 .availability-text {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--accent-tertiary);
 }
 
 /* ========== 可用性信息面板 ========== */
 .availability-panel {
   position: fixed;
-  right: 20px;
+  right: 1.25rem;
   top: 50%;
   transform: translateY(-50%);
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-  width: 340px;
-  max-height: 600px;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.15);
+  width: 21.25rem;
+  max-height: 37.5rem;
   display: flex;
   flex-direction: column;
   z-index: 10002;
@@ -2530,7 +2505,7 @@
 @keyframes panelSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-50%) translateX(20px);
+    transform: translateY(-50%) translateX(1.25rem);
   }
 
   to {
@@ -2540,17 +2515,17 @@
 }
 
 .panel-header {
-  padding: 16px;
+  padding: 1rem;
   border-bottom: 1px solid var(--border-primary);
   background: var(--bg-tertiary);
-  border-radius: 12px 12px 0 0;
+  border-radius: 0.75rem 0.75rem 0 0;
 }
 
 .panel-title-row {
   display: flex;
   align-items: flex-start;
   gap: 0;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .panel-title-content {
@@ -2561,13 +2536,13 @@
 }
 
 .panel-date {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .panel-time {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   font-weight: 500;
 }
@@ -2575,12 +2550,12 @@
 .panel-close-btn {
   background: none;
   border: none;
-  padding: 4px;
+  padding: 0.25rem;
   cursor: pointer;
   color: var(--text-secondary);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   transition: all 0.2s;
-  margin-left: 8px;
+  margin-left: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -2590,27 +2565,27 @@
 }
 
 .panel-count {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--accent-tertiary);
   background: #E8F0E9;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.75rem;
   display: inline-block;
-  margin-left: 24px;
+  margin-left: 1.5rem;
 }
 
 .panel-content {
-  padding: 12px;
+  padding: 0.75rem;
   overflow-y: auto;
   flex: 1;
 }
 
 .panel-student {
-  padding: 12px;
+  padding: 0.75rem;
   background: var(--bg-tertiary);
-  border-radius: 8px;
-  border-left: 3px solid var(--accent-secondary);
-  margin-bottom: 10px;
+  border-radius: 0.5rem;
+  border-left: 0.1875rem solid var(--accent-secondary);
+  margin-bottom: 0.625rem;
 }
 
 .panel-student:last-child {
@@ -2620,19 +2595,19 @@
 .panel-student-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .panel-student-dot {
-  width: 10px;
-  height: 10px;
+  width: 0.625rem;
+  height: 0.625rem;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .panel-student-name {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -2640,19 +2615,19 @@
 .panel-constraints {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .constraint-item {
   display: flex;
-  gap: 8px;
-  font-size: 11px;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
   line-height: 1.4;
 }
 
 .constraint-label {
   flex-shrink: 0;
-  width: 75px;
+  width: 4.6875rem;
   color: var(--text-secondary);
   font-weight: 500;
 }
@@ -2664,10 +2639,10 @@
 }
 
 /* 移动端调整 */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .availability-panel {
-    right: 10px;
-    left: 10px;
+    right: 0.625rem;
+    left: 0.625rem;
     width: auto;
     max-height: 70vh;
   }
@@ -2678,8 +2653,8 @@
 /* 学生选择checkbox */
 .student-selection-checkbox {
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   cursor: pointer;
   margin: 0;
   accent-color: var(--accent-tertiary);
@@ -2689,41 +2664,41 @@
 .student-hours-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-tertiary);
   background: var(--bg-tertiary);
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-top: 4px;
+  padding: 2px 0.375rem;
+  border-radius: 0.625rem;
+  margin-top: 0.25rem;
   font-weight: 500;
 }
 
 /* 一键排课操作面板 */
 .scheduling-action-panel {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 16px;
-  margin: 0 12px 12px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+  padding: 1rem;
+  margin: 0 0.75rem 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(102, 126, 234, 0.25);
 }
 
 .scheduling-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .select-all-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
   background: rgba(255, 255, 255, 0.9);
   color: var(--text-tertiary);
   border: none;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -2731,7 +2706,7 @@
 
 .select-all-btn:hover:not(:disabled) {
   background: var(--bg-secondary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 0.5rem rgba(0, 0, 0, 0.1);
 }
 
 .select-all-btn:disabled {
@@ -2741,7 +2716,7 @@
 
 .selected-count {
   color: white;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -2749,26 +2724,26 @@
 /* 一键排课按钮 */
 .one-click-schedule-btn {
   width: 100%;
-  padding: 14px 20px;
+  padding: 0.875rem 1.25rem;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  gap: 0.625rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(16, 185, 129, 0.3);
 }
 
 .one-click-schedule-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0.375rem 1rem rgba(16, 185, 129, 0.4);
 }
 
 .one-click-schedule-btn:active:not(:disabled) {
@@ -2783,9 +2758,9 @@
 
 /* 加载动画 */
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 0.1875rem solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -2797,30 +2772,30 @@
 
 /* 排课进度 */
 .scheduling-progress {
-  margin-top: 12px;
+  margin-top: 0.75rem;
   background: rgba(255, 255, 255, 0.15);
-  padding: 12px;
-  border-radius: 6px;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
 }
 
 .progress-bar {
-  height: 8px;
+  height: 0.5rem;
   background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
   transition: width 0.3s ease;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .progress-text {
   color: white;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   text-align: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -2829,24 +2804,24 @@
 /* ==================== 排课结果弹窗样式 ==================== */
 
 .result-modal {
-  max-width: 600px;
+  max-width: 37.5rem;
 }
 
 .result-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .result-stat-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 0.75rem;
+  padding: 1rem;
   background: var(--bg-tertiary);
-  border-radius: 8px;
-  border-left: 4px solid #CBD5E0;
+  border-radius: 0.5rem;
+  border-left: 0.25rem solid #CBD5E0;
 }
 
 .result-stat-item.success {
@@ -2885,13 +2860,13 @@
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #64748b;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 .stat-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #1e293b;
 }
@@ -2899,14 +2874,14 @@
 .result-errors {
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 0.5rem;
+  padding: 1rem;
 }
 
 .result-errors h4 {
   color: #dc2626;
-  font-size: 14px;
-  margin-bottom: 12px;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
 }
 
 .result-errors ul {
@@ -2917,8 +2892,8 @@
 
 .result-errors li {
   color: #991b1b;
-  font-size: 13px;
-  padding: 6px 0;
+  font-size: 0.8125rem;
+  padding: 0.375rem 0;
   border-bottom: 1px solid #fecaca;
 }
 
@@ -2930,14 +2905,14 @@
 
 .data-input-textarea {
   width: 100%;
-  padding: 12px;
+  padding: 0.75rem;
   border: 2px solid #E0E0E0;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   font-family: 'Courier New', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
   resize: vertical;
-  min-height: 200px;
+  min-height: 12.5rem;
   background: var(--bg-tertiary);
 }
 
@@ -2949,50 +2924,50 @@
 
 .modal-instructions {
   background: var(--bg-tertiary);
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
 }
 
 .modal-instructions p {
-  margin: 0 0 8px 0;
-  font-size: 14px;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
   color: var(--text-primary);
   font-weight: 500;
 }
 
 .modal-instructions ul {
   margin: 0;
-  padding-left: 20px;
-  font-size: 13px;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
   color: var(--text-tertiary);
 }
 
 .modal-instructions li {
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 /* ==================== 悬浮一键排课按钮 ==================== */
 
 .floating-schedule-btn {
   position: fixed;
-  bottom: 32px;
-  right: 32px;
-  width: 64px;
-  height: 64px;
+  bottom: 2rem;
+  right: 2rem;
+  width: 4rem;
+  height: 4rem;
   border-radius: 50%;
   border: none;
   background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
   color: white;
   cursor: not-allowed;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 0.25rem;
   font-family: 'Noto Sans', 'Noto Sans JP', 'Noto Sans SC', sans-serif;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
@@ -3003,15 +2978,15 @@
   background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
   cursor: pointer;
   opacity: 1;
-  width: 140px;
-  height: 56px;
-  border-radius: 28px;
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  width: 8.75rem;
+  height: 3.5rem;
+  border-radius: 1.75rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(139, 92, 246, 0.4);
 }
 
 .floating-schedule-btn.active:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0.75rem 2rem rgba(139, 92, 246, 0.5);
 }
 
 .floating-schedule-btn.active:active {
@@ -3028,7 +3003,7 @@
 }
 
 .floating-schedule-btn .btn-text {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -3036,27 +3011,27 @@
 
 .floating-schedule-btn .btn-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -0.25rem;
+  right: -0.25rem;
   background: #EF4444;
   color: white;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 20px;
+  padding: 2px 0.375rem;
+  border-radius: 0.625rem;
+  min-width: 1.25rem;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 2px 0.5rem rgba(239, 68, 68, 0.4);
 }
 
 .floating-schedule-btn .btn-progress {
-  font-size: 11px;
+  font-size: 0.6875rem;
   opacity: 0.9;
 }
 
 .floating-schedule-btn .spinner {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
@@ -3071,7 +3046,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(0.25rem);
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -3090,25 +3065,25 @@
 
 .progress-content {
   background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 32px 40px;
-  min-width: 320px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-radius: 1rem;
+  padding: 2rem 2.5rem;
+  min-width: 20rem;
+  box-shadow: 0 1.25rem 3.75rem rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 1.25rem;
 }
 
 .progress-spinner {
-  width: 64px;
-  height: 64px;
+  width: 4rem;
+  height: 4rem;
 }
 
 .spinner-large {
   width: 100%;
   height: 100%;
-  border: 4px solid #E5E7EB;
+  border: 0.25rem solid #E5E7EB;
   border-top-color: #8B5CF6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -3120,53 +3095,53 @@
 }
 
 .progress-title {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
   color: #1F2937;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .progress-student {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #6B7280;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .progress-bar-container {
   width: 100%;
-  height: 8px;
+  height: 0.5rem;
   background: var(--bg-tertiary);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #8B5CF6 0%, #7C3AED 100%);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   transition: width 0.3s ease-out;
 }
 
 .progress-percent {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: #8B5CF6;
 }
 
 /* 学生选择控制区域 */
 .scheduling-action-panel {
-  padding: 12px;
+  padding: 0.75rem;
   background: var(--bg-tertiary);
-  border-radius: 8px;
-  margin-top: 12px;
+  border-radius: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .scheduling-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .select-all-btn {
@@ -3174,12 +3149,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-tertiary);
   cursor: pointer;
@@ -3197,7 +3172,7 @@
 }
 
 .selected-count {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #6B7280;
   font-weight: 500;
   white-space: nowrap;

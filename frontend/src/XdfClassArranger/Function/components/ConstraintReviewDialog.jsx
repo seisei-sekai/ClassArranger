@@ -161,6 +161,7 @@ const ConstraintReviewDialog = ({ excelData, onClose, onApprove }) => {
         studentName: item.studentName,
         campus: item.campus,
         originalText: item.combinedText,
+        originalRow: item.originalRow, // Include full Excel row data
         constraint: item.parsed,
         confidence: item.confidence
       }));

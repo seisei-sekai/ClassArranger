@@ -5,3 +5,5 @@ ls -la
 
 
 test
+
+bash scripts/frequently-used/deploy-git.sh
