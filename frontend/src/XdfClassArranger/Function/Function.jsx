@@ -6,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import GeneticAlgorithm from './GeneticAlgorithm';
 import { useTestData } from '../TestDataContext';
+import { useSchedule } from '../ScheduleContext';
 import {
   EXCEL_COLUMNS,
   TEACHER_COLUMNS,
@@ -15,15 +16,20 @@ import {
 } from './utils/constants';
 import { parseStudentRows } from './utils/studentParser';
 import { parseTeacherRows } from './utils/teacherParser';
+import { parseClassroomRows } from './utils/classroomParser';
 import {
   generateAvailabilityEvents,
   getStudentsForTimeSlot
 } from './utils/availabilityCalculator';
+import ConstraintReviewDialog from './components/ConstraintReviewDialog';
+import { getNLPLogger } from './utils/nlpLogger';
+import { batchCleanStudentData, needsCleaning } from './services/studentDataCleanerService';
 import './Function.css';
 
 const Function = () => {
   const calendarRef = useRef(null);
   const { showTestData } = useTestData();
+  const scheduleContext = useSchedule();
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
@@ -32,18 +38,39 @@ const Function = () => {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [aiResult, setAIResult] = useState(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  
+  // NLP Constraint Review Dialog state (NLP约束审核对话框状态)
+  const [showNLPReview, setShowNLPReview] = useState(false);
+  const [nlpExcelData, setNlpExcelData] = useState(null);
 
-  // 学生列表状态
+  // 学生列表状态 (Student list state)
   const [students, setStudents] = useState([]);
   const [studentCounter, setStudentCounter] = useState(0);
   const [editingStudent, setEditingStudent] = useState(null); // 当前编辑的学生
   const [editingRawData, setEditingRawData] = useState(''); // 编辑中的原始数据
 
-  // 教师列表状态
+  // 教师列表状态 (Teacher list state)
   const [teachers, setTeachers] = useState([]);
   const [teacherCounter, setTeacherCounter] = useState(0);
   const [editingTeacher, setEditingTeacher] = useState(null); // 当前编辑的教师
   const [editingTeacherRawData, setEditingTeacherRawData] = useState(''); // 编辑中的教师原始数据
+
+  // 教室列表状态 (Classroom list state)
+  const [classrooms, setClassrooms] = useState([]);
+  const [editingClassroomData, setEditingClassroomData] = useState('');
+  const [showClassroomModal, setShowClassroomModal] = useState(false);
+
+  // 一键排课状态 (One-click scheduling state)
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleProgress, setScheduleProgress] = useState(0);
+  const [currentSchedulingStudent, setCurrentSchedulingStudent] = useState('');
+
+  // AI数据清洗状态 (AI data cleaning state)
+  const [isCleaningData, setIsCleaningData] = useState(false);
+  const [cleaningProgress, setCleaningProgress] = useState({ current: 0, total: 0, name: '' });
+  const [showCleaningModal, setShowCleaningModal] = useState(false);
+  const [showScheduleResult, setShowScheduleResult] = useState(false);
+  const [scheduleResultData, setScheduleResultData] = useState(null);
 
   // 添加学生
   const handleAddStudent = () => {
@@ -54,7 +81,9 @@ const Function = () => {
       color: JAPANESE_COLORS[studentCounter % JAPANESE_COLORS.length],
       rawData: '', // 存储Excel原始数据
       parsedData: null, // 解析后的数据（后续使用）
-      showAvailability: false // 是否在日历上显示该学生的可用性
+      showAvailability: false, // 是否在日历上显示该学生的可用性
+      selected: false, // 是否被选中进行排课
+      courseHours: { totalHours: 0, usedHours: 0, remainingHours: 0 } // 课时信息
     };
     setStudents([...students, newStudent]);
     setStudentCounter(studentCounter + 1);
@@ -90,8 +119,76 @@ const Function = () => {
     setEditingRawData(student.rawData || '');
   };
 
+  // Open NLP Review Dialog with Excel data (打开NLP审核对话框)
+  const handleOpenNLPReview = () => {
+    if (!editingRawData || editingRawData.trim().length === 0) {
+      alert('请先粘贴Excel数据');
+      return;
+    }
+    
+    // Parse raw data into rows
+    const parsedStudents = parseStudentRows(editingRawData);
+    if (parsedStudents.length === 0) {
+      alert('未能解析到有效的学生数据');
+      return;
+    }
+    
+    // Convert parsedStudents format to Excel row format for extractConstraintData
+    // parsedStudents: { rawData, name, values } -> Excel format: { '列名': 值 }
+    const columns = EXCEL_COLUMNS.split('\t');
+    const excelFormatData = parsedStudents.map(student => {
+      const row = {};
+      columns.forEach((col, idx) => {
+        row[col] = student.values[idx] || '';
+      });
+      return row;
+    });
+    
+    // Log the action
+    const logger = getNLPLogger();
+    logger.logParse(
+      { source: 'Function.jsx', action: 'open_nlp_review', rowCount: parsedStudents.length },
+      { students: excelFormatData },
+      true
+    );
+    
+    setNlpExcelData(excelFormatData);
+    setShowNLPReview(true);
+  };
+  
+  // Handle approved constraints from NLP dialog (处理NLP对话框批准的约束)
+  const handleNLPApproval = (approvedConstraints) => {
+    const logger = getNLPLogger();
+    
+    approvedConstraints.forEach(({ studentName, campus, originalText, constraint, confidence }) => {
+      // Create a new student with the constraint
+      const newStudent = {
+        id: `student-nlp-${Date.now()}-${Math.random()}`,
+        name: studentName,
+        campus: campus,
+        color: getRandomJapaneseColor(),
+        rawData: originalText,
+        parsedData: constraint,
+        constraint: constraint, // Store the constraint
+        confidence: confidence,
+        showAvailability: true
+      };
+      
+      setStudents(prev => [...prev, newStudent]);
+      
+      // Log approval
+      logger.logApproval(studentName, 'approve', constraint);
+    });
+    
+    alert(`成功导入 ${approvedConstraints.length} 个学生约束`);
+    
+    // Close the editing modal
+    setEditingStudent(null);
+    setEditingRawData('');
+  };
+
   // 保存编辑
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingStudent) {
       const parsedStudents = parseStudentRows(editingRawData);
 
@@ -102,28 +199,132 @@ const Function = () => {
         return;
       }
 
+      // 🔍 详细诊断：显示解析后的数据结构
+      console.group('[排课系统] 📊 数据解析诊断');
+      console.log('原始数据行数:', editingRawData.split('\n').length);
+      console.log('解析出的学生数:', parsedStudents.length);
+      
+      parsedStudents.forEach((student, index) => {
+        console.group(`学生 ${index + 1}: ${student.name || '未命名'}`);
+        console.log('✅ 核心字段:');
+        console.table({
+          '学生姓名': student.name,
+          '校区': student.campus,
+          '班主任': student.manager,
+          '批次': student.batch,
+          '录入日期': student.entryDate
+        });
+        console.log('📊 课时相关字段:');
+        console.table({
+          '上课频次 (列6)': student.frequency || '❌ 空',
+          '上课时长 (列7)': student.duration || '❌ 空',
+          '计算出的课时': student.courseHours?.totalHours || 0
+        });
+        console.log('📝 其他字段:');
+        console.table({
+          '上课形式': student.mode,
+          '科目': student.subject,
+          '级别': student.level,
+          '志望大学': student.targetUniversity,
+          '志望专业': student.targetMajor
+        });
+        console.log('⚠️ 原始数据字段数量:', student.values?.length || 0);
+        if (student.values && student.values.length < 19) {
+          console.warn(`❌ 数据列数不足！期望19列，实际${student.values.length}列`);
+          console.log('实际数据:', student.values);
+        }
+        console.groupEnd();
+      });
+      console.groupEnd();
+
+      // 检测是否需要AI清洗
+      const studentsNeedCleaning = parsedStudents.filter(s => needsCleaning(s));
+      
+      let finalStudents = parsedStudents;
+      
+      if (studentsNeedCleaning.length > 0) {
+        console.log(`[排课系统] 🧹 检测到 ${studentsNeedCleaning.length}/${parsedStudents.length} 名学生数据需要AI智能清洗`);
+        
+        // 显示清洗进度弹窗
+        setShowCleaningModal(true);
+        setIsCleaningData(true);
+        
+        try {
+          // 批量AI清洗
+          const cleanedStudents = await batchCleanStudentData(
+            studentsNeedCleaning,
+            (current, total, name) => {
+              setCleaningProgress({ current, total, name });
+            }
+          );
+          
+          // 合并清洗后的学生数据
+          finalStudents = parsedStudents.map(s => {
+            const cleaned = cleanedStudents.find(c => c.name === s.name);
+            return cleaned || s;
+          });
+          
+          console.log('[排课系统] ✅ AI清洗完成，准备保存');
+        } catch (error) {
+          console.error('[排课系统] ❌ AI清洗失败:', error);
+          alert('AI数据清洗失败，将使用默认值。请检查网络连接和API配置。');
+        } finally {
+          setIsCleaningData(false);
+          setShowCleaningModal(false);
+        }
+      }
+
       // 第一个学生更新到当前编辑的卡片
-      const firstStudent = parsedStudents[0];
+      const firstStudent = finalStudents[0];
+      
+      // 调试信息：检查课时计算
+      console.log('[排课系统] 学生课时信息:', {
+        name: firstStudent.name,
+        frequency: firstStudent.frequency,
+        duration: firstStudent.duration,
+        courseHours: firstStudent.courseHours,
+        aiCleaned: firstStudent.aiCleaned
+      });
+      
       let updatedStudents = students.map(s =>
         s.id === editingStudent.id
-          ? { ...s, rawData: firstStudent.rawData, name: firstStudent.name }
+          ? { 
+              ...s, 
+              rawData: firstStudent.rawData, 
+              name: firstStudent.name,
+              courseHours: firstStudent.courseHours || { weeklyHours: 0, totalHours: 0, usedHours: 0, remainingHours: 0 },
+              entryDate: firstStudent.entryDate,
+              timeRange: firstStudent.timeRange,
+              frequency: firstStudent.frequency,
+              duration: firstStudent.duration,
+              selected: false
+            }
           : s
       );
 
       // 如果有多个学生，创建额外的卡片
-      if (parsedStudents.length > 1) {
-        const additionalStudents = parsedStudents.slice(1).map((student, index) => ({
+      if (finalStudents.length > 1) {
+        const additionalStudents = finalStudents.slice(1).map((student, index) => ({
           id: `student-${Date.now()}-${index}`,
           name: student.name,
           color: JAPANESE_COLORS[(studentCounter + index + 1) % JAPANESE_COLORS.length],
           rawData: student.rawData,
           parsedData: null,
-          showAvailability: false
+          showAvailability: false,
+          selected: false,
+          courseHours: student.courseHours || { weeklyHours: 0, totalHours: 0, usedHours: 0, remainingHours: 0 },
+          entryDate: student.entryDate,
+          timeRange: student.timeRange,
+          frequency: student.frequency,
+          duration: student.duration
         }));
 
         updatedStudents = [...updatedStudents, ...additionalStudents];
-        setStudentCounter(studentCounter + parsedStudents.length - 1);
+        setStudentCounter(studentCounter + finalStudents.length - 1);
       }
+
+      // Update schedule context
+      scheduleContext.updateStudents(updatedStudents);
 
       setStudents(updatedStudents);
       setEditingStudent(null);
@@ -135,6 +336,436 @@ const Function = () => {
   const handleCancelEdit = () => {
     setEditingStudent(null);
     setEditingRawData('');
+  };
+
+  // ==================== 学生选择功能 (Student Selection) ====================
+
+  // 切换学生选择状态 (Toggle student selection)
+  const toggleStudentSelection = (studentId) => {
+    setStudents(students.map(s =>
+      s.id === studentId ? { ...s, selected: !s.selected } : s
+    ));
+  };
+
+  // 全选/取消全选学生 (Select/deselect all students)
+  const toggleAllStudentsSelection = () => {
+    const hasValidStudents = students.some(s => s.rawData && s.courseHours?.totalHours > 0);
+    if (!hasValidStudents) return;
+
+    const allSelected = students.every(s => 
+      !s.rawData || !s.courseHours?.totalHours || s.selected
+    );
+
+    setStudents(students.map(s => ({
+      ...s,
+      selected: s.rawData && s.courseHours?.totalHours > 0 ? !allSelected : false
+    })));
+  };
+
+  // 获取选中的学生 (Get selected students)
+  const getSelectedStudents = () => {
+    return students.filter(s => s.selected && s.rawData && s.courseHours?.totalHours > 0);
+  };
+
+  // ==================== 教室相关函数 (Classroom Functions) ====================
+
+  // 添加教室 (Add classroom)
+  const handleAddClassroom = () => {
+    setShowClassroomModal(true);
+    setEditingClassroomData('');
+  };
+
+  // 保存教室数据 (Save classroom data)
+  const handleSaveClassrooms = () => {
+    if (!editingClassroomData || editingClassroomData.trim().length === 0) {
+      alert('请粘贴教室数据');
+      return;
+    }
+
+    const parsedClassrooms = parseClassroomRows(editingClassroomData);
+    if (parsedClassrooms.length === 0) {
+      alert('未能解析到有效的教室数据');
+      return;
+    }
+
+    setClassrooms(parsedClassrooms);
+    scheduleContext.updateClassrooms(parsedClassrooms);
+    setShowClassroomModal(false);
+    setEditingClassroomData('');
+    
+    alert(`成功导入 ${parsedClassrooms.length} 个教室`);
+  };
+
+  // ==================== 一键排课功能 (One-Click Scheduling) ====================
+
+  // 一键排课主函数 (One-click scheduling main function)
+  const handleOneClickSchedule = async () => {
+    const selectedStudents = getSelectedStudents();
+    
+    if (selectedStudents.length === 0) {
+      alert('请至少选择一个学生进行排课');
+      return;
+    }
+
+    if (teachers.length === 0) {
+      alert('请先添加老师数据');
+      return;
+    }
+
+    if (classrooms.length === 0) {
+      alert('请先添加教室数据');
+      return;
+    }
+
+    // Start scheduling
+    setIsScheduling(true);
+    setScheduleProgress(0);
+    setScheduleResultData(null);
+
+    const results = {
+      successCount: 0,
+      failedCount: 0,
+      totalHoursScheduled: 0,
+      conflictsDetected: 0,
+      scheduledCourses: [],
+      errors: []
+    };
+
+    try {
+      console.log('[OneClickSchedule] Starting scheduling for', selectedStudents.length, 'students');
+      
+      // Import TripleMatchingEngine dynamically
+      const { default: TripleMatchingEngine } = await import('./matching/TripleMatchingEngine');
+      const { default: ConstraintEngine } = await import('./constraints/ConstraintEngine');
+      
+      // Initialize constraint engine
+      const constraintEngine = new ConstraintEngine();
+      
+      // Initialize triple matching engine
+      const matchingEngine = new TripleMatchingEngine(
+        selectedStudents,
+        teachers,
+        classrooms,
+        constraintEngine
+      );
+
+      // Track occupied time slots to prevent conflicts
+      const occupiedSlots = {
+        teachers: new Map(), // teacherId -> Set of "day-slot" strings
+        classrooms: new Map(), // classroomId -> Set of "day-slot" strings
+        students: new Map() // studentId -> Set of "day-slot" strings
+      };
+
+      // Process each selected student
+      for (let i = 0; i < selectedStudents.length; i++) {
+        const student = selectedStudents[i];
+        setCurrentSchedulingStudent(student.name);
+        setScheduleProgress(Math.floor(((i + 1) / selectedStudents.length) * 100));
+
+        try {
+          console.log(`[OneClickSchedule] Processing student ${i + 1}/${selectedStudents.length}: ${student.name}`);
+          
+          // Parse student availability from rawData
+          const { parseStudentAvailability } = await import('./utils/availabilityCalculator');
+          const studentAvailability = parseStudentAvailability(student.rawData);
+          
+          if (!studentAvailability) {
+            throw new Error('无法解析学生可用时间');
+          }
+
+          // Calculate how many courses this student needs
+          const hoursRemaining = student.courseHours?.remainingHours || 0;
+          if (hoursRemaining <= 0) {
+            console.log(`[OneClickSchedule] Student ${student.name} has no remaining hours, skipping`);
+            continue;
+          }
+
+          // Assume each course is 2 hours (24 slots)
+          const courseDuration = 24; // 2 hours = 24 * 5-minute slots
+          const coursesNeeded = Math.ceil(hoursRemaining / 2);
+          
+          console.log(`[OneClickSchedule] Student ${student.name} needs ${coursesNeeded} courses (${hoursRemaining}h remaining)`);
+
+          // Try to schedule courses for this student
+          let coursesScheduled = 0;
+          
+          for (let courseNum = 0; courseNum < coursesNeeded; courseNum++) {
+            // Find best match for this course
+            const match = await findBestMatch(
+              student,
+              teachers,
+              classrooms,
+              studentAvailability,
+              occupiedSlots,
+              courseDuration,
+              constraintEngine
+            );
+
+            if (match) {
+              // Create scheduled course
+              const scheduledCourse = {
+                id: `course-${Date.now()}-${Math.random()}`,
+                student: {
+                  id: student.id,
+                  name: student.name,
+                  color: student.color
+                },
+                teacher: {
+                  id: match.teacher.id,
+                  name: match.teacher.name
+                },
+                room: {
+                  id: match.classroom.id,
+                  name: match.classroom.name,
+                  campus: match.classroom.campus
+                },
+                timeSlot: {
+                  day: match.day,
+                  startSlot: match.startSlot,
+                  duration: courseDuration,
+                  start: slotToTime(match.startSlot),
+                  end: slotToTime(match.startSlot + courseDuration)
+                },
+                subject: match.subject || '一般课程',
+                score: match.score || 0
+              };
+
+              // Mark slots as occupied
+              markSlotsOccupied(occupiedSlots, scheduledCourse);
+
+              // Track the course
+              results.scheduledCourses.push(scheduledCourse);
+              coursesScheduled++;
+
+              // Consume course hours
+              const hoursConsumed = courseDuration / 12; // 12 slots = 1 hour
+              scheduleContext.hoursManager.consumeHours(
+                student.id,
+                hoursConsumed,
+                scheduledCourse.id,
+                {
+                  teacher: match.teacher.name,
+                  day: match.day,
+                  time: scheduledCourse.timeSlot.start
+                }
+              );
+
+              results.totalHoursScheduled += hoursConsumed;
+              
+              console.log(`[OneClickSchedule] Scheduled course ${courseNum + 1} for ${student.name}`);
+            } else {
+              console.warn(`[OneClickSchedule] Could not find match for course ${courseNum + 1} of ${student.name}`);
+              break; // Stop trying for this student
+            }
+          }
+
+          if (coursesScheduled > 0) {
+            results.successCount++;
+            console.log(`[OneClickSchedule] Successfully scheduled ${coursesScheduled} courses for ${student.name}`);
+          } else {
+            results.failedCount++;
+            results.errors.push(`${student.name}: 无法找到合适的时间和资源`);
+          }
+
+        } catch (studentError) {
+          console.error(`[OneClickSchedule] Error processing ${student.name}:`, studentError);
+          results.failedCount++;
+          results.errors.push(`${student.name}: ${studentError.message}`);
+        }
+
+        // Small delay for UI update
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // Add scheduled courses to global context
+      if (results.scheduledCourses.length > 0) {
+        scheduleContext.addScheduledCourses(results.scheduledCourses);
+      }
+
+      // Update student data in context
+      scheduleContext.updateStudents(students);
+
+      // Show results
+      setScheduleResultData(results);
+      setShowScheduleResult(true);
+
+      console.log('[OneClickSchedule] Scheduling complete:', results);
+
+    } catch (error) {
+      console.error('[OneClickSchedule] Fatal error:', error);
+      alert(`排课失败: ${error.message}`);
+    } finally {
+      setIsScheduling(false);
+      setScheduleProgress(0);
+      setCurrentSchedulingStudent('');
+    }
+  };
+
+  // Helper function: Find best match for a student's course
+  const findBestMatch = async (student, teachers, classrooms, studentAvailability, occupiedSlots, duration, constraintEngine) => {
+    // This is a simplified matching algorithm
+    // In production, this should use the full TripleMatchingEngine
+    
+    const matches = [];
+
+    // Try each day
+    for (let day = 0; day < 7; day++) {
+      // Try each time slot (9:00-21:30, every 30 minutes)
+      for (let startSlot = 0; startSlot < 150; startSlot += 6) { // 6 slots = 30 minutes
+        // Check if student is available
+        if (!isStudentAvailableAtSlot(studentAvailability, day, startSlot, duration)) {
+          continue;
+        }
+
+        // Check if student already has a course at this time
+        if (isSlotOccupied(occupiedSlots.students, student.id, day, startSlot, duration)) {
+          continue;
+        }
+
+        // Try each teacher
+        for (const teacher of teachers) {
+          if (!teacher.availableTimeSlots) continue;
+
+          // Check if teacher is available
+          if (!isTeacherAvailableAtSlot(teacher, day, startSlot, duration)) {
+            continue;
+          }
+
+          // Check if teacher already has a course at this time
+          if (isSlotOccupied(occupiedSlots.teachers, teacher.id, day, startSlot, duration)) {
+            continue;
+          }
+
+          // Try each classroom
+          for (const classroom of classrooms) {
+            if (!classroom.availableTimeRanges) continue;
+
+            // Check if classroom is available
+            if (!isClassroomAvailableAtSlot(classroom, day, startSlot, duration)) {
+              continue;
+            }
+
+            // Check if classroom already has a course at this time
+            if (isSlotOccupied(occupiedSlots.classrooms, classroom.id, day, startSlot, duration)) {
+              continue;
+            }
+
+            // We found a valid match!
+            const score = calculateMatchScore(student, teacher, classroom, day, startSlot);
+            matches.push({
+              teacher,
+              classroom,
+              day,
+              startSlot,
+              score,
+              subject: '一般课程'
+            });
+          }
+        }
+      }
+    }
+
+    // Sort by score and return best match
+    if (matches.length > 0) {
+      matches.sort((a, b) => b.score - a.score);
+      return matches[0];
+    }
+
+    return null;
+  };
+
+  // Helper function: Check if student is available at time slot
+  const isStudentAvailableAtSlot = (availability, day, startSlot, duration) => {
+    if (!availability || !Array.isArray(availability[day])) return false;
+    
+    for (let slot = startSlot; slot < startSlot + duration; slot++) {
+      if (!availability[day][slot]) return false;
+    }
+    return true;
+  };
+
+  // Helper function: Check if teacher is available at time slot
+  const isTeacherAvailableAtSlot = (teacher, day, startSlot, duration) => {
+    if (!teacher.availableTimeSlots) return false;
+    
+    return teacher.availableTimeSlots.some(range =>
+      range.day === day &&
+      startSlot >= range.startSlot &&
+      (startSlot + duration) <= range.endSlot
+    );
+  };
+
+  // Helper function: Check if classroom is available at time slot
+  const isClassroomAvailableAtSlot = (classroom, day, startSlot, duration) => {
+    if (!classroom.availableTimeRanges) return false;
+    
+    return classroom.availableTimeRanges.some(range =>
+      range.day === day &&
+      startSlot >= range.startSlot &&
+      (startSlot + duration) <= range.endSlot
+    );
+  };
+
+  // Helper function: Check if a slot is occupied
+  const isSlotOccupied = (occupiedMap, resourceId, day, startSlot, duration) => {
+    const occupied = occupiedMap.get(resourceId);
+    if (!occupied) return false;
+
+    for (let slot = startSlot; slot < startSlot + duration; slot++) {
+      if (occupied.has(`${day}-${slot}`)) return true;
+    }
+    return false;
+  };
+
+  // Helper function: Mark slots as occupied
+  const markSlotsOccupied = (occupiedSlots, course) => {
+    const { student, teacher, room, timeSlot } = course;
+    const { day, startSlot, duration } = timeSlot;
+
+    // Mark for student
+    if (!occupiedSlots.students.has(student.id)) {
+      occupiedSlots.students.set(student.id, new Set());
+    }
+    // Mark for teacher
+    if (!occupiedSlots.teachers.has(teacher.id)) {
+      occupiedSlots.teachers.set(teacher.id, new Set());
+    }
+    // Mark for classroom
+    if (!occupiedSlots.classrooms.has(room.id)) {
+      occupiedSlots.classrooms.set(room.id, new Set());
+    }
+
+    for (let slot = startSlot; slot < startSlot + duration; slot++) {
+      const key = `${day}-${slot}`;
+      occupiedSlots.students.get(student.id).add(key);
+      occupiedSlots.teachers.get(teacher.id).add(key);
+      occupiedSlots.classrooms.get(room.id).add(key);
+    }
+  };
+
+  // Helper function: Calculate match score
+  const calculateMatchScore = (student, teacher, classroom, day, startSlot) => {
+    let score = 100;
+    
+    // Prefer certain days (weekdays > weekend)
+    if (day === 0 || day === 6) score -= 10; // Weekend penalty
+    
+    // Prefer afternoon/evening slots
+    const hour = Math.floor(startSlot / 12) + 9;
+    if (hour >= 14 && hour <= 18) score += 10; // Afternoon bonus
+    
+    // Prefer same campus (if student has campus info)
+    // This would require parsing student campus from rawData
+    
+    return score;
+  };
+
+  // Helper function: Convert slot to time string
+  const slotToTime = (slot) => {
+    const totalMinutes = slot * 5;
+    const hours = Math.floor(totalMinutes / 60) + 9;
+    const minutes = totalMinutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
   // ==================== 教师相关函数 ====================
@@ -266,6 +897,34 @@ const Function = () => {
   useEffect(() => {
     refreshAvailabilityEvents();
   }, [students, showAvailability, calendarDate]);
+
+  // 监听容器尺寸变化，自动更新日历布局
+  // Monitor container size changes and update calendar layout automatically
+  useEffect(() => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+
+    // 查找日历的父容器 (.calendar-wrapper)
+    // Find the calendar's parent container (.calendar-wrapper)
+    const calendarWrapper = document.querySelector('.calendar-wrapper');
+    if (!calendarWrapper) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // 延迟执行，确保 CSS 过渡完成
+      // Delay execution to ensure CSS transitions complete
+      setTimeout(() => {
+        calendarApi.updateSize();
+      }, 300);
+    });
+
+    resizeObserver.observe(calendarWrapper);
+
+    // 清理函数
+    // Cleanup function
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
 
   // 日历日期变化处理
@@ -913,16 +1572,6 @@ const Function = () => {
               </svg>
               添加学生
             </button>
-            <button className="panel-action-btn batch-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="2" />
-                <circle cx="17" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
-                <path d="M3 20c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="2" />
-                <path d="M15 20c0-2 1.5-3 3.5-3s3.5 1 3.5 3" stroke="currentColor" strokeWidth="2" />
-                <path d="M20 5v4M18 7h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              批量添加
-            </button>
             <button className="panel-action-btn filter-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -1008,6 +1657,28 @@ const Function = () => {
             </div>
           )}
 
+          {/* 一键排课区域 */}
+          {students.filter(s => s.rawData && s.courseHours?.totalHours > 0).length > 0 && (
+            <div className="scheduling-action-panel">
+              <div className="scheduling-controls">
+                <button
+                  className="select-all-btn"
+                  onClick={toggleAllStudentsSelection}
+                  disabled={isScheduling}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  {students.every(s => !s.rawData || !s.courseHours?.totalHours || s.selected) ? '取消全选' : '全选学生'}
+                </button>
+                <span className="selected-count">
+                  已选: {getSelectedStudents().length} / {students.filter(s => s.courseHours?.totalHours > 0).length}
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="student-list">
             {students.length === 0 ? (
               <div className="student-empty">
@@ -1025,6 +1696,17 @@ const Function = () => {
                   className={`student-card ${student.rawData ? 'has-data' : ''}`}
                   style={{ borderLeftColor: student.color }}
                 >
+                  {/* 学生选择checkbox */}
+                  {student.rawData && student.courseHours?.totalHours > 0 && (
+                    <input
+                      type="checkbox"
+                      className="student-selection-checkbox"
+                      checked={student.selected || false}
+                      onChange={() => toggleStudentSelection(student.id)}
+                      title="选择此学生进行排课"
+                    />
+                  )}
+                  
                   {/* 可用性显示toggle按钮 */}
                   {student.rawData && (
                     <button
@@ -1057,6 +1739,15 @@ const Function = () => {
                       <div className="student-meta">
                         {student.rawData ? '已导入数据' : '待排课'}
                       </div>
+                      {student.courseHours && student.courseHours.totalHours > 0 && (
+                        <div className="student-hours-badge">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginRight: '4px' }}>
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                            <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          </svg>
+                          剩余: {student.courseHours.remainingHours}/{student.courseHours.totalHours}课时
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="student-card-actions">
@@ -1187,6 +1878,7 @@ const Function = () => {
         {/* 右侧教师面板 */}
         <div className="teacher-panel">
           <div className="teacher-panel-header">
+            <div className="panel-header-title">教师列表</div>
             <button className="panel-action-btn add-btn" onClick={handleAddTeacher}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
@@ -1194,63 +1886,6 @@ const Function = () => {
                 <path d="M19 8v6M16 11h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               添加教师
-            </button>
-            <button className="panel-action-btn batch-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="2" />
-                <circle cx="17" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
-                <path d="M3 20c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="2" />
-                <path d="M15 20c0-2 1.5-3 3.5-3s3.5 1 3.5 3" stroke="currentColor" strokeWidth="2" />
-                <path d="M20 5v4M18 7h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              批量添加
-            </button>
-            <button className="panel-action-btn filter-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              筛选条件
-            </button>
-            <button
-              className={`panel-action-btn availability-btn ${false ? 'active' : ''}`}
-              onClick={() => { }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
-                <path d="M3 10h18" stroke="currentColor" strokeWidth="2" />
-                <path d="M9 4v6" stroke="currentColor" strokeWidth="2" />
-                <path d="M15 4v6" stroke="currentColor" strokeWidth="2" />
-              </svg>
-              可用时间
-            </button>
-            <button
-              className="panel-action-btn toggle-all-btn"
-              onClick={toggleAllTeachersAvailability}
-              disabled={teachers.filter(t => t.rawData).length === 0}
-              title="全选/取消全选教师可用性显示"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                {teachers.filter(t => t.rawData && t.showAvailability).length > 0 ? (
-                  <>
-                    <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" fill="currentColor" opacity="0.3" />
-                    <path d="M5 6.5l1.5 1.5L9 5.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" fill="currentColor" opacity="0.3" />
-                    <path d="M16 6.5l1.5 1.5L20 5.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" fill="currentColor" opacity="0.3" />
-                    <path d="M5 17.5l1.5 1.5L9 16.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" fill="currentColor" opacity="0.3" />
-                    <path d="M16 17.5l1.5 1.5L20 16.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </>
-                ) : (
-                  <>
-                    <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
-                    <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
-                    <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
-                    <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2" />
-                  </>
-                )}
-              </svg>
-              全选显示
             </button>
           </div>
 
@@ -1333,7 +1968,7 @@ const Function = () => {
         </div>
       </div>
 
-      {/* 教室可用性面板 */}
+      {/* 教室列表面板 */}
       <div className="classroom-panel">
         <div className="classroom-panel-header">
           <h3 className="classroom-panel-title">
@@ -1344,11 +1979,71 @@ const Function = () => {
               <circle cx="12" cy="14" r="1.5" fill="currentColor" />
               <circle cx="16" cy="14" r="1.5" fill="currentColor" />
             </svg>
-            教室可用性
+            教室列表
+            <span className="classroom-count">({classrooms.length}间)</span>
           </h3>
+          <button className="panel-action-btn add-btn" onClick={handleAddClassroom}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+              <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/>
+              <path d="M9 4v6M15 4v6" stroke="currentColor" strokeWidth="2"/>
+              <path d="M21 7v8M17 11h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            添加教室
+          </button>
         </div>
         <div className="classroom-panel-content">
-          {/* 预留：教室可用性内容将在此显示 */}
+          {classrooms.length === 0 ? (
+            <div className="classroom-empty">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.3 }}>
+                <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
+                <path d="M3 9h18M9 4v5M15 4v5" stroke="currentColor" strokeWidth="2" />
+              </svg>
+              <p>暂无教室</p>
+              <p className="hint">点击上方"添加教室"按钮导入</p>
+            </div>
+          ) : (
+            <div className="classroom-list">
+              {classrooms.map((classroom, index) => (
+                <div
+                  key={classroom.id}
+                  className="classroom-card"
+                >
+                  <div className="classroom-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+                      <path d="M7 10h10M7 14h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <div className="classroom-info">
+                    <div className="classroom-name">{classroom.name}</div>
+                    <div className="classroom-meta">
+                      <span className="classroom-campus">{classroom.campus}</span>
+                      <span className="classroom-capacity">· 容量{classroom.capacity}人</span>
+                      {classroom.priority && (
+                        <span className="classroom-priority">· 优先级{classroom.priority}</span>
+                      )}
+                    </div>
+                    {classroom.notes && (
+                      <div className="classroom-notes">{classroom.notes}</div>
+                    )}
+                  </div>
+                  <button
+                    className="classroom-delete-btn"
+                    onClick={() => {
+                      setClassrooms(prev => prev.filter(c => c.id !== classroom.id));
+                      scheduleContext.updateClassrooms(classrooms.filter(c => c.id !== classroom.id));
+                    }}
+                    title="删除教室"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1484,7 +2179,13 @@ const Function = () => {
                   <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
                   <path d="M12 16v-4M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
-                <span>从 <strong>前途塾1v1约课.xlsx</strong> 的 <strong>2512</strong> 表格中复制一整行学生数据粘贴到下方</span>
+                <span>从 <strong>前途塾1v1约课.xlsx</strong> 的 <strong>2512</strong> 表格中复制一整行学生数据粘贴到下方，然后可以：</span>
+              </div>
+              <div className="edit-instruction" style={{ marginTop: '8px', background: '#f0f9ff', border: '1px solid #0ea5e9', borderRadius: '6px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', flexShrink: 0, color: '#0ea5e9' }}>
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ color: '#0369a1' }}>✨ <strong>新功能：</strong>点击下方 <strong>"AI智能解析时间约束"</strong> 按钮，自动解析学生的时间偏好</span>
               </div>
 
               <div className="column-reference">
@@ -1509,6 +2210,17 @@ const Function = () => {
                   {(() => {
                     const parsedStudents = parseStudentRows(editingRawData);
                     const columns = EXCEL_COLUMNS.split('\t');
+
+                    if (parsedStudents.length === 0) {
+                      return (
+                        <div className="preview-error">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px', color: '#f59e0b' }}>
+                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          <span>无法解析数据。请确保复制了完整的Excel行数据（至少包含10个字段，用Tab分隔）</span>
+                        </div>
+                      );
+                    }
 
                     return (
                       <>
@@ -1559,6 +2271,27 @@ const Function = () => {
             <div className="modal-footer">
               <button className="modal-button modal-button-secondary" onClick={handleCancelEdit}>
                 取消
+              </button>
+              <button 
+                className="modal-button modal-button-nlp" 
+                onClick={handleOpenNLPReview}
+                disabled={!editingRawData || editingRawData.trim().length === 0}
+                style={{ 
+                  background: editingRawData && editingRawData.trim().length > 0 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : '#e5e7eb',
+                  color: editingRawData && editingRawData.trim().length > 0 ? 'white' : '#9ca3af',
+                  marginRight: '8px',
+                  cursor: editingRawData && editingRawData.trim().length > 0 ? 'pointer' : 'not-allowed'
+                }}
+                title={editingRawData && editingRawData.trim().length > 0 
+                  ? '点击使用AI解析学生时间约束' 
+                  : '请先粘贴Excel数据'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}>
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                AI智能解析时间约束
               </button>
               <button className="modal-button modal-button-primary" onClick={handleSaveEdit}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}>
@@ -1751,6 +2484,293 @@ const Function = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* NLP Constraint Review Dialog (NLP约束审核对话框) */}
+      {showNLPReview && nlpExcelData && (
+        <ConstraintReviewDialog
+          excelData={nlpExcelData}
+          onClose={() => {
+            setShowNLPReview(false);
+            setNlpExcelData(null);
+          }}
+          onApprove={handleNLPApproval}
+        />
+      )}
+
+      {/* Classroom Management Modal (教室管理弹窗) */}
+      {showClassroomModal && (
+        <div className="modal-overlay" onClick={() => setShowClassroomModal(false)}>
+          <div className="modal-content large-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>添加教室数据</h3>
+              <button className="modal-close-btn" onClick={() => setShowClassroomModal(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-instructions">
+                <p>请从Excel复制教室数据并粘贴到下方文本框：</p>
+                <ul>
+                  <li>支持多行粘贴</li>
+                  <li>系统将自动解析教室名称、校区、容量等信息</li>
+                </ul>
+              </div>
+              <textarea
+                className="data-input-textarea"
+                value={editingClassroomData}
+                onChange={(e) => setEditingClassroomData(e.target.value)}
+                placeholder="从Excel复制教室数据粘贴到这里...&#10;格式: 教室名称	校区	容量	可用时间"
+                rows={15}
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn cancel-btn" onClick={() => setShowClassroomModal(false)}>
+                取消
+              </button>
+              <button className="modal-btn save-btn" onClick={handleSaveClassrooms}>
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Data Cleaning Progress Modal (AI数据清洗进度弹窗) */}
+      {showCleaningModal && (
+        <div className="modal-overlay" style={{ zIndex: 30000 }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>🧹 AI智能数据清洗中</h3>
+            </div>
+            <div className="modal-body" style={{ padding: '30px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ 
+                  fontSize: '48px', 
+                  marginBottom: '15px',
+                  animation: 'spin 2s linear infinite'
+                }}>
+                  🤖
+                </div>
+                <p style={{ fontSize: '16px', color: '#2D3748', marginBottom: '10px' }}>
+                  正在使用AI智能解析学生数据...
+                </p>
+                <p style={{ fontSize: '14px', color: '#718096' }}>
+                  AI正在理解并格式化课时、频次、时长等字段
+                </p>
+              </div>
+              
+              {cleaningProgress.total > 0 && (
+                <div>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    marginBottom: '8px',
+                    fontSize: '14px',
+                    color: '#4A5568'
+                  }}>
+                    <span>进度: {cleaningProgress.current} / {cleaningProgress.total}</span>
+                    <span>{Math.round((cleaningProgress.current / cleaningProgress.total) * 100)}%</span>
+                  </div>
+                  <div style={{
+                    width: '100%',
+                    height: '8px',
+                    backgroundColor: '#E2E8F0',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{
+                      width: `${(cleaningProgress.current / cleaningProgress.total) * 100}%`,
+                      height: '100%',
+                      backgroundColor: '#805AD5',
+                      transition: 'width 0.3s ease'
+                    }}></div>
+                  </div>
+                  {cleaningProgress.name && (
+                    <p style={{ 
+                      fontSize: '13px', 
+                      color: '#718096',
+                      textAlign: 'center',
+                      fontStyle: 'italic'
+                    }}>
+                      当前清洗: {cleaningProgress.name}
+                    </p>
+                  )}
+                </div>
+              )}
+              
+              <div style={{
+                marginTop: '20px',
+                padding: '12px',
+                backgroundColor: '#F7FAFC',
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: '#4A5568'
+              }}>
+                <p style={{ margin: '0 0 6px 0' }}>💡 <strong>AI正在做什么？</strong></p>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <li>理解模糊的频次描述（如"多次"→4次/周）</li>
+                  <li>统一时长格式（如"90分钟"→1.5小时）</li>
+                  <li>自动计算总课时（频次×时长×周数）</li>
+                  <li>解析起止时间并计算有效期</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Scheduling Result Modal (排课结果弹窗) */}
+      {showScheduleResult && scheduleResultData && (
+        <div className="modal-overlay" onClick={() => setShowScheduleResult(false)}>
+          <div className="modal-content result-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>排课完成</h3>
+              <button className="modal-close-btn" onClick={() => setShowScheduleResult(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="result-stats">
+                <div className="result-stat-item success">
+                  <div className="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                      <path d="M8 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-label">成功排课</div>
+                    <div className="stat-value">{scheduleResultData.successCount}名学生</div>
+                  </div>
+                </div>
+                <div className="result-stat-item hours">
+                  <div className="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                      <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-label">课时消耗</div>
+                    <div className="stat-value">{scheduleResultData.totalHoursScheduled.toFixed(1)}课时</div>
+                  </div>
+                </div>
+                <div className="result-stat-item courses">
+                  <div className="stat-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M3 10h18M9 4v6M15 4v6" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-label">安排课程</div>
+                    <div className="stat-value">{scheduleResultData.scheduledCourses.length}节课</div>
+                  </div>
+                </div>
+              </div>
+              {scheduleResultData.failedCount > 0 && (
+                <div className="result-errors">
+                  <h4>未能排课的学生 ({scheduleResultData.failedCount})</h4>
+                  <ul>
+                    {scheduleResultData.errors.map((error, idx) => (
+                      <li key={idx}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="modal-btn cancel-btn" 
+                onClick={() => setShowScheduleResult(false)}
+              >
+                关闭
+              </button>
+              <button 
+                className="modal-btn primary-btn"
+                onClick={() => {
+                  setShowScheduleResult(false);
+                  window.location.href = '/finalschedule';
+                }}
+              >
+                查看最终课表
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 悬浮一键排课按钮 (Floating One-Click Schedule Button) */}
+      <button
+        className={`floating-schedule-btn ${
+          students.filter(s => s.rawData && s.courseHours?.totalHours > 0).length === 0 || isScheduling
+            ? 'disabled'
+            : getSelectedStudents().length > 0
+            ? 'active'
+            : ''
+        }`}
+        onClick={handleOneClickSchedule}
+        disabled={
+          students.filter(s => s.rawData && s.courseHours?.totalHours > 0).length === 0 ||
+          isScheduling ||
+          getSelectedStudents().length === 0
+        }
+        title={
+          students.filter(s => s.rawData && s.courseHours?.totalHours > 0).length === 0
+            ? '请先导入有课时的学生数据'
+            : getSelectedStudents().length === 0
+            ? '请至少选择一个学生'
+            : `为${getSelectedStudents().length}名学生排课`
+        }
+      >
+        {isScheduling ? (
+          <>
+            <div className="spinner"></div>
+            <span className="btn-text">排课中</span>
+            {scheduleProgress > 0 && (
+              <span className="btn-progress">{scheduleProgress}%</span>
+            )}
+          </>
+        ) : (
+          <>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="btn-icon">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+              <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2"/>
+              <path d="M8 14h2M14 14h2M8 18h2M14 18h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <span className="btn-text">一键排课</span>
+            {getSelectedStudents().length > 0 && (
+              <span className="btn-badge">{getSelectedStudents().length}</span>
+            )}
+          </>
+        )}
+      </button>
+
+      {/* 排课进度浮层 (Scheduling Progress Overlay) */}
+      {isScheduling && (
+        <div className="scheduling-progress-overlay">
+          <div className="progress-content">
+            <div className="progress-spinner">
+              <div className="spinner-large"></div>
+            </div>
+            <div className="progress-info">
+              <div className="progress-title">正在智能排课...</div>
+              {currentSchedulingStudent && (
+                <div className="progress-student">当前: {currentSchedulingStudent}</div>
+              )}
+              <div className="progress-bar-container">
+                <div className="progress-bar-fill" style={{ width: `${scheduleProgress}%` }}></div>
+              </div>
+              <div className="progress-percent">{scheduleProgress}%</div>
+            </div>
           </div>
         </div>
       )}

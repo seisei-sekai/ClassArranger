@@ -1,29 +1,96 @@
-// 遗传算法核心 - 自动排课引擎
-// 基于 AlmanacAI 的思想实现
+/**
+ * Enhanced Genetic Algorithm - Automated Scheduling Engine
+ * 增强遗传算法核心 - 自动排课引擎
+ * 
+ * Enhanced with:
+ * - Constraint engine integration (约束引擎集成)
+ * - Intelligent mutation (智能变异)
+ * - Adaptive parameters (自适应参数)
+ * - Improved fitness function (改进的适应度函数)
+ * 
+ * Based on AlmanacAI methodology (基于 AlmanacAI 的思想实现)
+ */
 
 class GeneticAlgorithm {
   constructor(config) {
-    this.populationSize = config.populationSize || 50;
-    this.mutationRate = config.mutationRate || 0.1;
-    this.crossoverRate = config.crossoverRate || 0.7;
+    // Population parameters (种群参数)
+    this.populationSize = config.populationSize || 100;
+    this.baseMutationRate = config.mutationRate || 0.15;
+    this.mutationRate = this.baseMutationRate;
+    this.crossoverRate = config.crossoverRate || 0.8;
     this.elitismRate = config.elitismRate || 0.1;
-    this.maxGenerations = config.maxGenerations || 100;
+    this.maxGenerations = config.maxGenerations || 200;
     
-    // 排课约束
+    // Scheduling constraints (排课约束)
     this.teachers = config.teachers || [];
     this.students = config.students || [];
     this.rooms = config.rooms || [];
     this.courses = config.courses || [];
     this.timeSlots = config.timeSlots || [];
+    
+    // Enhanced features (增强功能)
+    this.constraintEngine = config.constraintEngine || null;
+    this.initialSchedule = config.initialSchedule || null; // From heuristic search (来自启发式搜索)
+    
+    // Adaptive parameters (自适应参数)
+    this.stagnationCounter = 0;
+    this.bestFitnessHistory = [];
+    this.diversityThreshold = 0.3;
+    
+    // Statistics (统计)
+    this.generationStats = [];
   }
 
-  // 生成初始种群
+  /**
+   * Generate initial population with intelligent initialization
+   * 生成初始种群（智能初始化）
+   * 
+   * If initialSchedule provided, use it as seed (如果提供初始解，用作种子)
+   */
   generateInitialPopulation() {
     const population = [];
-    for (let i = 0; i < this.populationSize; i++) {
+    
+    // If initial schedule provided, add it first (如果提供了初始解，首先添加它)
+    if (this.initialSchedule && this.initialSchedule.length > 0) {
+      population.push([...this.initialSchedule]);
+      
+      // Create variations of initial schedule (创建初始解的变体)
+      const variationCount = Math.floor(this.populationSize * 0.3);
+      for (let i = 0; i < variationCount; i++) {
+        const variation = this.createVariation(this.initialSchedule);
+        population.push(variation);
+      }
+    }
+    
+    // Fill rest with random schedules (用随机课表填充剩余)
+    while (population.length < this.populationSize) {
       population.push(this.createRandomSchedule());
     }
+    
     return population;
+  }
+  
+  /**
+   * Create variation of a schedule
+   * 创建课表的变体
+   */
+  createVariation(schedule) {
+    const variation = JSON.parse(JSON.stringify(schedule));
+    const mutationCount = Math.floor(variation.length * 0.1); // Mutate 10%
+    
+    for (let i = 0; i < mutationCount; i++) {
+      const randomIndex = Math.floor(Math.random() * variation.length);
+      const course = variation[randomIndex];
+      
+      // Randomly change time or room (随机改变时间或教室)
+      if (Math.random() < 0.5 && this.timeSlots.length > 0) {
+        course.timeSlot = this.timeSlots[Math.floor(Math.random() * this.timeSlots.length)];
+      } else if (this.rooms.length > 0) {
+        course.room = this.rooms[Math.floor(Math.random() * this.rooms.length)];
+      }
+    }
+    
+    return variation;
   }
 
   // 创建随机课表（一个个体）
@@ -50,23 +117,48 @@ class GeneticAlgorithm {
     return schedule;
   }
 
-  // 适应度函数（评分）
+  /**
+   * Enhanced fitness function with constraint engine integration
+   * 增强的适应度函数（集成约束引擎）
+   * 
+   * @param {Array} schedule - Course schedule (课表)
+   * @returns {number} Fitness score (适应度分数)
+   */
   calculateFitness(schedule) {
+    // If constraint engine available, use it (如果有约束引擎，使用它)
+    if (this.constraintEngine) {
+      const result = this.constraintEngine.calculateViolationScore(schedule, {
+        teachers: this.teachers,
+        students: this.students,
+        rooms: this.rooms
+      });
+      return result.score;
+    }
+    
+    // Fallback to legacy fitness calculation (回退到传统适应度计算)
+    return this.calculateLegacyFitness(schedule);
+  }
+  
+  /**
+   * Legacy fitness calculation
+   * 传统适应度计算
+   */
+  calculateLegacyFitness(schedule) {
     let fitness = 100;
     const conflicts = this.findConflicts(schedule);
     
-    // 硬约束违规（严重扣分）
-    fitness -= conflicts.teacherConflicts * 20;  // 教师冲突
-    fitness -= conflicts.studentConflicts * 20;  // 学生冲突
-    fitness -= conflicts.roomConflicts * 15;     // 教室冲突
+    // Hard constraint violations (严重扣分) (硬约束违规)
+    fitness -= conflicts.teacherConflicts * 20;  // Teacher conflicts (教师冲突)
+    fitness -= conflicts.studentConflicts * 20;  // Student conflicts (学生冲突)
+    fitness -= conflicts.roomConflicts * 15;     // Room conflicts (教室冲突)
     
-    // 软约束违规（轻微扣分）
-    fitness -= conflicts.lunchTimeViolations * 5; // 午休时间
-    fitness -= conflicts.consecutiveClasses * 3;  // 连续上课过多
-    fitness -= conflicts.earlyMorningClasses * 2; // 早晨课程
-    fitness -= conflicts.lateEveningClasses * 2;  // 晚间课程
+    // Soft constraint violations (轻微扣分) (软约束违规)
+    fitness -= conflicts.lunchTimeViolations * 5; // Lunch time (午休时间)
+    fitness -= conflicts.consecutiveClasses * 3;  // Consecutive classes (连续上课过多)
+    fitness -= conflicts.earlyMorningClasses * 2; // Early morning (早晨课程)
+    fitness -= conflicts.lateEveningClasses * 2;  // Late evening (晚间课程)
     
-    // 奖励分散的课程安排
+    // Reward distributed scheduling (奖励分散的课程安排)
     fitness += this.calculateDistributionScore(schedule) * 2;
     
     return Math.max(0, fitness);

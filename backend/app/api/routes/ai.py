@@ -1,9 +1,11 @@
 """
-AI Routes - Mock版本
+AI Routes - Mock版本 + OpenAI Proxy
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+import os
+from openai import OpenAI
 
 from app.services.mock_ai_service import (
     generate_mock_insight,
@@ -15,6 +17,11 @@ from app.services.mock_ai_service import (
 from app.api.routes.auth import get_current_user
 
 router = APIRouter()
+
+# Initialize OpenAI client (API key from environment variable)
+openai_client = None
+if os.getenv("OPENAI_API_KEY"):
+    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 class InsightRequest(BaseModel):
@@ -138,6 +145,97 @@ async def ai_health_check():
         "status": "healthy",
         "service": "mock-ai",
         "version": "1.0.0",
-        "note": "Mock AI服务运行正常"
+        "note": "Mock AI服务运行正常",
+        "openai_configured": openai_client is not None
     }
+
+
+# ============================================
+# OpenAI Proxy for Constraint Parsing
+# ============================================
+
+class ConstraintParseRequest(BaseModel):
+    """Request body for parsing student constraints"""
+    system_prompt: str
+    user_prompt: str
+    model: str = "gpt-4o-mini"
+    temperature: float = 0
+
+
+class ConstraintParseResponse(BaseModel):
+    """Response from OpenAI constraint parsing"""
+    content: str
+    model: str
+    usage: Dict
+
+
+@router.post("/openai/parse-constraint")
+async def parse_constraint_with_openai(request: ConstraintParseRequest):
+    """
+    Proxy endpoint for OpenAI API calls to parse student constraints.
+    
+    This endpoint solves CORS issues by acting as a server-side proxy.
+    Frontend calls this endpoint, which then calls OpenAI API.
+    
+    Args:
+        request: Contains system_prompt, user_prompt, model, and temperature
+    
+    Returns:
+        Parsed constraint as JSON string
+    
+    Raises:
+        HTTPException: If OpenAI client is not configured or API call fails
+    """
+    # Check if OpenAI is configured
+    if not openai_client:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "OpenAI API not configured on server",
+                "message": "请在服务器端配置 OPENAI_API_KEY 环境变量",
+                "instructions": [
+                    "1. 在后端添加 OPENAI_API_KEY 到环境变量",
+                    "2. 在 docker-compose.yml 的 backend 服务中添加环境变量",
+                    "3. 重启后端服务"
+                ]
+            }
+        )
+    
+    try:
+        # Call OpenAI API
+        response = openai_client.chat.completions.create(
+            model=request.model,
+            messages=[
+                {"role": "system", "content": request.system_prompt},
+                {"role": "user", "content": request.user_prompt}
+            ],
+            temperature=request.temperature,
+            response_format={"type": "json_object"}
+        )
+        
+        # Extract response
+        content = response.choices[0].message.content
+        
+        return {
+            "content": content,
+            "model": response.model,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+        }
+    
+    except Exception as e:
+        # Log the error (in production, use proper logging)
+        print(f"OpenAI API Error: {str(e)}")
+        
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "OpenAI API call failed",
+                "message": str(e),
+                "type": type(e).__name__
+            }
+        )
 

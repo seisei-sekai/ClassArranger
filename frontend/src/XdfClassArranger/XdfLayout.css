@@ -1,13 +1,65 @@
 /* ============================================
    ERP 布局样式 - 日系性冷淡风格
+   Theme Support (主题支持)
 ============================================ */
+
+/* Bright Mode Variables (亮色模式变量) */
+:root[data-theme="bright"], :root {
+  --bg-primary: #FAFAFA;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F5F5F0;
+  --bg-hover: #F5F5F0;
+  --bg-active: #3A4750;
+  
+  --text-primary: #2D3748;
+  --text-secondary: #718096;
+  --text-tertiary: #5A6C7D;
+  --text-inverse: #FFFFFF;
+  
+  --border-primary: #E8E8E8;
+  --border-secondary: #D8D8D8;
+  
+  --accent-primary: #3A4750;
+  --accent-secondary: #5A6C7D;
+  --accent-tertiary: #6B7C6E;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 12px rgba(90, 108, 125, 0.15);
+}
+
+/* Dark Mode Variables (暗色模式变量) */
+:root[data-theme="dark"] {
+  --bg-primary: #1A1D1F;
+  --bg-secondary: #232629;
+  --bg-tertiary: #2A2D31;
+  --bg-hover: #2F3438;
+  --bg-active: #4A5568;
+  
+  --text-primary: #E2E8F0;
+  --text-secondary: #A0AEC0;
+  --text-tertiary: #94A3B8;
+  --text-inverse: #1A1D1F;
+  
+  --border-primary: #3A3F45;
+  --border-secondary: #4A5059;
+  
+  --accent-primary: #5A6C7D;
+  --accent-secondary: #6B7C8D;
+  --accent-tertiary: #7C8D9E;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
 
 .xdf-erp-layout {
   display: flex;
   height: 100vh;
-  background: #FAFAFA;
+  background: var(--bg-primary);
   font-family: 'Noto Sans', 'Noto Sans JP', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow: hidden;
+  transition: background 0.3s ease;
 }
 
 /* ============================================
@@ -20,12 +72,13 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: #FFFFFF;
-  border-bottom: 1px solid #E8E8E8;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
   align-items: center;
   padding: 0 16px;
   z-index: 100;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
 }
 
 .mobile-menu-toggle {
@@ -33,7 +86,7 @@
   height: 40px;
   border: none;
   background: transparent;
-  color: #5A6C7D;
+  color: var(--text-tertiary);
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.2s;
@@ -43,14 +96,14 @@
 }
 
 .mobile-menu-toggle:hover {
-  background: #F5F5F0;
+  background: var(--bg-hover);
 }
 
 .mobile-title {
   flex: 1;
   font-size: 18px;
   font-weight: 500;
-  color: #2D3748;
+  color: var(--text-primary);
   text-align: center;
 }
 
@@ -63,13 +116,17 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: #5A6C7D;
-  color: white;
+  background: var(--accent-secondary);
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   font-weight: 500;
+}
+
+:root[data-theme="dark"] .avatar-circle {
+  color: white;
 }
 
 /* ============================================
@@ -78,8 +135,8 @@
 .erp-sidebar {
   width: 260px;
   height: 100vh;
-  background: #FFFFFF;
-  border-right: 1px solid #E8E8E8;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -99,7 +156,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  border-bottom: 1px solid #E8E8E8;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .logo-area {
@@ -115,7 +172,7 @@
 .logo-text {
   font-size: 18px;
   font-weight: 500;
-  color: #3A4750;
+  color: var(--accent-primary);
   white-space: nowrap;
   letter-spacing: 0.02em;
 }
@@ -124,9 +181,9 @@
   width: 32px;
   height: 32px;
   border: none;
-  background: #F5F5F0;
+  background: var(--bg-tertiary);
   border-radius: 6px;
-  color: #5A6C7D;
+  color: var(--text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -135,8 +192,8 @@
 }
 
 .sidebar-toggle:hover {
-  background: #E8E8E8;
-  color: #3A4750;
+  background: var(--bg-hover);
+  color: var(--accent-primary);
 }
 
 .erp-sidebar.collapsed .sidebar-toggle svg {
@@ -162,7 +219,7 @@
   border: none;
   background: transparent;
   border-radius: 6px;
-  color: #718096;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 400;
   cursor: pointer;
@@ -172,12 +229,12 @@
 }
 
 .nav-item:hover {
-  background: #F5F5F0;
-  color: #4A5568;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .nav-item.active {
-  background: #3A4750;
+  background: var(--bg-active);
   color: #FFFFFF;
   font-weight: 500;
 }
@@ -205,7 +262,7 @@
   transform: translateY(-50%);
   width: 3px;
   height: 20px;
-  background: #5A6C7D;
+  background: var(--accent-secondary);
   border-radius: 2px 0 0 2px;
 }
 
@@ -225,10 +282,66 @@
 /* 侧边栏底部 */
 .sidebar-footer {
   padding: 16px;
-  border-top: 1px solid #E8E8E8;
+  border-top: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* 主题切换按钮 */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  width: 100%;
+  text-align: left;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-secondary);
+}
+
+.theme-toggle.dark {
+  background: #3A4750;
+  border-color: #5A6C7D;
+  color: #E2E8F0;
+}
+
+.theme-toggle.bright {
+  background: #F5F5F0;
+  border-color: #E8E8E8;
+  color: #5A6C7D;
+}
+
+.theme-toggle .toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.theme-toggle .toggle-text {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.erp-sidebar.collapsed .theme-toggle {
+  padding: 10px;
+  justify-content: center;
+}
+
+.erp-sidebar.collapsed .theme-toggle .toggle-text {
+  display: none;
 }
 
 /* 测试数据开关 */
@@ -237,27 +350,33 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: #FFFFFF;
-  border: 1px solid #E8E8E8;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 12px;
-  color: #718096;
+  color: var(--text-secondary);
   font-weight: 500;
   width: 100%;
   text-align: left;
 }
 
 .test-data-toggle:hover {
-  background: #F5F5F0;
-  border-color: #5A6C7D;
+  background: var(--bg-hover);
+  border-color: var(--accent-secondary);
 }
 
 .test-data-toggle.active {
   background: #E8F0E9;
   border-color: #6B7C6E;
   color: #6B7C6E;
+}
+
+:root[data-theme="dark"] .test-data-toggle.active {
+  background: #2D4A3B;
+  border-color: #4A6B5A;
+  color: #7CBA9E;
 }
 
 .test-data-toggle .toggle-icon {
@@ -292,7 +411,7 @@
 }
 
 .user-info:hover {
-  background: #F5F5F0;
+  background: var(--bg-hover);
 }
 
 .user-avatar {
@@ -309,7 +428,7 @@
 .user-name {
   font-size: 13px;
   font-weight: 500;
-  color: #2D3748;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -317,7 +436,7 @@
 
 .user-role {
   font-size: 11px;
-  color: #718096;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -337,8 +456,8 @@
 .erp-main-content {
   flex: 1;
   overflow: hidden;
-  background: #FAFAFA;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
   height: 100vh;
   display: flex;
@@ -359,13 +478,15 @@
 
 .sidebar-nav::-webkit-scrollbar-thumb,
 .erp-main-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--text-secondary);
+  opacity: 0.4;
   border-radius: 3px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover,
 .erp-main-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--text-tertiary);
+  opacity: 0.6;
 }
 
 /* ============================================
@@ -427,6 +548,10 @@
     background: rgba(0, 0, 0, 0.5);
     z-index: 100;
     animation: fadeIn 0.2s;
+  }
+
+  :root[data-theme="dark"] .mobile-overlay {
+    background: rgba(0, 0, 0, 0.7);
   }
 
   @keyframes fadeIn {
