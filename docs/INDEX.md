@@ -36,10 +36,92 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 
 ### 💻 开发指南
 
+- **[⭐ 用户管理页面](./user-management-page.md) - 管理员CRUD用户界面**
+  - 包含：查看所有用户、创建用户、编辑用户、删除用户、查看详情、表格界面
+  - 创建时间：2026-02-02
+  - 状态：✅ **最新 · 完整 · Admin Only**
+  - 适用于：管理员管理系统用户账户
+
+- **[⭐ 认证与备份系统设置指南](./auth-and-backup-setup.md) - 用户登录和数据库备份完整指南**
+  - 包含：JWT认证、角色管理、自动备份、手动备份、MongoDB集成、安全配置
+  - 创建时间：2026-02-02
+  - 最后更新：2026-02-02
+  - 状态：✅ **最新 · 完整 · Production Ready**
+  - 适用于：设置用户认证、管理数据库备份、角色权限配置
+
+- **[⭐ LocalStorage数据持久化](./localStorage-implementation.md) - 自动保存所有数据到浏览器**
+  - 包含：架构设计、自动保存、自动加载、清空功能、Storage API、故障排查
+  - 创建时间：2026-01-27
+  - 最后更新：2026-01-27
+  - 状态：✅ **最新 · 完整 · Production Ready**
+  - 适用于：理解数据持久化机制、localStorage管理、数据恢复
+
 - **[本地运行指南](./local-run.md) - 本地开发环境设置**
   - 包含：Docker Compose 本地开发、热重载、调试
   - 创建时间：2026-01-22
   - 适用于：本地开发和测试
+
+- **[⭐ 实验页面实施总结](./experiment-page-implementation.md) - 1v1排课系统实验页面**
+  - 包含：数据结构文档、算法说明、可视化演示、随机数据生成
+  - 创建时间：2026-02-02
+  - 状态：✅ **最新 · 完整 · 教学演示**
+  - 适用于：理解排课算法、测试排课系统、教学演示
+
+- **[⭐ Experiment2实施总结](./experiment2-implementation.md) - 前途塾1v1排课系统**
+  - 包含：真实业务数据支持、Excel导入、三方匹配、增强日历、数据持久化
+  - 创建时间：2026-02-02
+  - 状态：✅ **最新 · 生产可用 · 管理员友好**
+  - 适用于：实际业务排课、非技术人员使用、真实数据处理
+
+- **[⭐ Experiment3设置总结](./experiment3-setup.md) - Function完整版克隆**
+  - 包含：70个文件完整复制、AI集成、NLP解析、Web Worker、FullCalendar
+  - 创建时间：2026-02-02
+  - 状态：✅ **最新 · 完整功能 · 高级特性**
+  - 适用于：复杂排课场景、AI辅助、大规模数据、生产环境（完整版）
+
+- **[⭐⭐⭐ Experiment3优化实施总结](./experiment3-optimization-summary.md) - 修复Function核心问题 - 必读**
+  - 包含：集成Exp1/2算法、混合日历视图、算法适配器、数据流整合、完整测试
+  - 创建时间：2026-02-02
+  - 状态：✅ **最新 · 核心修复完成 · 生产可用 · 推荐使用**
+  - 适用于：从Function迁移、真实业务排课、三种算法选择、混合视图
+  - 快速指南：`frontend/src/XdfClassArranger/Experiment3/QUICK_START.md`
+
+- **[⭐⭐⭐⭐⭐ Experiment3新约束系统指南](./experiment3-constraint-system-guide.md) - 10类约束系统完整指南**
+  - 包含：10类约束详解、AI自动解析、手动编辑、测试数据生成、FAQ
+  - 创建时间：2026-02-03
+  - 状态：✅ **最新 · 生产可用 · 非技术人员友好**
+  - 适用于：所有使用者、学管人员、教务管理
+  - 快速参考：`frontend/src/XdfClassArranger/Experiment3/CONSTRAINT_SYSTEM_QUICK_START.md`
+
+- **[Experiment3新约束系统实施总结](./experiment3-constraint-system-implementation.md) - 技术实施文档**
+  - 包含：架构设计、文件清单、性能指标、测试覆盖、技术创新
+  - 创建时间：2026-02-03
+  - 状态：✅ **已完成 · 全部10个阶段**
+  - 适用于：开发人员、技术团队
+
+- **[Experiment3 Dark Mode修复](./experiment3-dark-mode-fix.md)**
+  - 包含：Dark Mode显示问题修复、CSS变量使用、Classroom Panel宽度调整
+  - 创建时间：2026-02-02
+  - 状态：✅ 已修复
+  - 修复内容：日历控制面板dark mode适配、classroom panel布局优化
+
+- **[OpenAI API配置指南](./openai-setup-guide.md)**
+  - 包含：获取API密钥、配置方法、错误排查、费用估算、安全建议
+  - 创建时间：2026-02-02
+  - 状态：📖 配置指南
+  - 适用于：需要使用AI智能解析功能的用户
+
+- **[实验页面对比指南](./experiments-comparison.md) - 三个实验页面完整对比**
+  - 包含：详细功能对比、性能分析、使用场景推荐、迁移指南
+  - 创建时间：2026-02-02
+  - 状态：✅ **最新 · 完整对比 · 选择指南**
+  - 适用于：选择合适的实验页面、了解差异、规划升级路径
+
+- **[实验页面问题修复日志](./experiment-page-bugfix-log.md) - Bug修复记录**
+  - 包含：ga.run错误修复、时间槽格式修复、详细测试步骤
+  - 创建时间：2026-02-02
+  - 状态：✅ **问题已解决**
+  - 适用于：故障排查、版本更新参考
 
 - **[Mock 模式指南](./mock-mode-guide.md) - Mock 模式使用和配置**
   - 包含：Mock 数据、Mock 服务、测试账号
@@ -74,6 +156,13 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
   - 适用于：解决课时数据模糊、格式不标准等问题
 
 ### 📅 排课系统指南
+
+- **[⭐⭐⭐ 排课调整系统实施总结](./schedule-adjustment-implementation.md) - 冲突解决与迭代调整**
+  - 包含：冲突分析、智能建议、数据修改追踪、批量重试、修改历史、完整流程
+  - 创建时间：2026-02-03
+  - 最后更新：2026-02-03
+  - 状态：✅ **最新 · 模块化设计 · Production Ready**
+  - 适用于：解决排课冲突、优化排课结果、追踪数据修改
 
 - **[⭐ 课时计算和一键排课使用指南](./课时计算和一键排课使用指南.md) - 智能课时计算与悬浮一键排课**
   - 包含：智能课时计算、有效周期解析、悬浮一键排课按钮、完整使用流程、常见问题
@@ -176,6 +265,31 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 ---
 
 ## 🔄 Recently Updated
+
+- **2026-02-02**: 用户管理界面
+  - ✅ 新增 `user-management-page.md` - 完整的用户管理CRUD界面文档
+  - ✅ 创建管理员专用用户管理页面 `/user_management`
+  - ✅ 表格视图显示所有用户
+  - ✅ 创建、查看、编辑、删除用户功能
+  - ✅ 角色徽章和颜色编码
+  - ✅ 模态窗口表单界面
+  - ✅ 完整的验证和错误处理
+  - ✅ 统一的日系性冷淡风格设计
+
+- **2026-02-02**: 认证与备份系统
+  - ✅ 新增 `auth-and-backup-setup.md` - 完整的认证和备份系统指南
+  - ✅ 实现 JWT 认证和角色管理（Admin, Teacher, Staff, Student）
+  - ✅ MongoDB数据库集成替代内存存储
+  - ✅ 自动备份系统（每周备份，30天保留）
+  - ✅ 手动备份、下载、删除功能
+  - ✅ 登录页面和受保护路由
+  - ✅ 管理员专用注册页面
+
+- **2026-01-27**: 数据持久化功能
+  - ✅ 新增 `localStorage-implementation.md` - 完整的localStorage持久化系统
+  - ✅ 实现所有数据自动保存到localStorage
+  - ✅ 页面刷新/浏览器重启后数据自动恢复
+  - ✅ 清空按钮功能增强（清空所有数据）
 
 - **2026-01-23**: 重大更新
   - ✅ 合并冗余文档（删除 8 个重复/过时文档）
@@ -304,6 +418,6 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 
 ---
 
-**Last Updated:** 2026-01-23  
-**Total Documents:** 7 核心文档 + 1 脚本说明  
+**Last Updated:** 2026-02-02  
+**Total Documents:** 10 核心文档 + 1 脚本说明  
 **Status:** ✅ 最新 · 完整 · Best Practice

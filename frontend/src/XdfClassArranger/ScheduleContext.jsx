@@ -8,6 +8,13 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getCourseHoursManager } from './Function/utils/courseHoursManager';
+import {
+  studentsStorage,
+  teachersStorage,
+  classroomsStorage,
+  scheduledCoursesStorage,
+  schedulingMetadataStorage,
+} from './services/localStorageService';
 
 const ScheduleContext = createContext();
 
@@ -19,34 +26,39 @@ const ScheduleContext = createContext();
  * 包裹应用并提供排课状态
  */
 export const ScheduleProvider = ({ children }) => {
-  // Scheduled courses state
-  // 已排课程状态
-  const [scheduledCourses, setScheduledCourses] = useState([]);
-  
-  // All students (including those not yet scheduled)
-  // 所有学生（包括尚未排课的）
-  const [allStudents, setAllStudents] = useState([]);
-  
-  // All teachers
-  // 所有老师
-  const [allTeachers, setAllTeachers] = useState([]);
-  
-  // All classrooms
-  // 所有教室
-  const [allClassrooms, setAllClassrooms] = useState([]);
+  // Initialize state from localStorage
+  // 从localStorage初始化状态
+  const [scheduledCourses, setScheduledCourses] = useState(() => scheduledCoursesStorage.load());
+  const [allStudents, setAllStudents] = useState(() => studentsStorage.load());
+  const [allTeachers, setAllTeachers] = useState(() => teachersStorage.load());
+  const [allClassrooms, setAllClassrooms] = useState(() => classroomsStorage.load());
+  const [schedulingMetadata, setSchedulingMetadata] = useState(() => schedulingMetadataStorage.load());
   
   // Course hours manager instance
   // 课时管理器实例
   const [hoursManager] = useState(() => getCourseHoursManager());
-  
-  // Scheduling metadata
-  // 排课元数据
-  const [schedulingMetadata, setSchedulingMetadata] = useState({
-    lastScheduledAt: null,
-    totalCoursesScheduled: 0,
-    totalHoursScheduled: 0,
-    conflictsDetected: 0
-  });
+
+  // Auto-save to localStorage when data changes
+  // 数据变化时自动保存到localStorage
+  useEffect(() => {
+    scheduledCoursesStorage.save(scheduledCourses);
+  }, [scheduledCourses]);
+
+  useEffect(() => {
+    studentsStorage.save(allStudents);
+  }, [allStudents]);
+
+  useEffect(() => {
+    teachersStorage.save(allTeachers);
+  }, [allTeachers]);
+
+  useEffect(() => {
+    classroomsStorage.save(allClassrooms);
+  }, [allClassrooms]);
+
+  useEffect(() => {
+    schedulingMetadataStorage.save(schedulingMetadata);
+  }, [schedulingMetadata]);
 
   /**
    * Add scheduled courses
@@ -115,6 +127,10 @@ export const ScheduleProvider = ({ children }) => {
       totalHoursScheduled: 0,
       conflictsDetected: 0
     });
+    
+    // Clear localStorage
+    scheduledCoursesStorage.clear();
+    schedulingMetadataStorage.clear();
   }, [hoursManager]);
 
   /**

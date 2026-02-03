@@ -24,6 +24,15 @@ import {
 import ConstraintReviewDialog from './components/ConstraintReviewDialog';
 import { getNLPLogger } from './utils/nlpLogger';
 import { batchCleanStudentData, needsCleaning } from './services/studentDataCleanerService';
+import {
+  studentsStorage,
+  teachersStorage,
+  classroomsStorage,
+  eventsStorage,
+  aiResultStorage,
+  countersStorage,
+  clearAllLocalStorage,
+} from '../services/localStorageService';
 import './Function.css';
 
 const Function = () => {
@@ -36,7 +45,8 @@ const Function = () => {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [aiResult, setAIResult] = useState(null);
+  // Initialize from localStorage
+  const [aiResult, setAIResult] = useState(() => aiResultStorage.load());
   const [showTutorial, setShowTutorial] = useState(false);
   
   // NLP Constraint Review Dialog state (NLP约束审核对话框状态)
@@ -44,19 +54,22 @@ const Function = () => {
   const [nlpExcelData, setNlpExcelData] = useState(null);
 
   // 学生列表状态 (Student list state)
-  const [students, setStudents] = useState([]);
-  const [studentCounter, setStudentCounter] = useState(0);
+  // Initialize from localStorage
+  const [students, setStudents] = useState(() => studentsStorage.load());
+  const [studentCounter, setStudentCounter] = useState(() => countersStorage.loadStudentCounter());
   const [editingStudent, setEditingStudent] = useState(null); // 当前编辑的学生
   const [editingRawData, setEditingRawData] = useState(''); // 编辑中的原始数据
 
   // 教师列表状态 (Teacher list state)
-  const [teachers, setTeachers] = useState([]);
-  const [teacherCounter, setTeacherCounter] = useState(0);
+  // Initialize from localStorage
+  const [teachers, setTeachers] = useState(() => teachersStorage.load());
+  const [teacherCounter, setTeacherCounter] = useState(() => countersStorage.loadTeacherCounter());
   const [editingTeacher, setEditingTeacher] = useState(null); // 当前编辑的教师
   const [editingTeacherRawData, setEditingTeacherRawData] = useState(''); // 编辑中的教师原始数据
 
   // 教室列表状态 (Classroom list state)
-  const [classrooms, setClassrooms] = useState([]);
+  // Initialize from localStorage
+  const [classrooms, setClassrooms] = useState(() => classroomsStorage.load());
   const [editingClassroomData, setEditingClassroomData] = useState('');
   const [showClassroomModal, setShowClassroomModal] = useState(false);
 
@@ -120,12 +133,43 @@ const Function = () => {
   // 开始编辑学生
   const handleEditStudent = (student) => {
     setEditingStudent(student);
-    setEditingRawData(student.rawData || '');
+    
+    // Convert object rawData to tab-separated string for editing
+    let rawDataStr = '';
+    if (student.rawData) {
+      if (typeof student.rawData === 'string') {
+        rawDataStr = student.rawData;
+      } else if (typeof student.rawData === 'object') {
+        // Convert object to tab-separated format matching EXCEL_COLUMNS order
+        const fields = [
+          student.rawData.学生姓名 || student.name || '',
+          student.rawData.校区 || student.campus || '',
+          student.rawData.学管姓名 || '',
+          student.rawData.学生批次 || '',
+          student.rawData.录入日期 || '',
+          student.rawData.频次 || student.frequency || '',
+          student.rawData.时长 || student.duration || '',
+          student.rawData.形式 || student.mode || '',
+          student.rawData.级别 || student.level || '',
+          student.rawData.内容 || student.subject || '',
+          '', // 可用日期
+          '', // 起止时间
+          '', // 上课形式
+          student.rawData.截止时间 || '',
+          student.rawData.希望时间段 || '',
+          student.rawData.具体时间 || '',
+          student.rawData.每周频次 || ''
+        ];
+        rawDataStr = fields.join('\t');
+      }
+    }
+    
+    setEditingRawData(rawDataStr);
   };
 
   // Open NLP Review Dialog with Excel data (打开NLP审核对话框)
   const handleOpenNLPReview = () => {
-    if (!editingRawData || editingRawData.trim().length === 0) {
+    if (!editingRawData || typeof editingRawData !== 'string' || editingRawData.trim().length === 0) {
       alert('请先粘贴Excel数据');
       return;
     }
@@ -1118,7 +1162,44 @@ const Function = () => {
     ]
   };
 
-  const [events, setEvents] = useState([]);
+  // Initialize from localStorage
+  const [events, setEvents] = useState(() => eventsStorage.load());
+
+  // Auto-save to localStorage when data changes
+  // 数据变化时自动保存到localStorage
+  useEffect(() => {
+    studentsStorage.save(students);
+    // Sync with ScheduleContext
+    scheduleContext.updateStudents(students);
+  }, [students, scheduleContext]);
+
+  useEffect(() => {
+    teachersStorage.save(teachers);
+    // Sync with ScheduleContext
+    scheduleContext.updateTeachers(teachers);
+  }, [teachers, scheduleContext]);
+
+  useEffect(() => {
+    classroomsStorage.save(classrooms);
+    // Sync with ScheduleContext
+    scheduleContext.updateClassrooms(classrooms);
+  }, [classrooms, scheduleContext]);
+
+  useEffect(() => {
+    eventsStorage.save(events);
+  }, [events]);
+
+  useEffect(() => {
+    aiResultStorage.save(aiResult);
+  }, [aiResult]);
+
+  useEffect(() => {
+    countersStorage.saveStudentCounter(studentCounter);
+  }, [studentCounter]);
+
+  useEffect(() => {
+    countersStorage.saveTeacherCounter(teacherCounter);
+  }, [teacherCounter]);
 
   // 监听测试数据开关，自动添加/移除示例课程
   useEffect(() => {
@@ -1268,11 +1349,29 @@ const Function = () => {
     }
   };
 
-  // 清除所有课程
+  // 清除所有数据 (Clear all data)
+  // Clears all students, teachers, classrooms, events, and localStorage
   const handleClearAll = () => {
-    if (window.confirm('确定要清除所有课程吗？')) {
+    if (window.confirm('确定要清除所有数据吗？这将删除所有学生、老师、教室和课程信息。')) {
+      // Clear local state
+      setStudents([]);
+      setTeachers([]);
+      setClassrooms([]);
       setEvents([]);
       setAIResult(null);
+      setStudentCounter(0);
+      setTeacherCounter(0);
+      
+      // Clear ScheduleContext
+      scheduleContext.clearSchedule();
+      scheduleContext.updateStudents([]);
+      scheduleContext.updateTeachers([]);
+      scheduleContext.updateClassrooms([]);
+      
+      // Clear all localStorage
+      clearAllLocalStorage();
+      
+      console.log('[Function] All data cleared from localStorage');
     }
   };
 
@@ -2291,16 +2390,16 @@ const Function = () => {
               <button 
                 className="modal-button modal-button-nlp" 
                 onClick={handleOpenNLPReview}
-                disabled={!editingRawData || editingRawData.trim().length === 0}
+                disabled={!editingRawData || typeof editingRawData !== 'string' || editingRawData.trim().length === 0}
                 style={{ 
-                  background: editingRawData && editingRawData.trim().length > 0 
+                  background: editingRawData && typeof editingRawData === 'string' && editingRawData.trim().length > 0 
                     ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                     : '#e5e7eb',
-                  color: editingRawData && editingRawData.trim().length > 0 ? 'white' : '#9ca3af',
+                  color: editingRawData && typeof editingRawData === 'string' && editingRawData.trim().length > 0 ? 'white' : '#9ca3af',
                   marginRight: '8px',
-                  cursor: editingRawData && editingRawData.trim().length > 0 ? 'pointer' : 'not-allowed'
+                  cursor: editingRawData && typeof editingRawData === 'string' && editingRawData.trim().length > 0 ? 'pointer' : 'not-allowed'
                 }}
-                title={editingRawData && editingRawData.trim().length > 0 
+                title={editingRawData && typeof editingRawData === 'string' && editingRawData.trim().length > 0 
                   ? '点击使用AI解析学生时间约束' 
                   : '请先粘贴Excel数据'}
               >

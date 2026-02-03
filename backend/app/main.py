@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, ai  # diaries route removed - using mock data only
+from app.api.routes import auth, ai, users, backup
 from app.core.database import connect_to_mongodb, close_mongodb_connection
+from app.services.auth_service import initialize_admin_user
+from app.services.backup_scheduler import get_backup_scheduler
 import os
 
 app = FastAPI(
@@ -10,7 +12,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS 配置
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -23,25 +25,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 启动和关闭事件
+# Startup and shutdown events
 @app.on_event("startup")
 async def startup_db_client():
-    """启动时连接数据库"""
+    """Startup: Connect to database and initialize services"""
     await connect_to_mongodb()
+    print("✅ MongoDB connected")
+    
+    # Initialize admin user
+    await initialize_admin_user()
+    
+    # Start backup scheduler
+    backup_scheduler = get_backup_scheduler()
+    backup_scheduler.start()
+    
     print("✅ Application started successfully")
 
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    """关闭时断开数据库连接"""
+    """Shutdown: Close database connection and stop services"""
+    # Stop backup scheduler
+    backup_scheduler = get_backup_scheduler()
+    backup_scheduler.stop()
+    
     await close_mongodb_connection()
     print("👋 Application shutdown")
 
 
-# 注册路由
+# Register routers
 app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(backup.router, prefix="/backup", tags=["backup"])
 app.include_router(ai.router, prefix="/ai", tags=["ai"])
-# app.include_router(diaries.router, prefix="/diaries", tags=["diaries"])  # Commented out - route file doesn't exist
 
 @app.get("/")
 async def root():

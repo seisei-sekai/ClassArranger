@@ -1,5 +1,5 @@
 """
-Authentication Routes - Mock版本
+Authentication Routes
 """
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -7,14 +7,15 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import timedelta
 
-from app.services.mock_auth_service import (
+from app.services.auth_service import (
     authenticate_user,
     register_user,
     create_access_token,
     decode_token,
     get_user_by_id,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
 )
+from app.core.config import settings
+from app.models.user import UserRole
 
 router = APIRouter()
 security = HTTPBearer()
@@ -30,6 +31,8 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     username: str
+    role: UserRole = "student"
+    description: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
@@ -42,13 +45,15 @@ class UserResponse(BaseModel):
     id: str
     email: str
     username: str
+    role: str
+    description: Optional[str] = None
 
 
-# Dependency: 验证Token
+# Dependency: Get current user with await
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> dict:
-    """从Token获取当前用户"""
+    """Get current user from JWT token"""
     token = credentials.credentials
     payload = decode_token(token)
     
@@ -65,7 +70,7 @@ async def get_current_user(
             detail="Invalid token payload",
         )
     
-    user = get_user_by_id(user_id)
+    user = await get_user_by_id(user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -75,18 +80,34 @@ async def get_current_user(
     return user
 
 
+# Dependency: Require admin role
+async def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
+    """Require admin role for endpoint access"""
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user
+
+
 @router.post("/register", response_model=TokenResponse)
-async def register(request: RegisterRequest):
+async def register(
+    request: RegisterRequest,
+    admin_user: dict = Depends(require_admin)
+):
     """
-    注册新用户
+    Register new user (Admin only)
     
-    Mock模式下，用户数据保存在内存中（重启后会丢失）
+    Only administrators can register new users with specific roles.
     """
     try:
-        user = register_user(
+        user = await register_user(
             email=request.email,
             password=request.password,
-            username=request.username
+            username=request.username,
+            role=request.role,
+            description=request.description
         )
     except ValueError as e:
         raise HTTPException(
@@ -94,8 +115,8 @@ async def register(request: RegisterRequest):
             detail=str(e)
         )
     
-    # 创建Token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # Create token
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": user["id"], "email": user["email"]},
         expires_delta=access_token_expires
@@ -108,6 +129,8 @@ async def register(request: RegisterRequest):
             "id": user["id"],
             "email": user["email"],
             "username": user["username"],
+            "role": user.get("role", "student"),
+            "description": user.get("description")
         }
     }
 
@@ -115,13 +138,11 @@ async def register(request: RegisterRequest):
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest):
     """
-    用户登录
+    User login
     
-    Mock模式下的测试账号：
-    - test@example.com / password
-    - admin@example.com / admin123
+    Returns JWT token on successful authentication.
     """
-    user = authenticate_user(request.email, request.password)
+    user = await authenticate_user(request.email, request.password)
     
     if not user:
         raise HTTPException(
@@ -129,8 +150,8 @@ async def login(request: LoginRequest):
             detail="Incorrect email or password",
         )
     
-    # 创建Token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # Create token
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": user["id"], "email": user["email"]},
         expires_delta=access_token_expires
@@ -143,40 +164,26 @@ async def login(request: LoginRequest):
             "id": user["id"],
             "email": user["email"],
             "username": user["username"],
+            "role": user.get("role", "student"),
+            "description": user.get("description")
         }
     }
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: dict = Depends(get_current_user)):
-    """
-    获取当前用户信息
-    """
+    """Get current user information"""
     return {
         "id": current_user["id"],
         "email": current_user["email"],
         "username": current_user["username"],
+        "role": current_user.get("role", "student"),
+        "description": current_user.get("description")
     }
 
 
 @router.post("/logout")
 async def logout():
-    """
-    登出（Mock版本，实际上JWT是无状态的）
-    """
+    """Logout (JWT is stateless, client should discard token)"""
     return {"message": "Logged out successfully"}
-
-
-@router.get("/test-accounts")
-async def get_test_accounts():
-    """
-    获取测试账号列表（仅用于开发）
-    """
-    return {
-        "accounts": [
-            {"email": "test@example.com", "password": "password", "username": "测试用户"},
-            {"email": "admin@example.com", "password": "admin123", "username": "管理员"},
-        ],
-        "note": "这是Mock模式下的测试账号，生产环境请禁用此接口"
-    }
 

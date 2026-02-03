@@ -1,0 +1,339 @@
+/* 
+ * 排课调整模块 - 颜色修复
+ * 统一定义所有颜色，确保在所有主题下都能正常显示
+ * 
+ * 配色方案：
+ * - 主要文字: #1a1a1a (深色)
+ * - 次要文字: #666 (灰色)
+ * - 白色背景: #ffffff
+ * - 浅灰背景: #f8f9fa
+ * - 中灰背景: #f0f0f0
+ * - 边框: #e0e0e0
+ * - 主色调: #4A90E2 (蓝色)
+ */
+
+/* ==== 全局调整面板背景 ==== */
+.adjustment-panel {
+  background: #f8f9fa !important;
+}
+
+.adjustment-panel-empty p {
+  color: #666 !important;
+}
+
+/* ==== 区域标题 ==== */
+.section-header {
+  background: #ffffff !important;
+  border-bottom-color: #e0e0e0 !important;
+}
+
+.section-title {
+  color: #1a1a1a !important;
+}
+
+.section-title svg {
+  color: #4A90E2 !important;
+}
+
+/* ==== 学生信息卡片 ==== */
+.student-info-card {
+  background: #ffffff !important;
+  border-color: #e0e0e0 !important;
+}
+
+.info-label {
+  color: #666 !important;
+}
+
+.info-value {
+  color: #1a1a1a !important;
+}
+
+.conflict-reason-box {
+  background: rgba(255, 149, 0, 0.1) !important;
+  border-color: rgba(255, 149, 0, 0.3) !important;
+}
+
+.reason-header {
+  color: #FF9500 !important;
+}
+
+.reason-header svg {
+  color: #FF9500 !important;
+}
+
+.reason-text {
+  color: #1a1a1a !important;
+}
+
+/* ==== 历史按钮 ==== */
+.history-btn {
+  background: transparent !important;
+  border-color: #e0e0e0 !important;
+  color: #666 !important;
+}
+
+.history-btn:hover {
+  background: #f0f0f0 !important;
+  color: #1a1a1a !important;
+  border-color: #4A90E2 !important;
+}
+
+.history-btn svg {
+  color: currentColor !important;
+}
+
+/* ==== 智能建议标签页 ==== */
+.suggestions-tabs {
+  background: #f0f0f0 !important;
+  border-bottom-color: #e0e0e0 !important;
+}
+
+.tab-button {
+  color: #666 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.tab-button:hover:not(:disabled) {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+  border-color: #e0e0e0 !important;
+}
+
+.tab-button.active {
+  background: #4A90E2 !important;
+  color: white !important;
+  border-color: #4A90E2 !important;
+}
+
+.tab-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.tab-count {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ==== 建议卡片 ==== */
+.suggestion-card {
+  background: #ffffff !important;
+  border-color: #e0e0e0 !important;
+}
+
+.suggestion-card:hover {
+  border-color: #4A90E2 !important;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1) !important;
+}
+
+.suggestion-title {
+  color: #1a1a1a !important;
+}
+
+.suggestion-description {
+  color: #666 !important;
+}
+
+.confidence-label {
+  color: #666 !important;
+}
+
+.confidence-value {
+  color: #1a1a1a !important;
+}
+
+.confidence-bar {
+  background: #f0f0f0 !important;
+}
+
+/* ==== 建议应用按钮 ==== */
+.apply-btn {
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3) !important;
+  border: none !important;
+}
+
+.apply-btn:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4) !important;
+}
+
+.apply-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.apply-btn svg {
+  color: white !important;
+}
+
+/* ==== 建议页脚 ==== */
+.suggestions-footer {
+  background: #fff8e1 !important;
+  color: #FF9500 !important;
+  border-color: rgba(255, 149, 0, 0.3) !important;
+}
+
+.suggestions-footer svg {
+  color: #FF9500 !important;
+}
+
+/* ==== 空状态 ==== */
+.empty-state p {
+  color: #1a1a1a !important;
+}
+
+.empty-state small {
+  color: #666 !important;
+}
+
+.empty-state svg {
+  color: #e0e0e0 !important;
+}
+
+.loading-state p {
+  color: #666 !important;
+}
+
+/* ==== 手动编辑区域 ==== */
+.manual-edit-section {
+  border-top-color: #e0e0e0 !important;
+  border-bottom-color: #e0e0e0 !important;
+}
+
+.edit-tabs {
+  background: #f0f0f0 !important;
+  border-bottom-color: #e0e0e0 !important;
+}
+
+.edit-tab {
+  color: #666 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.edit-tab:hover {
+  background: rgba(74, 144, 226, 0.05) !important;
+  color: #1a1a1a !important;
+}
+
+.edit-tab.active {
+  color: #4A90E2 !important;
+  border-bottom-color: #4A90E2 !important;
+  background: rgba(74, 144, 226, 0.05) !important;
+}
+
+/* ==== 表单元素 ==== */
+.form-label {
+  color: #1a1a1a !important;
+}
+
+.form-label.required::after {
+  color: #FF3B30 !important;
+}
+
+.form-textarea,
+.form-input {
+  background: #ffffff !important;
+  border-color: #e0e0e0 !important;
+  color: #1a1a1a !important;
+}
+
+.form-textarea::placeholder,
+.form-input::placeholder {
+  color: #999 !important;
+}
+
+.form-textarea:focus,
+.form-input:focus {
+  border-color: #4A90E2 !important;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1) !important;
+}
+
+/* ==== 操作按钮区域 ==== */
+.action-buttons {
+  background: #f0f0f0 !important;
+  border-top-color: #e0e0e0 !important;
+}
+
+/* 主要按钮（保存修改） */
+.action-btn.primary {
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3) !important;
+}
+
+.action-btn.primary:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4) !important;
+}
+
+/* 成功按钮（重新尝试） */
+.action-btn.success {
+  background: linear-gradient(135deg, #34C759 0%, #2DA84A 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3) !important;
+}
+
+.action-btn.success:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4) !important;
+}
+
+/* 次要按钮（跳过） */
+.action-btn.secondary {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+  border-color: #e0e0e0 !important;
+}
+
+.action-btn.secondary:hover:not(:disabled) {
+  background: #f0f0f0 !important;
+  border-color: #4A90E2 !important;
+}
+
+/* 信息按钮（下一个） */
+.action-btn.info {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+}
+
+.action-btn.info:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4) !important;
+}
+
+.action-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.action-btn svg {
+  color: currentColor !important;
+}
+
+/* ==== 滚动条样式 ==== */
+.suggestions-content::-webkit-scrollbar,
+.adjustment-panel::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.suggestions-content::-webkit-scrollbar-track,
+.adjustment-panel::-webkit-scrollbar-track {
+  background: #f0f0f0 !important;
+  border-radius: 3px !important;
+}
+
+.suggestions-content::-webkit-scrollbar-thumb,
+.adjustment-panel::-webkit-scrollbar-thumb {
+  background: #e0e0e0 !important;
+  border-radius: 3px !important;
+}
+
+.suggestions-content::-webkit-scrollbar-thumb:hover,
+.adjustment-panel::-webkit-scrollbar-thumb:hover {
+  background: #4A90E2 !important;
+}

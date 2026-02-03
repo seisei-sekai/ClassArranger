@@ -263,6 +263,11 @@
   flex-shrink: 0;
 }
 
+/* Admin Section */
+.admin-section {
+  margin-top: 2rem;
+}
+
 /* 响应式 */
 @media (max-width: 64rem) {
   .user-details-grid {

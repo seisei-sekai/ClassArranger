@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Literal
 from datetime import datetime
 from bson import ObjectId
 
@@ -20,13 +20,26 @@ class PyObjectId(ObjectId):
         return {"type": "string"}
 
 
+# User role type
+UserRole = Literal["admin", "teacher", "staff", "student"]
+
+
 class UserBase(BaseModel):
     email: str
     username: str
+    role: UserRole = "student"  # Default role
+    description: Optional[str] = None
 
 
 class UserCreate(UserBase):
     password: str
+    
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
 
 
 class UserInDB(UserBase):

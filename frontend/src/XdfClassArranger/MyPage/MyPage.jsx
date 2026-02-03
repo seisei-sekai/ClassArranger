@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useTestData } from '../TestDataContext';
+import { useAuth } from '../Auth/AuthContext';
+import BackupManagement from '../Admin/BackupManagement';
 import './MyPage.css';
 
 const MyPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const { showTestData } = useTestData();
+  const { user, isAdmin } = useAuth();
 
   const userInfo = showTestData ? {
     name: '管理员',
@@ -213,6 +216,13 @@ const MyPage = () => {
           ))}
         </div>
       </div>
+
+      {/* Backup Management (Admin Only) */}
+      {isAdmin() && (
+        <div className="admin-section">
+          <BackupManagement />
+        </div>
+      )}
     </div>
   );
 };

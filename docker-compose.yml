@@ -27,8 +27,15 @@ services:
       - MONGODB_URL=mongodb://mongodb:27017
       - MONGODB_DB_NAME=xdf_class_arranger
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@xdf.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-Administrator}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-change-in-production}
+      - BACKUP_ENABLED=${BACKUP_ENABLED:-false}
+      - BACKUP_PATH=/app/backups
     volumes:
       - ./backend:/app
+      - ./backend/backups:/app/backups
     depends_on:
       - mongodb
 

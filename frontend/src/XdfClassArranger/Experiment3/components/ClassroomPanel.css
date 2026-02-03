@@ -1,0 +1,258 @@
+/* Classroom Panel Styles (教室资源面板样式) */
+
+.classroom-panel {
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 0.5rem rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid #E5E8EB;
+  background: linear-gradient(135deg, #84FAB0 0%, #8FD3F4 100%);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1A1D1F;
+  margin: 0;
+}
+
+/* Statistics (统计) */
+.room-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E8EB;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border: 2px solid #E5E8EB;
+  border-radius: 0.625rem;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: #84FAB0;
+  transform: translateY(-2px);
+}
+
+.stat-card.available {
+  border-color: #34C759;
+  background: #34C75910;
+}
+
+.stat-card.occupied {
+  border-color: #FF3B30;
+  background: #FF3B3010;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1A1D1F;
+  margin-bottom: 0.25rem;
+}
+
+.stat-card.available .stat-value {
+  color: #34C759;
+}
+
+.stat-card.occupied .stat-value {
+  color: #FF3B30;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6F767E;
+  font-weight: 500;
+}
+
+/* Filters (过滤器) */
+.panel-filters {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid #E5E8EB;
+}
+
+.filter-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6F767E;
+}
+
+.filter-group select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #84FAB0;
+}
+
+/* Room List (教室列表) */
+.room-list {
+  max-height: 31.25rem;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+}
+
+.room-list::-webkit-scrollbar {
+  width: 0.375rem;
+}
+
+.room-list::-webkit-scrollbar-track {
+  background: #F5F7FA;
+}
+
+.room-list::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 0.1875rem;
+}
+
+.room-list::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Room Card (教室卡片) */
+.room-card {
+  padding: 0.875rem;
+  background: #F9FAFB;
+  border: 2px solid #E5E8EB;
+  border-radius: 0.625rem;
+  margin-bottom: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.room-card:last-child {
+  margin-bottom: 0;
+}
+
+.room-card:hover {
+  background: var(--bg-secondary);
+  border-color: #84FAB0;
+  box-shadow: 0 0.25rem 0.75rem rgba(132, 250, 176, 0.2);
+  transform: translateX(0.25rem);
+}
+
+.room-card.occupied {
+  border-color: #FF3B3040;
+  background: #FF3B3008;
+}
+
+.room-card.occupied:hover {
+  border-color: #FF3B30;
+}
+
+.room-card.available {
+  border-color: #34C75940;
+  background: #34C75908;
+}
+
+.room-card.available:hover {
+  border-color: #34C759;
+}
+
+.room-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.625rem;
+}
+
+.room-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1A1D1F;
+}
+
+.room-status {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.0313rem;
+}
+
+.room-status.available {
+  background: #34C75920;
+  color: #34C759;
+}
+
+.room-status.occupied {
+  background: #FF3B3020;
+  color: #FF3B30;
+}
+
+.room-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.room-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #6F767E;
+}
+
+.room-detail svg {
+  color: #9CA3AF;
+}
+
+/* Empty State (空状态) */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1.25rem;
+}
+
+.empty-state p {
+  font-size: 0.875rem;
+  color: #9CA3AF;
+  margin: 0;
+}
+
+/* Responsive Design (响应式设计) */
+@media (max-width: 48rem) {
+  .room-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .panel-filters {
+    flex-direction: column;
+  }
+  
+  .room-list {
+    max-height: 25rem;
+  }
+}
+

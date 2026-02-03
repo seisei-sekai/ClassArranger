@@ -418,6 +418,18 @@
   flex-shrink: 0;
   width: 2.5rem;
   height: 2.5rem;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-text {
+  color: var(--text-inverse);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .user-details {
@@ -448,6 +460,49 @@
 
 .erp-sidebar.collapsed .user-details {
   display: none;
+}
+
+/* Logout Button */
+.logout-button {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.logout-button:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.logout-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.erp-sidebar.collapsed .logout-text {
+  display: none;
+}
+
+.erp-sidebar.collapsed .logout-button {
+  justify-content: center;
 }
 
 /* ============================================

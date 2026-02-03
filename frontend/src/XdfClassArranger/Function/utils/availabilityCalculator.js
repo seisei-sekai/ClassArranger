@@ -32,8 +32,15 @@ import {
 export const parseEntryDate = (rawData) => {
   if (!rawData) return null;
   
-  const values = rawData.split('\t');
-  const entryDateStr = values[4] ? values[4].trim() : ''; // Index 4 = 录入日期
+  let entryDateStr = '';
+  
+  // Handle both string (Excel paste) and object (test data) formats
+  if (typeof rawData === 'string') {
+    const values = rawData.split('\t');
+    entryDateStr = values[4] ? values[4].trim() : ''; // Index 4 = 录入日期
+  } else if (typeof rawData === 'object') {
+    entryDateStr = rawData.录入日期 || rawData.entryDate || '';
+  }
   
   if (!entryDateStr) return null;
   
@@ -240,13 +247,28 @@ export const parseStudentAvailabilityFromParsedData = (parsedData) => {
 export const parseStudentAvailabilityFromRawData = (rawData) => {
   if (!rawData) return null;
 
-  const values = rawData.split('\t');
-  const frequency = values[5] || '';
-  const duration = values[6] || '';
-  const deadline = values[13] || '';
-  const preferredDays = values[14] || '';
-  const specificTime = values[15] || '';
-  const weeklyFrequency = values[16] || '';
+  let frequency, duration, deadline, preferredDays, specificTime, weeklyFrequency;
+
+  // Handle both string (Excel paste) and object (test data) formats
+  if (typeof rawData === 'string') {
+    const values = rawData.split('\t');
+    frequency = values[5] || '';
+    duration = values[6] || '';
+    deadline = values[13] || '';
+    preferredDays = values[14] || '';
+    specificTime = values[15] || '';
+    weeklyFrequency = values[16] || '';
+  } else if (typeof rawData === 'object') {
+    // Object format (from test data generator or parsed data)
+    frequency = rawData.频次 || rawData.frequency || '';
+    duration = rawData.时长 || rawData.duration || '';
+    deadline = rawData.截止时间 || rawData.deadline || '';
+    preferredDays = rawData.希望时间段 || rawData.preferredDays || '';
+    specificTime = rawData.具体时间 || rawData.specificTime || '';
+    weeklyFrequency = rawData.每周频次 || rawData.weeklyFrequency || '';
+  } else {
+    return null;
+  }
 
   // Initialize: Default all available (maximum tolerance)
   const availability = Array(7).fill(null).map(() => Array(SLOTS_PER_DAY).fill(true));
@@ -584,15 +606,29 @@ export const getStudentsForTimeSlot = (students, dayOfWeek, slotIndex) => {
         confidence: data.confidence || 0
       };
     } else if (student.rawData) {
-      const values = student.rawData.split('\t');
-      constraints = {
-        frequency: values[5] || '-',
-        duration: values[6] || '-',
-        deadline: values[13] || '-',
-        preferredDays: values[14] || '-',
-        specificTime: values[15] || '-',
-        weeklyFrequency: values[16] || '-'
-      };
+      // Handle both string and object formats
+      if (typeof student.rawData === 'string') {
+        const values = student.rawData.split('\t');
+        constraints = {
+          frequency: values[5] || '-',
+          duration: values[6] || '-',
+          deadline: values[13] || '-',
+          preferredDays: values[14] || '-',
+          specificTime: values[15] || '-',
+          weeklyFrequency: values[16] || '-'
+        };
+      } else if (typeof student.rawData === 'object') {
+        constraints = {
+          frequency: student.rawData.频次 || student.rawData.frequency || '-',
+          duration: student.rawData.时长 || student.rawData.duration || '-',
+          deadline: student.rawData.截止时间 || student.rawData.deadline || '-',
+          preferredDays: student.rawData.希望时间段 || student.rawData.preferredDays || '-',
+          specificTime: student.rawData.具体时间 || student.rawData.specificTime || '-',
+          weeklyFrequency: student.rawData.每周频次 || student.rawData.weeklyFrequency || '-'
+        };
+      } else {
+        constraints = {};
+      }
     } else {
       constraints = {};
     }
