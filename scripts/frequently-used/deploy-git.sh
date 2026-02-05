@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # ClassArranger Git-Based Deployment Script
