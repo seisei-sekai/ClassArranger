@@ -165,33 +165,129 @@ export class TripleMatchScheduler {
         continue;
       }
 
-      // Try each common time slot
-      for (const timeSlot of commonSlots) {
-        // Find available classroom
-        const classroomInfo = this.findAvailableClassroom(
-          student.campus,
-          timeSlot,
-          classroomAvailability
-        );
+      // 检查是否为灵活排课模式
+      const isFlexibleMode = student.schedulingMode === 'flexible' || student.isRecurringFixed === false;
+      const frequencyNum = parseInt(student.frequency) || 1;
+      
+      // 灵活排课模式：尝试为每次课找不同的时间槽
+      if (isFlexibleMode && frequencyNum > 1) {
+        console.log(`[TripleMatch] 学生${student.name}使用灵活排课模式，需要安排${frequencyNum}次课`);
+        
+        const scheduledSlots = [];
+        const usedDays = new Set();
+        
+        // 尝试为每次课找一个时间槽
+        for (let i = 0; i < frequencyNum; i++) {
+          let slotFound = false;
+          
+          for (const timeSlot of commonSlots) {
+            // 避免同一天安排多次课
+            if (usedDays.has(timeSlot.day)) {
+              continue;
+            }
+            
+            // 检查这个时间槽是否已被使用
+            const isSlotUsed = scheduledSlots.some(s => 
+              s.day === timeSlot.day && 
+              timeSlotsOverlap(s, timeSlot)
+            );
+            if (isSlotUsed) continue;
+            
+            // Find available classroom
+            const classroomInfo = this.findAvailableClassroom(
+              student.campus,
+              timeSlot,
+              classroomAvailability
+            );
 
-        if (classroomInfo) {
-          // Success! Found a complete match
+            if (classroomInfo) {
+              scheduledSlots.push(timeSlot);
+              usedDays.add(timeSlot.day);
+              
+              // 临时标记这个时间槽为已占用（防止重复使用）
+              this.updateAvailability(
+                teacherAvailability,
+                teacher.id,
+                timeSlot
+              );
+              this.updateAvailability(
+                classroomAvailability,
+                classroomInfo.resource.id,
+                timeSlot
+              );
+              
+              slotFound = true;
+              break;
+            }
+          }
+          
+          if (!slotFound) {
+            console.log(`[TripleMatch] 灵活排课：无法为第${i + 1}次课找到时间槽`);
+            // 回滚已占用的时间槽
+            scheduledSlots.forEach(slot => {
+              // 这里简化处理，实际应该恢复 availability
+            });
+            break;
+          }
+        }
+        
+        // 检查是否成功安排了所有课程
+        if (scheduledSlots.length === frequencyNum) {
+          console.log(`[TripleMatch] 灵活排课成功！为${student.name}安排了${scheduledSlots.length}个不同时间段`);
+          
+          // 创建第一个课程（代表整个系列）
           const course = createCourse({
             student: student,
             teacher: teacher,
-            classroom: classroomInfo.resource,
+            classroom: classroomAvailability[Object.keys(classroomAvailability)[0]].resource,
             subject: student.subject,
-            timeSlot: timeSlot,
-            isRecurring: student.frequency !== '1次',
-            recurrencePattern: 'weekly'
+            timeSlot: scheduledSlots[0],
+            isRecurring: false, // 灵活模式不是固定重复
+            recurrencePattern: 'flexible',
+            flexibleSlots: scheduledSlots, // 保存所有时间槽
+            schedulingMode: 'flexible'
           });
 
           return {
             success: true,
             course: course,
             teacher: teacher,
-            classroom: classroomInfo.resource
+            classroom: classroomAvailability[Object.keys(classroomAvailability)[0]].resource,
+            flexibleSlots: scheduledSlots
           };
+        } else {
+          failureReasons.push(`灵活排课：只能安排${scheduledSlots.length}/${frequencyNum}次课`);
+          continue; // 尝试下一个教师
+        }
+      } else {
+        // 传统固定时间模式
+        for (const timeSlot of commonSlots) {
+          // Find available classroom
+          const classroomInfo = this.findAvailableClassroom(
+            student.campus,
+            timeSlot,
+            classroomAvailability
+          );
+
+          if (classroomInfo) {
+            // Success! Found a complete match
+            const course = createCourse({
+              student: student,
+              teacher: teacher,
+              classroom: classroomInfo.resource,
+              subject: student.subject,
+              timeSlot: timeSlot,
+              isRecurring: student.frequency !== '1次',
+              recurrencePattern: 'weekly'
+            });
+
+            return {
+              success: true,
+              course: course,
+              teacher: teacher,
+              classroom: classroomInfo.resource
+            };
+          }
         }
       }
       

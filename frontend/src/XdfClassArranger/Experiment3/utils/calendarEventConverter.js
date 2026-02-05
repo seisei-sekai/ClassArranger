@@ -198,10 +198,36 @@ function dateTimeToSlot(dateTime) {
  * 为循环课程生成重复事件
  */
 export function generateRecurringEvents(course, weeks = 4, baseDate = new Date()) {
+  // 灵活排课模式：为每个时间槽生成一个事件
+  if (course.schedulingMode === 'flexible' && course.flexibleSlots) {
+    console.log('[EventConverter] 生成灵活排课事件，时间槽数量:', course.flexibleSlots.length);
+    
+    const events = [];
+    course.flexibleSlots.forEach((timeSlot, index) => {
+      const flexibleCourse = {
+        ...course,
+        timeSlot: timeSlot,
+        id: `${course.id || 'flexible'}-slot-${index}`
+      };
+      
+      const event = convertCourseToFullCalendarEvent(flexibleCourse, baseDate);
+      if (event) {
+        event.title = `${course.student.name} - ${course.teacher.name} (${index + 1}/${course.flexibleSlots.length})`;
+        event.extendedProps.flexibleIndex = index;
+        event.extendedProps.totalFlexibleSlots = course.flexibleSlots.length;
+        events.push(event);
+      }
+    });
+    
+    return events;
+  }
+  
+  // 非重复课程
   if (!course.isRecurring) {
     return [convertCourseToFullCalendarEvent(course, baseDate)].filter(e => e !== null);
   }
 
+  // 传统固定时间重复
   const events = [];
   for (let week = 0; week < weeks; week++) {
     const weekDate = new Date(baseDate);

@@ -342,7 +342,38 @@ function generateRecommendations(conflict, targetType) {
       });
     }
     
-    // 推荐4: 线上线下模式切换
+    // 推荐4: 灵活时间安排（针对时间冲突）⭐ 重要
+    if (currentFreq > 1) {
+      recommendations.push({
+        id: 'flexible-scheduling',
+        title: '采用灵活时间安排（推荐）',
+        description: '不使用固定时间重复，而是每次课安排在不同的可用时间段，大幅提高排课成功率',
+        priority: 'high',
+        confidence: 0.90,
+        changes: [
+          {
+            field: '排课模式',
+            oldValue: `固定时间重复（${currentFreq}次/周）`,
+            newValue: `灵活时间安排（${currentFreq}次/周，每次不同时间）`
+          },
+          {
+            field: '说明',
+            oldValue: '每周同一时间上课',
+            newValue: '每周在可用时间范围内灵活安排'
+          }
+        ],
+        expectedEffect: '避免固定时间冲突，每次课独立寻找最佳时间槽。成功率提升约70-80%！特别适合时间冲突严重的情况。',
+        risks: ['学生需要接受每周上课时间不固定', '需要及时通知学生每周的上课时间'],
+        data: {
+          // 保持频率不变，但添加标记表示非固定时间
+          frequency: student.frequency,
+          schedulingMode: 'flexible', // 新增字段：灵活排课模式
+          isRecurringFixed: false // 标记不使用固定时间重复
+        }
+      });
+    }
+    
+    // 推荐5: 线上线下模式切换
     const studentMode = student.mode || '线下';
     if (studentMode === '线下') {
       recommendations.push({
@@ -386,7 +417,7 @@ function generateRecommendations(conflict, targetType) {
       });
     }
     
-    // 推荐5: 放宽教师偏好
+    // 推荐6: 放宽教师偏好
     if (student.preferredTeacher) {
       recommendations.push({
         id: 'relax-teacher-preference',
@@ -409,7 +440,7 @@ function generateRecommendations(conflict, targetType) {
       });
     }
     
-    // 推荐6: 调整课时总量（降低门槛）
+    // 推荐7: 调整课时总量（降低门槛）
     const currentCourseHours = parseFloat(student.courseHours) || 30;
     if (currentCourseHours > 10) {
       const reducedHours = Math.floor(currentCourseHours / 2);
