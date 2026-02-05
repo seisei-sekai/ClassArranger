@@ -375,7 +375,29 @@ class ScheduleAdjustmentService {
         };
       } else {
         // 排课失败，更新失败原因
-        const newReason = result.conflicts?.[0]?.reason || '排课失败';
+        let newReason = '未知原因';
+        
+        if (result.conflicts && result.conflicts.length > 0) {
+          const studentConflict = result.conflicts[0];
+          newReason = studentConflict.reason || studentConflict.type || '排课条件不满足';
+          
+          // 添加更详细的信息
+          if (studentConflict.details) {
+            newReason += ` - ${studentConflict.details}`;
+          }
+        } else if (result.message) {
+          newReason = result.message;
+        } else {
+          newReason = '排课算法未返回有效结果，可能是约束条件过于严格';
+        }
+        
+        console.log('[AdjustmentService] 排课失败详情:', {
+          conflictId,
+          reason: newReason,
+          result,
+          student: conflict.student
+        });
+        
         conflict.reason = newReason;
         
         // 重新生成建议
@@ -399,7 +421,7 @@ class ScheduleAdjustmentService {
         return {
           success: false,
           reason: newReason,
-          message: '排课失败'
+          message: newReason
         };
       }
     } catch (error) {

@@ -147,6 +147,7 @@ const ScheduleAdjustmentModal = ({
     const { targetType, data, reason, conflictId, isVisualEdit } = modifyData;
     
     console.log('[AdjustmentModal] Manual modify:', modifyData);
+    console.log('[AdjustmentModal] Data to apply:', data);
     
     if (isVisualEdit) {
       // 可视化编辑器的结构化数据
@@ -177,6 +178,8 @@ const ScheduleAdjustmentModal = ({
         return;
       }
       
+      console.log('[AdjustmentModal] Target before modification:', JSON.parse(JSON.stringify(target)));
+      
       // 应用所有修改
       let modifiedFields = [];
       Object.entries(data).forEach(([field, value]) => {
@@ -184,12 +187,31 @@ const ScheduleAdjustmentModal = ({
         
         const oldValue = target[field];
         
-        // 只修改发生变化的字段
-        if (JSON.stringify(oldValue) !== JSON.stringify(value)) {
-          target[field] = value;
-          modifiedFields.push(`${field}: ${JSON.stringify(oldValue)} → ${JSON.stringify(value)}`);
+        // 特殊处理 parsedData - 深度合并而不是替换
+        if (field === 'parsedData' && typeof value === 'object' && value !== null) {
+          if (!target.parsedData) {
+            target.parsedData = {};
+          }
+          
+          // 深度合并 parsedData
+          Object.entries(value).forEach(([subField, subValue]) => {
+            const oldSubValue = target.parsedData[subField];
+            if (JSON.stringify(oldSubValue) !== JSON.stringify(subValue)) {
+              target.parsedData[subField] = subValue;
+              modifiedFields.push(`parsedData.${subField}: ${JSON.stringify(oldSubValue)} → ${JSON.stringify(subValue)}`);
+            }
+          });
+        } else {
+          // 普通字段直接赋值
+          if (JSON.stringify(oldValue) !== JSON.stringify(value)) {
+            target[field] = value;
+            modifiedFields.push(`${field}: ${JSON.stringify(oldValue)} → ${JSON.stringify(value)}`);
+          }
         }
       });
+      
+      console.log('[AdjustmentModal] Target after modification:', JSON.parse(JSON.stringify(target)));
+      console.log('[AdjustmentModal] Modified fields:', modifiedFields);
       
       if (modifiedFields.length > 0) {
         // 标记为已修改
@@ -212,9 +234,13 @@ const ScheduleAdjustmentModal = ({
         adjustmentService.modificationRecords.push(modificationRecord);
         
         console.log('[AdjustmentModal] Applied modifications:', modificationRecord);
-        alert(`已修改 ${modifiedFields.length} 个字段:\n${modifiedFields.join('\n')}`);
+        
+        // 不显示alert，直接继续排课
+        console.log(`[AdjustmentModal] 已修改 ${modifiedFields.length} 个字段`);
       } else {
-        alert('没有检测到数据变化');
+        console.warn('[AdjustmentModal] 没有检测到数据变化');
+        alert('没有检测到数据变化，请检查推荐方案');
+        return; // 如果没有修改，不继续排课
       }
     } else {
       // 原始文本粘贴方式
@@ -232,14 +258,22 @@ const ScheduleAdjustmentModal = ({
     if (!adjustmentService) return;
     
     setLoading(true);
+    console.log('[AdjustmentModal] 开始重新排课 - conflictId:', conflictId);
+    
     const result = await adjustmentService.retryScheduleForStudent(conflictId);
+    
+    console.log('[AdjustmentModal] 排课结果:', result);
     
     if (result.success) {
       alert(`排课成功！已为学生安排课程`);
       // 刷新冲突列表
       setEnhancedConflicts(adjustmentService.getEnhancedConflicts());
     } else {
-      alert(`排课失败：${result.reason || result.message}`);
+      const errorMsg = result.reason || result.message || '未知错误';
+      console.error('[AdjustmentModal] 排课失败:', errorMsg);
+      
+      // 显示更详细的错误信息
+      alert(`排课失败：${errorMsg}\n\n可能的原因：\n1. 修改的约束仍然不满足排课条件\n2. 教师或教室资源不足\n3. 时间冲突无法解决\n\n建议：尝试其他推荐方案或手动调整更多约束`);
     }
     
     setLoading(false);

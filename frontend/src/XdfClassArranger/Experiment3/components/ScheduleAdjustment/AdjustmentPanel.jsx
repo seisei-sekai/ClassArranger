@@ -116,6 +116,8 @@ const AdjustmentPanel = ({
    * 处理智能推荐并重新排课
    */
   const handleSmartRecommendationAndRetry = (recommendation) => {
+    console.log('[AdjustmentPanel] 应用智能推荐:', recommendation);
+    
     onManualModify({
       targetType: activeEditTab,
       data: recommendation.data,
@@ -126,8 +128,9 @@ const AdjustmentPanel = ({
     
     // 等待修改保存后立即触发重新排课
     setTimeout(() => {
+      console.log('[AdjustmentPanel] 触发重新排课');
       onRetrySchedule(conflict.id);
-    }, 100);
+    }, 200);
   };
   
   return (

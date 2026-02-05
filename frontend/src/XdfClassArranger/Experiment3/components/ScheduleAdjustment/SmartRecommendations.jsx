@@ -334,11 +334,11 @@ function generateRecommendations(conflict, targetType) {
           }
         ],
         expectedEffect: '短时间段更容易找到匹配的教师和教室，排课成功率提升约20%。',
-        risks: ['需要确认学生接受更频繁但更短的课程安排', '总课时保持不变'],
-        data: {
-          frequency: '2次',
-          duration: `${(currentDuration / 2).toFixed(1)}小时`
-        }
+          risks: ['需要确认学生接受更频繁但更短的课程安排', '总课时保持不变'],
+          data: {
+            frequency: '2次/周',
+            duration: (currentDuration / 2).toFixed(1) + '小时'
+          }
       });
     }
     
@@ -410,8 +410,9 @@ function generateRecommendations(conflict, targetType) {
     }
     
     // 推荐6: 调整课时总量（降低门槛）
-    const currentCourseHours = parseInt(student.courseHours) || 30;
+    const currentCourseHours = parseFloat(student.courseHours) || 30;
     if (currentCourseHours > 10) {
+      const reducedHours = Math.floor(currentCourseHours / 2);
       recommendations.push({
         id: 'reduce-total-hours',
         title: '暂时降低课时总量',
@@ -422,13 +423,13 @@ function generateRecommendations(conflict, targetType) {
           {
             field: '课时总量',
             oldValue: `${currentCourseHours}小时`,
-            newValue: `${Math.floor(currentCourseHours / 2)}小时`
+            newValue: `${reducedHours}小时`
           }
         ],
         expectedEffect: '降低排课复杂度，提高初次排课成功率。后续可再增加课时。',
         risks: ['需要分阶段完成全部课程安排'],
         data: {
-          courseHours: Math.floor(currentCourseHours / 2)
+          courseHours: reducedHours
         }
       });
     }
