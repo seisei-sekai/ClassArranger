@@ -163,8 +163,55 @@ export class SchedulingAlgorithmAdapter {
       frequency: student.rawData?.频次 || "1次/周",
     };
 
-    // Parse availability into time ranges
-    if (availability?.parsedData?.slots) {
+    // 优先使用 parsedData（智能推荐和可视化编辑器修改的数据）
+    if (student.parsedData) {
+      console.log(`[AlgorithmAdapter] 使用 student.parsedData:`, student.parsedData);
+      
+      // 处理 allowedDays
+      if (student.parsedData.allowedDays) {
+        const days = Array.isArray(student.parsedData.allowedDays) 
+          ? student.parsedData.allowedDays 
+          : Array.from(student.parsedData.allowedDays);
+        days.forEach(day => constraints.allowedDays.add(day));
+      }
+      
+      // 处理 allowedTimeRanges
+      if (student.parsedData.allowedTimeRanges && student.parsedData.allowedTimeRanges.length > 0) {
+        student.parsedData.allowedTimeRanges.forEach(range => {
+          // 如果 range 没有 day 字段，应用到所有 allowedDays
+          if (range.day !== undefined && range.day !== null) {
+            constraints.allowedTimeRanges.push({
+              day: range.day,
+              startSlot: range.start || range.startSlot,
+              endSlot: range.end || range.endSlot
+            });
+          } else {
+            // 没有指定 day，应用到所有允许的天数
+            const allowedDays = Array.from(constraints.allowedDays);
+            if (allowedDays.length === 0) {
+              // 如果还没有 allowedDays，使用工作日
+              [1, 2, 3, 4, 5].forEach(day => {
+                constraints.allowedDays.add(day);
+                constraints.allowedTimeRanges.push({
+                  day,
+                  startSlot: range.start || range.startSlot,
+                  endSlot: range.end || range.endSlot
+                });
+              });
+            } else {
+              allowedDays.forEach(day => {
+                constraints.allowedTimeRanges.push({
+                  day,
+                  startSlot: range.start || range.startSlot,
+                  endSlot: range.end || range.endSlot
+                });
+              });
+            }
+          }
+        });
+      }
+    } else if (availability?.parsedData?.slots) {
+      // 如果没有 parsedData，使用 availability
       availability.parsedData.slots.forEach((slot) => {
         constraints.allowedDays.add(slot.dayOfWeek);
 
@@ -187,6 +234,13 @@ export class SchedulingAlgorithmAdapter {
         });
       });
     }
+
+    console.log(`[AlgorithmAdapter] 提取的约束:`, {
+      allowedDays: Array.from(constraints.allowedDays),
+      allowedTimeRanges: constraints.allowedTimeRanges,
+      duration: constraints.duration,
+      frequency: constraints.frequency
+    });
 
     return constraints;
   }
