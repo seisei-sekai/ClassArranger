@@ -129,10 +129,59 @@
   height: 14px;
 }
 
+/* Smart Toggle Button - Special Styling */
+.mode-toggle-smart {
+  position: relative;
+}
+
+.mode-toggle-smart:not(.active) {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  color: #667eea;
+}
+
+.mode-toggle-smart:not(.active):hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  color: #667eea;
+}
+
+.mode-toggle-smart.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.mode-toggle-smart.active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0.5rem;
+  opacity: 0.3;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
 /* Dark Mode */
 :root[data-theme="dark"] .mode-toggle-btn.active {
   background: rgba(90, 108, 125, 0.3);
   color: var(--accent-tertiary);
+}
+
+:root[data-theme="dark"] .mode-toggle-smart.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 /* Student Info Section */
