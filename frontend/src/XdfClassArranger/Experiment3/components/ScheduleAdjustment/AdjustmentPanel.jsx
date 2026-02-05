@@ -12,6 +12,7 @@
 
 import React, { useState } from 'react';
 import SmartSuggestions from './SmartSuggestions';
+import VisualEditor from './VisualEditor';
 import './AdjustmentPanel.css';
 
 const AdjustmentPanel = ({
@@ -22,11 +23,14 @@ const AdjustmentPanel = ({
   onSkipConflict,
   onNextConflict,
   onShowHistory,
-  loading = false
+  loading = false,
+  availableTeachers = [],
+  availableClassrooms = []
 }) => {
   const [editingData, setEditingData] = useState('');
   const [modificationReason, setModificationReason] = useState('');
   const [activeEditTab, setActiveEditTab] = useState('student'); // 'student', 'teacher', 'classroom'
+  const [editMode, setEditMode] = useState('paste'); // 'paste' or 'visual'
   
   console.log('[AdjustmentPanel] Rendering with conflict:', conflict);
   
@@ -87,6 +91,24 @@ const AdjustmentPanel = ({
     // 清空输入
     setEditingData('');
     setModificationReason('');
+  };
+  
+  /**
+   * 处理可视化编辑并重新排课
+   */
+  const handleVisualEditAndRetry = (modifiedData, targetType) => {
+    onManualModify({
+      targetType: targetType,
+      data: modifiedData,
+      reason: '通过可视化编辑器修改',
+      conflictId: conflict.id,
+      isVisualEdit: true
+    });
+    
+    // 等待修改保存后立即触发重新排课
+    setTimeout(() => {
+      onRetrySchedule(conflict.id);
+    }, 100);
   };
   
   return (
@@ -177,6 +199,31 @@ const AdjustmentPanel = ({
             </svg>
             手动修改
           </h3>
+          
+          {/* 编辑模式切换 */}
+          <div className="edit-mode-toggle">
+            <button
+              className={`mode-toggle-btn ${editMode === 'paste' ? 'active' : ''}`}
+              onClick={() => setEditMode('paste')}
+              title="粘贴Excel数据"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" stroke="currentColor" strokeWidth="2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              <span>粘贴</span>
+            </button>
+            <button
+              className={`mode-toggle-btn ${editMode === 'visual' ? 'active' : ''}`}
+              onClick={() => setEditMode('visual')}
+              title="可视化选择"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M9 11H3v2h6v-2zM21 13h-6v-2h6v2zM9 6H3v2h6V6zM21 8h-6V6h6v2zM9 16H3v2h6v-2zM21 18h-6v-2h6v2z" fill="currentColor"/>
+              </svg>
+              <span>选择</span>
+            </button>
+          </div>
         </div>
         
         {/* 编辑标签页 */}
@@ -201,46 +248,61 @@ const AdjustmentPanel = ({
           </button>
         </div>
         
-        {/* 编辑表单 */}
-        <div className="edit-form">
-          <div className="form-group">
-            <label className="form-label">修改数据（支持粘贴Excel）</label>
-            <textarea
-              className="form-textarea"
-              placeholder={`粘贴${activeEditTab === 'student' ? '学生' : activeEditTab === 'teacher' ? '教师' : '教室'}的Excel数据...`}
-              value={editingData}
-              onChange={(e) => setEditingData(e.target.value)}
-              rows={4}
-            />
+        {/* 编辑表单 - 粘贴模式 */}
+        {editMode === 'paste' && (
+          <div className="edit-form">
+            <div className="form-group">
+              <label className="form-label">修改数据（支持粘贴Excel）</label>
+              <textarea
+                className="form-textarea"
+                placeholder={`粘贴${activeEditTab === 'student' ? '学生' : activeEditTab === 'teacher' ? '教师' : '教室'}的Excel数据...`}
+                value={editingData}
+                onChange={(e) => setEditingData(e.target.value)}
+                rows={4}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label required">修改原因</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="请输入修改原因..."
+                value={modificationReason}
+                onChange={(e) => setModificationReason(e.target.value)}
+              />
+            </div>
           </div>
-          
-          <div className="form-group">
-            <label className="form-label required">修改原因</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="请输入修改原因..."
-              value={modificationReason}
-              onChange={(e) => setModificationReason(e.target.value)}
-            />
-          </div>
-        </div>
+        )}
+        
+        {/* 可视化编辑器 */}
+        {editMode === 'visual' && (
+          <VisualEditor
+            targetType={activeEditTab}
+            data={activeEditTab === 'student' ? student : null}
+            availableTeachers={availableTeachers}
+            availableClassrooms={availableClassrooms}
+            onApplyAndRetry={handleVisualEditAndRetry}
+            loading={loading}
+          />
+        )}
       </div>
       
-      {/* 操作按钮区 */}
-      <div className="action-buttons">
-        <button
-          className="action-btn primary"
-          onClick={handleManualModify}
-          disabled={loading}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <polyline points="7 3 7 8 15 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          保存修改
-        </button>
+      {/* 操作按钮区 - 只在粘贴模式下显示 */}
+      {editMode === 'paste' && (
+        <div className="action-buttons">
+          <button
+            className="action-btn primary"
+            onClick={handleManualModify}
+            disabled={loading}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="7 3 7 8 15 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            保存修改
+          </button>
         
         <button
           className="action-btn success"
@@ -264,17 +326,18 @@ const AdjustmentPanel = ({
           跳过
         </button>
         
-        <button
-          className="action-btn info"
-          onClick={onNextConflict}
-          disabled={loading}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          下一个
-        </button>
-      </div>
+          <button
+            className="action-btn info"
+            onClick={onNextConflict}
+            disabled={loading}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            下一个
+          </button>
+        </div>
+      )}
     </div>
   );
 };

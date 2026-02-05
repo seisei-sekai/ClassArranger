@@ -177,7 +177,7 @@
 }
 
 /* Modal Body - Split Layout */
-.modal-body {
+.adjustment-modal .modal-body {
   display: flex;
   flex-direction: row !important; /* 强制横向布局 */
   gap: 1.5rem;
@@ -297,7 +297,7 @@
 /* 注释掉小屏幕的上下布局，始终保持左右布局 */
 /*
 @media (max-width: 900px) {
-  .modal-body {
+  .adjustment-modal .modal-body {
     flex-direction: column;
   }
   

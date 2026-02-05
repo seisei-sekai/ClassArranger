@@ -1298,6 +1298,8 @@
   flex: 1 1 auto;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column !important;
 }
 
 .edit-instruction {
@@ -1921,6 +1923,8 @@
   overflow-y: scroll;
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column !important;
 }
 
 .teacher-data-input {

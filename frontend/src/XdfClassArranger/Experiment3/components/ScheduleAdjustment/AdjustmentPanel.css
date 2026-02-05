@@ -88,6 +88,53 @@
   border-color: #4A90E2;
 }
 
+/* Edit Mode Toggle */
+.edit-mode-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-tertiary);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-primary);
+}
+
+.mode-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-toggle-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.mode-toggle-btn.active {
+  background: white;
+  color: var(--accent-tertiary);
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mode-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Dark Mode */
+:root[data-theme="dark"] .mode-toggle-btn.active {
+  background: rgba(90, 108, 125, 0.3);
+  color: var(--accent-tertiary);
+}
+
 /* Student Info Section */
 .student-info-section {
   border-bottom: 2px solid #e0e0e0;

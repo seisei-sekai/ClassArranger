@@ -144,12 +144,82 @@ const ScheduleAdjustmentModal = ({
   const handleManualModify = (modifyData) => {
     if (!adjustmentService) return;
     
-    const { targetType, data, reason, conflictId } = modifyData;
+    const { targetType, data, reason, conflictId, isVisualEdit } = modifyData;
     
-    // 这里简化处理，实际应该解析data并调用对应的修改方法
     console.log('[AdjustmentModal] Manual modify:', modifyData);
     
-    alert('数据已修改（需要实现具体解析逻辑）');
+    if (isVisualEdit) {
+      // 可视化编辑器的结构化数据
+      const conflict = adjustmentService.getConflictById(conflictId);
+      if (!conflict) {
+        alert('找不到对应的冲突信息');
+        return;
+      }
+      
+      let targetId;
+      if (targetType === 'student') {
+        targetId = conflict.student.id;
+      } else if (targetType === 'teacher') {
+        targetId = data.teacherId || conflict.teacher?.id;
+      } else if (targetType === 'classroom') {
+        targetId = data.classroomId || conflict.classroom?.id;
+      }
+      
+      if (!targetId) {
+        alert('无法确定修改目标');
+        return;
+      }
+      
+      // 获取目标对象
+      const target = adjustmentService._findTarget(targetType, targetId);
+      if (!target) {
+        alert('找不到目标对象');
+        return;
+      }
+      
+      // 应用所有修改
+      let modifiedFields = [];
+      Object.entries(data).forEach(([field, value]) => {
+        if (field === 'teacherId' || field === 'classroomId') return; // 跳过ID字段
+        
+        const oldValue = target[field];
+        
+        // 只修改发生变化的字段
+        if (JSON.stringify(oldValue) !== JSON.stringify(value)) {
+          target[field] = value;
+          modifiedFields.push(`${field}: ${JSON.stringify(oldValue)} → ${JSON.stringify(value)}`);
+        }
+      });
+      
+      if (modifiedFields.length > 0) {
+        // 标记为已修改
+        if (!target.isModified) {
+          target.isModified = true;
+          target.modificationHistory = [];
+        }
+        
+        const modificationRecord = {
+          timestamp: new Date().toISOString(),
+          targetType,
+          targetId,
+          targetName: target.name,
+          fields: modifiedFields,
+          reason,
+          conflictId
+        };
+        
+        target.modificationHistory.push(modificationRecord);
+        adjustmentService.modificationRecords.push(modificationRecord);
+        
+        console.log('[AdjustmentModal] Applied modifications:', modificationRecord);
+        alert(`已修改 ${modifiedFields.length} 个字段:\n${modifiedFields.join('\n')}`);
+      } else {
+        alert('没有检测到数据变化');
+      }
+    } else {
+      // 原始文本粘贴方式
+      alert('数据已修改（文本粘贴模式需要实现具体解析逻辑）');
+    }
     
     // 刷新冲突列表
     setEnhancedConflicts(adjustmentService.getEnhancedConflicts());
@@ -358,6 +428,8 @@ const ScheduleAdjustmentModal = ({
               onNextConflict={handleNextConflict}
               onShowHistory={() => setShowHistory(true)}
               loading={loading}
+              availableTeachers={teachers}
+              availableClassrooms={classrooms}
             />
           </div>
         </div>

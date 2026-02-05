@@ -1011,7 +1011,11 @@ const Experiment3 = () => {
   // 开始编辑教师
   const handleEditTeacher = (teacher) => {
     setEditingTeacher(teacher);
-    setEditingTeacherRawData(teacher.rawData || '');
+    // 确保rawData是字符串类型
+    const rawDataStr = typeof teacher.rawData === 'string' 
+      ? teacher.rawData 
+      : '';
+    setEditingTeacherRawData(rawDataStr);
   };
 
   // 保存教师编辑
