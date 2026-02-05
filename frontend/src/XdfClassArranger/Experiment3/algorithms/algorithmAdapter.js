@@ -163,9 +163,16 @@ export class SchedulingAlgorithmAdapter {
       frequency: student.rawData?.频次 || "1次/周",
     };
 
+    console.log(`[AlgorithmAdapter] 提取学生 ${student.name} 的约束，原始数据:`, {
+      hasParsedData: !!student.parsedData,
+      hasConstraints: !!student.constraints,
+      hasAvailability: !!availability,
+      studentKeys: Object.keys(student)
+    });
+    
     // 优先使用 parsedData（智能推荐和可视化编辑器修改的数据）
     if (student.parsedData) {
-      console.log(`[AlgorithmAdapter] 使用 student.parsedData:`, student.parsedData);
+      console.log(`[AlgorithmAdapter] ✅ 使用 student.parsedData:`, student.parsedData);
       
       // 处理 allowedDays
       if (student.parsedData.allowedDays) {
@@ -173,11 +180,15 @@ export class SchedulingAlgorithmAdapter {
           ? student.parsedData.allowedDays 
           : Array.from(student.parsedData.allowedDays);
         days.forEach(day => constraints.allowedDays.add(day));
+        console.log(`[AlgorithmAdapter]   添加 allowedDays:`, days);
       }
       
       // 处理 allowedTimeRanges
       if (student.parsedData.allowedTimeRanges && student.parsedData.allowedTimeRanges.length > 0) {
-        student.parsedData.allowedTimeRanges.forEach(range => {
+        console.log(`[AlgorithmAdapter]   处理 ${student.parsedData.allowedTimeRanges.length} 个时间范围`);
+        student.parsedData.allowedTimeRanges.forEach((range, idx) => {
+          console.log(`[AlgorithmAdapter]     范围 ${idx + 1}:`, range);
+          
           // 如果 range 没有 day 字段，应用到所有 allowedDays
           if (range.day !== undefined && range.day !== null) {
             constraints.allowedTimeRanges.push({
@@ -188,6 +199,7 @@ export class SchedulingAlgorithmAdapter {
           } else {
             // 没有指定 day，应用到所有允许的天数
             const allowedDays = Array.from(constraints.allowedDays);
+            console.log(`[AlgorithmAdapter]     无 day 字段，应用到: [${allowedDays}]`);
             if (allowedDays.length === 0) {
               // 如果还没有 allowedDays，使用工作日
               [1, 2, 3, 4, 5].forEach(day => {
@@ -209,6 +221,28 @@ export class SchedulingAlgorithmAdapter {
             }
           }
         });
+      }
+    } else if (student.constraints && (student.constraints.allowedDays?.size > 0 || student.constraints.allowedTimeRanges?.length > 0)) {
+      // 如果没有 parsedData，但有 constraints（来自智能推荐）
+      console.log(`[AlgorithmAdapter] ✅ 使用 student.constraints:`, student.constraints);
+      
+      if (student.constraints.allowedDays) {
+        const days = student.constraints.allowedDays instanceof Set
+          ? Array.from(student.constraints.allowedDays)
+          : student.constraints.allowedDays;
+        days.forEach(day => constraints.allowedDays.add(day));
+      }
+      
+      if (student.constraints.allowedTimeRanges) {
+        constraints.allowedTimeRanges = student.constraints.allowedTimeRanges.map(r => ({
+          day: r.day,
+          startSlot: r.startSlot,
+          endSlot: r.endSlot
+        }));
+      }
+      
+      if (student.constraints.excludedTimeRanges) {
+        constraints.excludedTimeRanges = student.constraints.excludedTimeRanges;
       }
     } else if (availability?.parsedData?.slots) {
       // 如果没有 parsedData，使用 availability

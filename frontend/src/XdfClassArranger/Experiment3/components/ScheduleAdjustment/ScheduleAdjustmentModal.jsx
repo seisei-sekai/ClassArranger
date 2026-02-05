@@ -201,6 +201,32 @@ const ScheduleAdjustmentModal = ({
               modifiedFields.push(`parsedData.${subField}: ${JSON.stringify(oldSubValue)} → ${JSON.stringify(subValue)}`);
             }
           });
+        } else if (field === 'constraints' && typeof value === 'object' && value !== null) {
+          // 特殊处理 constraints - 深度合并并转换 Set
+          if (!target.constraints) {
+            target.constraints = {};
+          }
+          
+          // 深度合并 constraints
+          Object.entries(value).forEach(([subField, subValue]) => {
+            const oldSubValue = target.constraints[subField];
+            
+            // 特殊处理 allowedDays（可能是 Set）
+            if (subField === 'allowedDays') {
+              const newSet = subValue instanceof Set ? subValue : new Set(subValue);
+              const oldSet = oldSubValue instanceof Set ? oldSubValue : new Set(oldSubValue || []);
+              
+              if (JSON.stringify(Array.from(oldSet)) !== JSON.stringify(Array.from(newSet))) {
+                target.constraints[subField] = newSet;
+                modifiedFields.push(`constraints.${subField}: [${Array.from(oldSet)}] → [${Array.from(newSet)}]`);
+              }
+            } else {
+              if (JSON.stringify(oldSubValue) !== JSON.stringify(subValue)) {
+                target.constraints[subField] = subValue;
+                modifiedFields.push(`constraints.${subField}: ${JSON.stringify(oldSubValue)} → ${JSON.stringify(subValue)}`);
+              }
+            }
+          });
         } else {
           // 普通字段直接赋值
           if (JSON.stringify(oldValue) !== JSON.stringify(value)) {

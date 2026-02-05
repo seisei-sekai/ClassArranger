@@ -397,12 +397,29 @@ export class TripleMatchScheduler {
    */
   findCommonTimeSlots(student, teacherSlots) {
     const validSlots = [];
-    const studentRanges = student.constraints?.allowedTimeRanges || student.parsedData?.allowedTimeRanges || [];
+    
+    // 优先使用 constraints，其次 parsedData
+    let studentRanges = [];
+    let allowedDaysSet = new Set([1,2,3,4,5]);
+    
+    if (student.constraints?.allowedTimeRanges && student.constraints.allowedTimeRanges.length > 0) {
+      studentRanges = student.constraints.allowedTimeRanges;
+      allowedDaysSet = student.constraints.allowedDays || new Set([1,2,3,4,5]);
+      console.log(`[findCommonTimeSlots] ✅ 使用 student.constraints`);
+    } else if (student.parsedData?.allowedTimeRanges && student.parsedData.allowedTimeRanges.length > 0) {
+      studentRanges = student.parsedData.allowedTimeRanges;
+      allowedDaysSet = student.parsedData.allowedDays || [1,2,3,4,5];
+      console.log(`[findCommonTimeSlots] ✅ 使用 student.parsedData`);
+    } else {
+      console.warn(`[findCommonTimeSlots] ⚠️ 学生 ${student.name} 没有时间约束！`);
+    }
+    
     const duration = student.constraints?.duration || student.duration || 15;
-    const allowedDaysSet = student.constraints?.allowedDays || student.parsedData?.allowedDays || new Set([1,2,3,4,5]);
 
     console.log(`[findCommonTimeSlots] 学生${student.name}时间约束:`, {
+      source: student.constraints?.allowedTimeRanges ? 'constraints' : 'parsedData',
       studentRanges: studentRanges.length,
+      studentRangesDetail: studentRanges,
       duration,
       allowedDays: Array.isArray(allowedDaysSet) ? allowedDaysSet : Array.from(allowedDaysSet),
       teacherSlotsCount: teacherSlots.length
@@ -411,50 +428,70 @@ export class TripleMatchScheduler {
     for (const studentRange of studentRanges) {
       // Check if day is allowed
       const allowedDays = Array.isArray(allowedDaysSet) ? allowedDaysSet : Array.from(allowedDaysSet);
-      if (!allowedDays.includes(studentRange.day)) {
-        continue;
-      }
-
-      for (const teacherSlot of teacherSlots) {
-        // Find overlap
-        const overlap = findOverlap(studentRange, teacherSlot);
-        
-        if (!overlap) {
+      
+      // 如果 studentRange 没有 day 字段，为每个允许的天数创建范围
+      const rangesWithDay = [];
+      if (studentRange.day !== undefined && studentRange.day !== null) {
+        if (!allowedDays.includes(studentRange.day)) {
+          console.log(`[findCommonTimeSlots]   跳过范围（天数不允许）:`, studentRange);
           continue;
         }
-
-        // Check if overlap is long enough
-        const overlapDuration = overlap.endSlot - overlap.startSlot;
-        
-        if (overlapDuration < duration) {
-          continue;
-        }
-
-        // Check against excluded ranges
-        const hasExclusion = this.hasExcludedConflict(
-          overlap,
-          student.constraints.excludedTimeRanges || []
-        );
-        if (hasExclusion) continue;
-
-        // Create time slot with formatted times
-        const minutesPerSlot = this.granularity.minutes;
-        const startMinutes = overlap.startSlot * minutesPerSlot;
-        const endMinutes = (overlap.startSlot + duration) * minutesPerSlot;
-        
-        const startHour = 9 + Math.floor(startMinutes / 60);
-        const startMin = startMinutes % 60;
-        const endHour = 9 + Math.floor(endMinutes / 60);
-        const endMin = endMinutes % 60;
-        
-        validSlots.push({
-          day: overlap.day,
-          startSlot: overlap.startSlot,
-          endSlot: overlap.startSlot + duration,
-          duration: duration,
-          start: formatTime(startHour, startMin),
-          end: formatTime(endHour, endMin)
+        rangesWithDay.push(studentRange);
+      } else {
+        // 如果没有 day 字段，这个范围适用于所有允许的天数
+        console.log(`[findCommonTimeSlots]   范围无 day 字段，扩展到所有允许的天数:`, studentRange);
+        allowedDays.forEach(day => {
+          rangesWithDay.push({
+            day,
+            startSlot: studentRange.start || studentRange.startSlot,
+            endSlot: studentRange.end || studentRange.endSlot
+          });
         });
+      }
+      
+      // 对每个有 day 的范围进行匹配
+      for (const rangeWithDay of rangesWithDay) {
+        for (const teacherSlot of teacherSlots) {
+          // Find overlap
+          const overlap = findOverlap(rangeWithDay, teacherSlot);
+          
+          if (!overlap) {
+            continue;
+          }
+
+          // Check if overlap is long enough
+          const overlapDuration = overlap.endSlot - overlap.startSlot;
+          
+          if (overlapDuration < duration) {
+            continue;
+          }
+
+          // Check against excluded ranges
+          const hasExclusion = this.hasExcludedConflict(
+            overlap,
+            student.constraints?.excludedTimeRanges || []
+          );
+          if (hasExclusion) continue;
+
+          // Create time slot with formatted times
+          const minutesPerSlot = this.granularity.minutes;
+          const startMinutes = overlap.startSlot * minutesPerSlot;
+          const endMinutes = (overlap.startSlot + duration) * minutesPerSlot;
+          
+          const startHour = 9 + Math.floor(startMinutes / 60);
+          const startMin = startMinutes % 60;
+          const endHour = 9 + Math.floor(endMinutes / 60);
+          const endMin = endMinutes % 60;
+          
+          validSlots.push({
+            day: overlap.day,
+            startSlot: overlap.startSlot,
+            endSlot: overlap.startSlot + duration,
+            duration: duration,
+            start: formatTime(startHour, startMin),
+            end: formatTime(endHour, endMin)
+          });
+        }
       }
     }
 
