@@ -120,6 +120,15 @@ export class TripleMatchScheduler {
    * 为单个学生排课
    */
   scheduleStudent(student, teacherAvailability, classroomAvailability) {
+    console.log(`[TripleMatch] 开始为学生排课:`, {
+      name: student.name,
+      subject: student.subject,
+      campus: student.campus,
+      frequency: student.frequency,
+      schedulingMode: student.schedulingMode,
+      isRecurringFixed: student.isRecurringFixed
+    });
+    
     // Check remaining hours
     if (student.remainingHours <= 0) {
       return {
@@ -135,6 +144,8 @@ export class TripleMatchScheduler {
       teacherAvailability
     );
 
+    console.log(`[TripleMatch] 找到符合条件的教师数量: ${eligibleTeachers.length}`);
+
     if (eligibleTeachers.length === 0) {
       return {
         success: false,
@@ -146,6 +157,7 @@ export class TripleMatchScheduler {
     const failureReasons = [];
     for (const teacherInfo of eligibleTeachers) {
       const teacher = teacherInfo.resource;
+      console.log(`[TripleMatch] 尝试教师: ${teacher.name}`);
 
       // Check teacher's weekly hours limit
       const hoursNeeded = (student.constraints.duration * this.granularity.minutes) / 60;
@@ -160,8 +172,11 @@ export class TripleMatchScheduler {
         teacherInfo.availableSlots
       );
 
+      console.log(`[TripleMatch] 与教师${teacher.name}的共同时间槽数量: ${commonSlots.length}`);
+
       if (commonSlots.length === 0) {
         failureReasons.push(`与教师${teacher.name}没有共同时间段`);
+        console.log(`[TripleMatch] ❌ 与教师${teacher.name}没有共同时间段`);
         continue;
       }
 
@@ -169,9 +184,17 @@ export class TripleMatchScheduler {
       const isFlexibleMode = student.schedulingMode === 'flexible' || student.isRecurringFixed === false;
       const frequencyNum = parseInt(student.frequency) || 1;
       
+      console.log(`[TripleMatch] 排课模式检查:`, {
+        isFlexibleMode,
+        schedulingMode: student.schedulingMode,
+        isRecurringFixed: student.isRecurringFixed,
+        frequency: student.frequency,
+        frequencyNum
+      });
+      
       // 灵活排课模式：尝试为每次课找不同的时间槽
       if (isFlexibleMode && frequencyNum > 1) {
-        console.log(`[TripleMatch] 学生${student.name}使用灵活排课模式，需要安排${frequencyNum}次课`);
+        console.log(`[TripleMatch] ✅ 学生${student.name}使用灵活排课模式，需要安排${frequencyNum}次课`);
         
         const scheduledSlots = [];
         const usedDays = new Set();
@@ -179,10 +202,12 @@ export class TripleMatchScheduler {
         // 尝试为每次课找一个时间槽
         for (let i = 0; i < frequencyNum; i++) {
           let slotFound = false;
+          console.log(`[TripleMatch] 尝试安排第${i + 1}/${frequencyNum}次课...`);
           
           for (const timeSlot of commonSlots) {
             // 避免同一天安排多次课
             if (usedDays.has(timeSlot.day)) {
+              console.log(`[TripleMatch]   跳过时间槽（同一天）:`, timeSlot);
               continue;
             }
             
@@ -191,7 +216,12 @@ export class TripleMatchScheduler {
               s.day === timeSlot.day && 
               timeSlotsOverlap(s, timeSlot)
             );
-            if (isSlotUsed) continue;
+            if (isSlotUsed) {
+              console.log(`[TripleMatch]   跳过时间槽（已使用）:`, timeSlot);
+              continue;
+            }
+            
+            console.log(`[TripleMatch]   检查时间槽:`, timeSlot);
             
             // Find available classroom
             const classroomInfo = this.findAvailableClassroom(
@@ -201,6 +231,7 @@ export class TripleMatchScheduler {
             );
 
             if (classroomInfo) {
+              console.log(`[TripleMatch]   ✅ 找到可用教室: ${classroomInfo.resource.name}`);
               scheduledSlots.push(timeSlot);
               usedDays.add(timeSlot.day);
               
@@ -218,11 +249,14 @@ export class TripleMatchScheduler {
               
               slotFound = true;
               break;
+            } else {
+              console.log(`[TripleMatch]   ❌ 该时间槽无可用教室`);
             }
           }
           
           if (!slotFound) {
-            console.log(`[TripleMatch] 灵活排课：无法为第${i + 1}次课找到时间槽`);
+            console.log(`[TripleMatch] ❌ 灵活排课：无法为第${i + 1}次课找到时间槽`);
+            console.log(`[TripleMatch]    已安排: ${scheduledSlots.length}次，需要: ${frequencyNum}次`);
             // 回滚已占用的时间槽
             scheduledSlots.forEach(slot => {
               // 这里简化处理，实际应该恢复 availability
@@ -363,12 +397,21 @@ export class TripleMatchScheduler {
    */
   findCommonTimeSlots(student, teacherSlots) {
     const validSlots = [];
-    const studentRanges = student.constraints.allowedTimeRanges || [];
-    const duration = student.constraints.duration;
+    const studentRanges = student.constraints?.allowedTimeRanges || student.parsedData?.allowedTimeRanges || [];
+    const duration = student.constraints?.duration || student.duration || 15;
+    const allowedDaysSet = student.constraints?.allowedDays || student.parsedData?.allowedDays || new Set([1,2,3,4,5]);
+
+    console.log(`[findCommonTimeSlots] 学生${student.name}时间约束:`, {
+      studentRanges: studentRanges.length,
+      duration,
+      allowedDays: Array.isArray(allowedDaysSet) ? allowedDaysSet : Array.from(allowedDaysSet),
+      teacherSlotsCount: teacherSlots.length
+    });
 
     for (const studentRange of studentRanges) {
       // Check if day is allowed
-      if (!student.constraints.allowedDays.has(studentRange.day)) {
+      const allowedDays = Array.isArray(allowedDaysSet) ? allowedDaysSet : Array.from(allowedDaysSet);
+      if (!allowedDays.includes(studentRange.day)) {
         continue;
       }
 
