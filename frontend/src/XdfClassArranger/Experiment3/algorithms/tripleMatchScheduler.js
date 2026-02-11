@@ -181,8 +181,15 @@ export class TripleMatchScheduler {
       }
 
       // 检查是否为灵活排课模式
-      const isFlexibleMode = student.schedulingMode === 'flexible' || student.isRecurringFixed === false;
-      const frequencyNum = parseInt(student.frequency) || 1;
+      // V4 Schema > 旧字段
+      const isFlexibleMode = student.scheduling?.frequencyConstraints?.schedulingMode === 'flexible'
+        || student.schedulingMode === 'flexible' 
+        || student.scheduling?.frequencyConstraints?.isRecurringFixed === false
+        || student.isRecurringFixed === false;
+      
+      // 获取频率：V4 Schema > 旧字段
+      const frequencyStr = student.scheduling?.frequencyConstraints?.frequency || student.frequency || '1次/周';
+      const frequencyNum = parseInt(frequencyStr) || 1;
       
       console.log(`[TripleMatch] 排课模式检查:`, {
         isFlexibleMode,
@@ -336,10 +343,29 @@ export class TripleMatchScheduler {
         reason += ` (还有${failureReasons.length - 3}个原因)`;
       }
     }
+    
+    console.error(`[TripleMatch] ❌ 排课失败`, {
+      studentName: student.name,
+      studentSubject: student.subject,
+      studentCampus: student.campus,
+      studentSchedulingMode: student.schedulingMode,
+      studentIsRecurringFixed: student.isRecurringFixed,
+      studentFrequency: student.frequency,
+      studentConstraints: student.constraints,
+      studentScheduling: student.scheduling,
+      eligibleTeachersCount: eligibleTeachers.length,
+      failureReasonsCount: failureReasons.length,
+      failureReasons: failureReasons,
+      reason: reason
+    });
 
     return {
       success: false,
-      reason: reason
+      reason: reason,
+      details: {
+        failureReasons,
+        eligibleTeachersCount: eligibleTeachers.length
+      }
     };
   }
 
@@ -398,15 +424,24 @@ export class TripleMatchScheduler {
   findCommonTimeSlots(student, teacherSlots) {
     const validSlots = [];
     
-    // 优先使用 constraints，其次 parsedData
+    // 优先级：V4 Schema > constraints > parsedData
     let studentRanges = [];
     let allowedDaysSet = new Set([1,2,3,4,5]);
     
-    if (student.constraints?.allowedTimeRanges && student.constraints.allowedTimeRanges.length > 0) {
+    // V4 Schema (最高优先级)
+    if (student.scheduling?.timeConstraints) {
+      studentRanges = student.scheduling.timeConstraints.allowedTimeRanges || [];
+      allowedDaysSet = new Set(student.scheduling.timeConstraints.allowedDays || [1,2,3,4,5]);
+      console.log(`[findCommonTimeSlots] ✅ 使用 V4 Schema (student.scheduling)`);
+    }
+    // 旧的constraints系统
+    else if (student.constraints?.allowedTimeRanges && student.constraints.allowedTimeRanges.length > 0) {
       studentRanges = student.constraints.allowedTimeRanges;
       allowedDaysSet = student.constraints.allowedDays || new Set([1,2,3,4,5]);
       console.log(`[findCommonTimeSlots] ✅ 使用 student.constraints`);
-    } else if (student.parsedData?.allowedTimeRanges && student.parsedData.allowedTimeRanges.length > 0) {
+    }
+    // parsedData (AI解析结果)
+    else if (student.parsedData?.allowedTimeRanges && student.parsedData.allowedTimeRanges.length > 0) {
       studentRanges = student.parsedData.allowedTimeRanges;
       allowedDaysSet = student.parsedData.allowedDays || [1,2,3,4,5];
       console.log(`[findCommonTimeSlots] ✅ 使用 student.parsedData`);
@@ -414,7 +449,11 @@ export class TripleMatchScheduler {
       console.warn(`[findCommonTimeSlots] ⚠️ 学生 ${student.name} 没有时间约束！`);
     }
     
-    const duration = student.constraints?.duration || student.duration || 15;
+    // Duration: V4 Schema > constraints > student.duration
+    const duration = student.scheduling?.frequencyConstraints?.duration / 10 
+      || student.constraints?.duration 
+      || student.duration 
+      || 15;
 
     console.log(`[findCommonTimeSlots] 学生${student.name}时间约束:`, {
       source: student.constraints?.allowedTimeRanges ? 'constraints' : 'parsedData',

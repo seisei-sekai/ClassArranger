@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -47,7 +47,7 @@ import {
   countersStorage,
   adjustmentHistoryStorage,
   clearAllLocalStorage,
-} from '../services/localStorageService';
+} from '../services/databaseService'; // 🔥 使用MongoDB后端API
 import './Experiment3.css';
 
 const Experiment3 = () => {
@@ -60,8 +60,8 @@ const Experiment3 = () => {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
-  // Initialize from localStorage
-  const [aiResult, setAIResult] = useState(() => aiResultStorage.load());
+  // 🔥 Initialize from MongoDB (异步加载)
+  const [aiResult, setAIResult] = useState(null);
   const [showTutorial, setShowTutorial] = useState(false);
   
   // NLP Constraint Review Dialog state (NLP约束审核对话框状态)
@@ -69,24 +69,28 @@ const Experiment3 = () => {
   const [nlpExcelData, setNlpExcelData] = useState(null);
 
   // 学生列表状态 (Student list state)
-  // Initialize from localStorage
-  const [students, setStudents] = useState(() => studentsStorage.load());
-  const [studentCounter, setStudentCounter] = useState(() => countersStorage.loadStudentCounter());
+  // 🔥 Initialize from MongoDB (异步加载)
+  const [students, setStudents] = useState([]);
+  const [studentCounter, setStudentCounter] = useState(0);
   const [editingStudent, setEditingStudent] = useState(null); // 当前编辑的学生
   const [editingRawData, setEditingRawData] = useState(''); // 编辑中的原始数据
 
   // 教师列表状态 (Teacher list state)
-  // Initialize from localStorage
-  const [teachers, setTeachers] = useState(() => teachersStorage.load());
-  const [teacherCounter, setTeacherCounter] = useState(() => countersStorage.loadTeacherCounter());
+  // 🔥 Initialize from MongoDB (异步加载)
+  const [teachers, setTeachers] = useState([]);
+  const [teacherCounter, setTeacherCounter] = useState(0);
   const [editingTeacher, setEditingTeacher] = useState(null); // 当前编辑的教师
   const [editingTeacherRawData, setEditingTeacherRawData] = useState(''); // 编辑中的教师原始数据
 
   // 教室列表状态 (Classroom list state)
-  // Initialize from localStorage
-  const [classrooms, setClassrooms] = useState(() => classroomsStorage.load());
+  // 🔥 Initialize from MongoDB (异步加载)
+  const [classrooms, setClassrooms] = useState([]);
   const [editingClassroomData, setEditingClassroomData] = useState('');
   const [showClassroomModal, setShowClassroomModal] = useState(false);
+  
+  // 🔥 数据加载状态
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [dataLoadError, setDataLoadError] = useState(null);
 
   // 一键排课状态 (One-click scheduling state)
   const [isScheduling, setIsScheduling] = useState(false);
@@ -124,6 +128,58 @@ const Experiment3 = () => {
   const [showTestDataGenerator, setShowTestDataGenerator] = useState(false); // Test data generator modal
   const [showOnboarding, setShowOnboarding] = useState(false); // Onboarding tour
 
+  // 🔥 侧边栏折叠状态 (Panel collapse states)
+  const [isStudentPanelCollapsed, setIsStudentPanelCollapsed] = useState(false);
+  const [isTeacherPanelCollapsed, setIsTeacherPanelCollapsed] = useState(false);
+  const [isClassroomPanelCollapsed, setIsClassroomPanelCollapsed] = useState(false);
+
+  // 🔥 从MongoDB加载初始数据
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        console.log('[Experiment3] Loading data from MongoDB...');
+        setIsDataLoaded(false);
+        
+        // 并行加载所有数据
+        const [
+          loadedStudents,
+          loadedTeachers,
+          loadedClassrooms,
+          studentCnt,
+          teacherCnt,
+          loadedAI
+        ] = await Promise.all([
+          studentsStorage.load(),
+          teachersStorage.load(),
+          classroomsStorage.load(),
+          countersStorage.loadStudentCounter(),
+          countersStorage.loadTeacherCounter(),
+          aiResultStorage.load()
+        ]);
+        
+        setStudents(loadedStudents);
+        setTeachers(loadedTeachers);
+        setClassrooms(loadedClassrooms);
+        setStudentCounter(studentCnt);
+        setTeacherCounter(teacherCnt);
+        setAIResult(loadedAI);
+        
+        setIsDataLoaded(true);
+        console.log('[Experiment3] Data loaded successfully:', {
+          students: loadedStudents.length,
+          teachers: loadedTeachers.length,
+          classrooms: loadedClassrooms.length
+        });
+      } catch (error) {
+        console.error('[Experiment3] Error loading data:', error);
+        setDataLoadError(error.message);
+        setIsDataLoaded(true); // Still mark as loaded to show error
+      }
+    };
+    
+    loadInitialData();
+  }, []); // 只在组件mount时加载一次
+
   // 数据同步：当排课结果更新时，同步到FullCalendar (Data sync: Update FullCalendar when schedule changes)
   useEffect(() => {
     const syncToFullCalendar = async () => {
@@ -131,8 +187,25 @@ const Experiment3 = () => {
         try {
           const { convertCoursesToFullCalendarEvents } = await import('./utils/calendarEventConverter.js');
           const fcEvents = convertCoursesToFullCalendarEvents(scheduledCourses);
-          setFullCalendarEvents(fcEvents);
-          console.log('[DataSync] Synced to FullCalendar:', fcEvents.length, 'events');
+          
+          // 🔥 根据学生和教师的 courseVisibility 过滤事件
+          const filteredEvents = fcEvents.filter(event => {
+            const studentId = event.extendedProps?.studentId;
+            const teacherId = event.extendedProps?.teacherId;
+            
+            // 找到对应的学生和教师
+            const student = students.find(s => s.id === studentId);
+            const teacher = teachers.find(t => t.id === teacherId);
+            
+            // 如果学生或教师的 courseVisibility 为 false，则隐藏该事件
+            const studentVisible = !student || student.courseVisibility !== false;
+            const teacherVisible = !teacher || teacher.courseVisibility !== false;
+            
+            return studentVisible && teacherVisible;
+          });
+          
+          setFullCalendarEvents(filteredEvents);
+          console.log('[DataSync] Synced to FullCalendar:', filteredEvents.length, '/', fcEvents.length, 'events (filtered)');
         } catch (error) {
           console.error('[DataSync] Failed to sync to FullCalendar:', error);
         }
@@ -142,7 +215,7 @@ const Experiment3 = () => {
     };
     
     syncToFullCalendar();
-  }, [scheduledCourses]);
+  }, [scheduledCourses, students, teachers]); // 🔥 添加 students 和 teachers 依赖
 
   // 添加学生
   const handleAddStudent = () => {
@@ -155,6 +228,7 @@ const Experiment3 = () => {
       parsedData: null, // 解析后的数据（后续使用）
       showAvailability: false, // 是否在日历上显示该学生的可用性
       selected: false, // 是否被选中进行排课
+      courseVisibility: true, // 是否在日历上显示该学生的排课课程
       courseHours: { totalHours: 0, usedHours: 0, remainingHours: 0 } // 课时信息
     };
     setStudents([...students, newStudent]);
@@ -170,6 +244,38 @@ const Experiment3 = () => {
   const toggleStudentAvailability = (studentId) => {
     setStudents(students.map(s =>
       s.id === studentId ? { ...s, showAvailability: !s.showAvailability } : s
+    ));
+  };
+
+  // 切换单个学生的课程显示
+  const toggleStudentCourseVisibility = (studentId) => {
+    setStudents(students.map(s =>
+      s.id === studentId ? { ...s, courseVisibility: !s.courseVisibility } : s
+    ));
+  };
+  
+  // 🔥 批量切换所有学生的课程可见性
+  const toggleAllStudentsCourseVisibility = () => {
+    // 检查是否有学生已排课
+    const studentsWithCourses = students.filter(s => 
+      scheduledCourses.some(course => course.studentId === s.id)
+    );
+    
+    if (studentsWithCourses.length === 0) return;
+    
+    // 如果有任何一个学生课程隐藏，则全部显示；否则全部隐藏
+    const anyHidden = studentsWithCourses.some(s => s.courseVisibility === false);
+    
+    setStudents(students.map(s => {
+      const hasCourses = scheduledCourses.some(course => course.studentId === s.id);
+      return hasCourses ? { ...s, courseVisibility: anyHidden } : s;
+    }));
+  };
+
+  // 切换单个教师的课程显示
+  const toggleTeacherCourseVisibility = (teacherId) => {
+    setTeachers(teachers.map(t =>
+      t.id === teacherId ? { ...t, courseVisibility: !t.courseVisibility } : t
     ));
   };
 
@@ -684,6 +790,275 @@ const Experiment3 = () => {
     }, 3000);
   };
 
+  /**
+   * 为排课失败的学生创建虚拟排课
+   * 使用超级老师和超级教室，随机分配时间
+   * @param {Array} conflicts - 排课冲突列表
+   * @param {Array} teachers - 教师列表
+   * @param {Array} classrooms - 教室列表
+   * @returns {Array} 虚拟课程列表
+   */
+  const createVirtualCoursesForFailedStudents = (conflicts, teachers, classrooms) => {
+    const virtualCourses = [];
+    const SUPER_TEACHER_ID = 'super-teacher-virtual';
+    const SUPER_CLASSROOM_ID = 'super-classroom-virtual';
+    
+    // 创建超级老师数据
+    const superTeacher = {
+      id: SUPER_TEACHER_ID,
+      name: '超级老师（待分配）',
+      subjects: ['所有科目'],
+      campus: ['所有校区'],
+      isVirtual: true
+    };
+    
+    // 创建超级教室数据
+    const superClassroom = {
+      id: SUPER_CLASSROOM_ID,
+      name: '超级教室（待分配）',
+      campus: '所有校区',
+      capacity: 999,
+      isVirtual: true
+    };
+    
+    conflicts.forEach((conflict, index) => {
+      const student = conflict.student;
+      
+      // 随机生成一个时间槽（周一到周日，9:00-21:00）
+      const randomDay = Math.floor(Math.random() * 7); // 0-6 (Mon-Sun)
+      const randomStartSlot = Math.floor(Math.random() * (144 - 24)) + 0; // 0-120, 避免太晚
+      
+      // 获取学生的课程时长（默认2小时 = 24个5分钟槽）
+      const duration = student.duration ? 
+        (parseInt(student.duration) || 2) * 12 : 24; // 转换为5分钟槽数
+      
+      // 获取频率
+      const frequency = student.frequency || student.rawData?.频次 || '1次/周';
+      const isRecurring = frequency !== '1次';
+      
+      // 计算时间槽的开始和结束
+      const endSlot = randomStartSlot + duration;
+      
+      // 转换槽位为时间字符串
+      const startTime = slotToTimeString(randomStartSlot);
+      const endTime = slotToTimeString(endSlot);
+      
+      // 创建虚拟课程对象
+      const virtualCourse = {
+        id: `virtual-course-${student.id}-${Date.now()}-${index}`,
+        studentId: student.id,
+        studentName: student.name || student.rawData?.学生姓名 || '未知学生',
+        teacherId: SUPER_TEACHER_ID,
+        teacherName: superTeacher.name,
+        classroomId: SUPER_CLASSROOM_ID,
+        classroomName: superClassroom.name,
+        subject: student.subject || student.rawData?.内容 || '',
+        campus: student.campus || student.rawData?.校区 || '',
+        timeSlot: {
+          day: randomDay,
+          startSlot: randomStartSlot,
+          endSlot: endSlot,
+          duration: duration,
+          start: startTime,
+          end: endTime
+        },
+        isRecurring: isRecurring,
+        recurrencePattern: isRecurring ? 'weekly' : null,
+        frequency: frequency,
+        status: 'unscheduled', // 🔥 标记为未排课
+        isVirtual: true, // 🔥 标记为虚拟课程
+        confirmationStatus: 'pending', // 🔥 确认状态：'pending' | 'confirmed'
+        conflictReason: conflict.reason, // 保存失败原因
+        color: '#9CA3AF', // 灰色
+        // 添加课程详情
+        duration: duration,
+        format: student.mode || student.rawData?.形式 || '线下',
+        remainingHours: student.courseHours?.remainingHours || 0,
+        totalHours: student.courseHours?.totalHours || 0
+      };
+      
+      virtualCourses.push(virtualCourse);
+      
+      console.log(`[VirtualCourse] Created for ${student.name}: ${getDayName(randomDay)} ${startTime}-${endTime}`);
+    });
+    
+    return virtualCourses;
+  };
+  
+  /**
+   * 将槽位索引转换为时间字符串
+   * @param {number} slot - 槽位索引 (0-149)
+   * @returns {string} 时间字符串 "HH:MM"
+   */
+  const slotToTimeString = (slot) => {
+    const minutes = slot * 5;
+    const hour = 9 + Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  };
+  
+  /**
+   * 获取星期名称
+   * @param {number} day - 0-6 (Mon-Sun)
+   * @returns {string} 星期名称
+   */
+  const getDayName = (day) => {
+    const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return days[day] || '未知';
+  };
+
+  /**
+   * 切换课程确认状态
+   * @param {string} courseId - 课程ID
+   */
+  const toggleCourseConfirmation = useCallback((courseId) => {
+    console.log('[ConfirmCourse] Toggling confirmation for course:', courseId);
+    
+    // 更新 scheduledCourses
+    setScheduledCourses(prevCourses => {
+      const updatedCourses = prevCourses.map(course => {
+        if (course.id === courseId) {
+          const newStatus = course.confirmationStatus === 'confirmed' ? 'pending' : 'confirmed';
+          console.log(`[ConfirmCourse] ${course.studentName}: ${course.confirmationStatus} → ${newStatus}`);
+          return {
+            ...course,
+            confirmationStatus: newStatus
+          };
+        }
+        return course;
+      });
+      
+      return updatedCourses;
+    });
+    
+    // 更新 FullCalendar events
+    setFullCalendarEvents(prevEvents => {
+      const updatedEvents = prevEvents.map(event => {
+        if (event.id === courseId) {
+          const newStatus = event.extendedProps.confirmationStatus === 'confirmed' ? 'pending' : 'confirmed';
+          const isVirtual = event.extendedProps.isVirtual;
+          
+          // 更新样式类
+          let classNames;
+          if (isVirtual && newStatus === 'pending') {
+            // 状态3: 失败 + 待确认 → 灰色斜条纹
+            classNames = ['event-type-course', 'event-virtual', 'event-pending'];
+          } else if (isVirtual && newStatus === 'confirmed') {
+            // 状态4: 失败 + 已确认 → 纯彩色
+            classNames = ['event-type-course', 'event-confirmed'];
+          } else if (!isVirtual && newStatus === 'pending') {
+            // 状态1: 成功 + 待确认 → 彩色 + 斜条纹
+            classNames = ['event-type-course', 'event-pending-with-stripe'];
+          } else {
+            // 状态2: 成功 + 已确认 → 纯彩色
+            classNames = ['event-type-course', 'event-confirmed'];
+          }
+          
+          return {
+            ...event,
+            classNames: classNames,
+            extendedProps: {
+              ...event.extendedProps,
+              confirmationStatus: newStatus
+            },
+            editable: newStatus !== 'confirmed',
+            draggable: newStatus !== 'confirmed'
+          };
+        }
+        return event;
+      });
+      
+      return updatedEvents;
+    });
+    
+    showToast(
+      `课程确认状态已更新`,
+      'info'
+    );
+  }, []);
+
+  /**
+   * 批量确认所有课程
+   */
+  const confirmAllCourses = useCallback(() => {
+    if (!confirm('确定要确认所有课程吗？确认后课程将不可编辑。')) {
+      return;
+    }
+    
+    console.log('[ConfirmCourse] Confirming all courses');
+    
+    // 更新 scheduledCourses
+    setScheduledCourses(prevCourses => {
+      return prevCourses.map(course => ({
+        ...course,
+        confirmationStatus: 'confirmed'
+      }));
+    });
+    
+    // 更新 FullCalendar events
+    setFullCalendarEvents(prevEvents => {
+      return prevEvents.map(event => {
+        // 已确认后全部为纯彩色（状态2和状态4）
+        const classNames = ['event-type-course', 'event-confirmed'];
+        
+        return {
+          ...event,
+          classNames: classNames,
+          extendedProps: {
+            ...event.extendedProps,
+            confirmationStatus: 'confirmed'
+          },
+          editable: false,
+          draggable: false
+        };
+      });
+    });
+    
+    showToast('所有课程已确认', 'info');
+  }, []);
+
+  /**
+   * 批量取消确认所有课程
+   */
+  const unconfirmAllCourses = useCallback(() => {
+    if (!confirm('确定要取消确认所有课程吗？')) {
+      return;
+    }
+    
+    console.log('[ConfirmCourse] Unconfirming all courses');
+    
+    // 更新 scheduledCourses
+    setScheduledCourses(prevCourses => {
+      return prevCourses.map(course => ({
+        ...course,
+        confirmationStatus: 'pending'
+      }));
+    });
+    
+    // 更新 FullCalendar events
+    setFullCalendarEvents(prevEvents => {
+      return prevEvents.map(event => {
+        const isVirtual = event.extendedProps.isVirtual;
+        const classNames = isVirtual 
+          ? ['event-type-course', 'event-virtual', 'event-pending']
+          : ['event-type-course', 'event-pending-with-stripe'];
+        
+        return {
+          ...event,
+          classNames: classNames,
+          extendedProps: {
+            ...event.extendedProps,
+            confirmationStatus: 'pending'
+          },
+          editable: true,
+          draggable: true
+        };
+      });
+    });
+    
+    showToast('所有课程已取消确认', 'info');
+  }, []);
+
   // 一键排课主函数 (One-click scheduling main function) - 使用新算法适配器
   const handleOneClickSchedule = async () => {
     const validStudents = students.filter(s => s.rawData && s.courseHours?.totalHours > 0);
@@ -783,6 +1158,25 @@ const Experiment3 = () => {
       if (result.conflicts && result.conflicts.length > 0) {
         setAdjustmentConflicts(result.conflicts);
         console.log('[OneClickSchedule] Saved conflicts for adjustment:', result.conflicts.length);
+        
+        // 🔥 新增：为排课失败的学生创建虚拟排课（灰色显示）
+        console.log('[OneClickSchedule] Creating virtual courses for failed students...');
+        const virtualCourses = createVirtualCoursesForFailedStudents(result.conflicts, teachers, classrooms);
+        console.log('[OneClickSchedule] Created virtual courses:', virtualCourses.length);
+        
+        // 合并虚拟课程到排课结果
+        const allCourses = [...displayableCourses, ...virtualCourses];
+        setScheduledCourses(allCourses);
+        
+        // 更新 FullCalendar 事件（包含虚拟课程）
+        const allFcEvents = convertCoursesToFullCalendarEvents(allCourses);
+        setFullCalendarEvents(allFcEvents);
+        console.log('[OneClickSchedule] Total events (real + virtual):', allFcEvents.length);
+        
+        // 更新 context
+        if (virtualCourses.length > 0) {
+          scheduleContext.addScheduledCourses(virtualCourses);
+        }
       } else {
         setAdjustmentConflicts([]);
       }
@@ -978,7 +1372,9 @@ const Experiment3 = () => {
       color: JAPANESE_COLORS[teacherCounter % JAPANESE_COLORS.length],
       rawData: '', // 存储Excel原始数据
       parsedData: null, // 解析后的数据（后续使用）
-      showAvailability: false // 是否在日历上显示该教师的可用性
+      showAvailability: false, // 是否在日历上显示该教师的可用性
+      selected: false, // 是否被选中
+      courseVisibility: true // 是否在日历上显示该教师的排课课程
     };
     setTeachers([...teachers, newTeacher]);
     setTeacherCounter(teacherCounter + 1);
@@ -993,6 +1389,13 @@ const Experiment3 = () => {
   const toggleTeacherAvailability = (teacherId) => {
     setTeachers(teachers.map(t =>
       t.id === teacherId ? { ...t, showAvailability: !t.showAvailability } : t
+    ));
+  };
+
+  // 切换单个教师的选中状态
+  const toggleTeacherSelection = (teacherId) => {
+    setTeachers(teachers.map(t =>
+      t.id === teacherId ? { ...t, selected: !t.selected } : t
     ));
   };
 
@@ -1307,25 +1710,52 @@ const Experiment3 = () => {
   // Initialize from localStorage
   const [events, setEvents] = useState(() => eventsStorage.load());
 
-  // Auto-save to localStorage when data changes
-  // 数据变化时自动保存到localStorage
+  // 🔥 Auto-save to MongoDB when data changes (debounced)
+  // 数据变化时自动保存到MongoDB (防抖)
   useEffect(() => {
-    studentsStorage.save(students);
+    if (!isDataLoaded) return; // 只在数据加载完成后才保存
+    
+    const saveTimer = setTimeout(() => {
+      studentsStorage.save(students).catch(err => 
+        console.error('[Experiment3] Error saving students:', err)
+      );
+    }, 1000); // 1秒防抖
+    
     // Sync with ScheduleContext
     scheduleContext.updateStudents(students);
-  }, [students, scheduleContext]);
+    
+    return () => clearTimeout(saveTimer);
+  }, [students, scheduleContext, isDataLoaded]);
 
   useEffect(() => {
-    teachersStorage.save(teachers);
+    if (!isDataLoaded) return;
+    
+    const saveTimer = setTimeout(() => {
+      teachersStorage.save(teachers).catch(err =>
+        console.error('[Experiment3] Error saving teachers:', err)
+      );
+    }, 1000);
+    
     // Sync with ScheduleContext
     scheduleContext.updateTeachers(teachers);
-  }, [teachers, scheduleContext]);
+    
+    return () => clearTimeout(saveTimer);
+  }, [teachers, scheduleContext, isDataLoaded]);
 
   useEffect(() => {
-    classroomsStorage.save(classrooms);
+    if (!isDataLoaded) return;
+    
+    const saveTimer = setTimeout(() => {
+      classroomsStorage.save(classrooms).catch(err =>
+        console.error('[Experiment3] Error saving classrooms:', err)
+      );
+    }, 1000);
+    
     // Sync with ScheduleContext
     scheduleContext.updateClassrooms(classrooms);
-  }, [classrooms, scheduleContext]);
+    
+    return () => clearTimeout(saveTimer);
+  }, [classrooms, scheduleContext, isDataLoaded]);
 
   useEffect(() => {
     eventsStorage.save(events);
@@ -1335,13 +1765,14 @@ const Experiment3 = () => {
     aiResultStorage.save(aiResult);
   }, [aiResult]);
 
-  useEffect(() => {
-    countersStorage.saveStudentCounter(studentCounter);
-  }, [studentCounter]);
+  // 🔥 Counters are auto-managed by backend, no need to save manually
+  // useEffect(() => {
+  //   countersStorage.saveStudentCounter(studentCounter);
+  // }, [studentCounter]);
 
-  useEffect(() => {
-    countersStorage.saveTeacherCounter(teacherCounter);
-  }, [teacherCounter]);
+  // useEffect(() => {
+  //   countersStorage.saveTeacherCounter(teacherCounter);
+  // }, [teacherCounter]);
 
   // 监听测试数据开关，自动添加/移除示例课程
   useEffect(() => {
@@ -1607,6 +2038,50 @@ const Experiment3 = () => {
 
   return (
     <div className="function-page">
+      {/* 🔥 数据加载状态 */}
+      {!isDataLoaded && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            background: 'var(--bg-primary)',
+            padding: '2rem',
+            borderRadius: '8px',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }}>
+            <div style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>加载数据中...</div>
+            <div style={{ color: 'var(--text-secondary)' }}>正在从数据库加载您的排课数据</div>
+          </div>
+        </div>
+      )}
+      
+      {/* 🔥 数据加载错误 */}
+      {dataLoadError && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: '#fee',
+          padding: '1rem',
+          borderRadius: '8px',
+          border: '1px solid #fcc',
+          zIndex: 9999
+        }}>
+          <div style={{ color: '#c00', fontWeight: 'bold', marginBottom: '0.5rem' }}>数据加载失败</div>
+          <div style={{ color: '#666', fontSize: '0.9rem' }}>{dataLoadError}</div>
+        </div>
+      )}
+      
       <div className="function-header">
         <div className="header-left">
           <h1 className="function-title">排课功能</h1>
@@ -1837,9 +2312,26 @@ const Experiment3 = () => {
       {/* 主内容区域：学生列表 + 日历 */}
       <div className="main-content-area">
         {/* 左侧学生列表区域 */}
-        <div className="student-panel">
+        <div className={`student-panel ${isStudentPanelCollapsed ? 'collapsed' : ''}`}>
           <div className="student-panel-header">
-            <button className="panel-action-btn add-btn" onClick={handleAddStudent}>
+            {/* 🔥 折叠按钮 */}
+            <button 
+              className="panel-collapse-btn"
+              onClick={() => setIsStudentPanelCollapsed(!isStudentPanelCollapsed)}
+              title={isStudentPanelCollapsed ? '展开学生面板' : '折叠学生面板'}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                {isStudentPanelCollapsed ? (
+                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                ) : (
+                  <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                )}
+              </svg>
+            </button>
+            
+            {!isStudentPanelCollapsed && (
+              <>
+                <button className="panel-action-btn add-btn" onClick={handleAddStudent}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                 <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" strokeWidth="2" />
@@ -1912,10 +2404,14 @@ const Experiment3 = () => {
               </svg>
               全选显示
             </button>
+              </>
+            )}
           </div>
 
-          {/* 可用性颜色图例 */}
-          {showAvailability && students.filter(s => s.rawData).length > 0 && (
+          {!isStudentPanelCollapsed && (
+            <>
+              {/* 可用性颜色图例 */}
+              {showAvailability && students.filter(s => s.rawData).length > 0 && (
             <div className="availability-legend">
               <div className="legend-title">可用学生比例</div>
               <div className="legend-items">
@@ -1962,6 +2458,36 @@ const Experiment3 = () => {
                   已选: {getSelectedStudents().length} / {students.filter(s => s.courseHours?.totalHours > 0).length}
                 </span>
               </div>
+              
+              {/* 🔥 课程可见性批量控制 */}
+              {scheduledCourses.length > 0 && (
+                <div className="scheduling-controls" style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-primary)', paddingTop: '0.5rem' }}>
+                  <button
+                    className="toggle-course-visibility-btn"
+                    onClick={toggleAllStudentsCourseVisibility}
+                    disabled={students.filter(s => scheduledCourses.some(c => c.studentId === s.id)).length === 0}
+                    title="批量显示/隐藏所有学生的排课课程"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      {students.filter(s => scheduledCourses.some(c => c.studentId === s.id) && s.courseVisibility !== false).length > 0 ? (
+                        <>
+                          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                          <path d="M9 11l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </>
+                      ) : (
+                        <>
+                          <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                          <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </>
+                      )}
+                    </svg>
+                    {students.filter(s => scheduledCourses.some(c => c.studentId === s.id) && s.courseVisibility === false).length > 0 ? '显示全部课程' : '隐藏全部课程'}
+                  </button>
+                  <span className="selected-count">
+                    可见: {students.filter(s => scheduledCourses.some(c => c.studentId === s.id) && s.courseVisibility !== false).length} / {students.filter(s => scheduledCourses.some(c => c.studentId === s.id)).length}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -1991,6 +2517,29 @@ const Experiment3 = () => {
                       onChange={() => toggleStudentSelection(student.id)}
                       title="选择此学生进行排课"
                     />
+                  )}
+                  
+                  {/* 课程显示toggle按钮 */}
+                  {scheduledCourses.some(course => course.studentId === student.id) && (
+                    <button
+                      className={`student-course-visibility-toggle ${student.courseVisibility !== false ? 'active' : ''}`}
+                      onClick={() => toggleStudentCourseVisibility(student.id)}
+                      title={student.courseVisibility !== false ? '隐藏该学生的排课课程' : '显示该学生的排课课程'}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        {student.courseVisibility !== false ? (
+                          <>
+                            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                            <path d="M9 11l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </>
+                        ) : (
+                          <>
+                            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          </>
+                        )}
+                      </svg>
+                    </button>
                   )}
                   
                   {/* 可用性显示toggle按钮 */}
@@ -2084,6 +2633,8 @@ const Experiment3 = () => {
               ))
             )}
           </div>
+            </>
+          )}
         </div>
 
         {/* 中间列：日历 + 教室列表 */}
@@ -2174,6 +2725,31 @@ const Experiment3 = () => {
                 {scheduleStats.conflicts && scheduleStats.conflicts.length > 0 && (
                   <span className="stat-item warning">⚠️ {scheduleStats.conflicts.length}个冲突</span>
                 )}
+                
+                {/* 🔥 批量确认按钮 */}
+                <div className="confirmation-actions">
+                  <button
+                    className="action-btn confirm-all-btn"
+                    onClick={confirmAllCourses}
+                    title="批量确认所有课程"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
+                      <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    确认全部
+                  </button>
+                  <button
+                    className="action-btn unconfirm-all-btn"
+                    onClick={unconfirmAllCourses}
+                    title="批量取消确认所有课程"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
+                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    取消全部
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -2263,9 +2839,26 @@ const Experiment3 = () => {
           </div>
 
           {/* 教室列表面板 */}
-          <div className="classroom-panel">
+          <div className={`classroom-panel ${isClassroomPanelCollapsed ? 'collapsed' : ''}`}>
             <div className="classroom-panel-header">
-              <h3 className="classroom-panel-title">
+              {/* 🔥 折叠按钮 */}
+              <button 
+                className="panel-collapse-btn"
+                onClick={() => setIsClassroomPanelCollapsed(!isClassroomPanelCollapsed)}
+                title={isClassroomPanelCollapsed ? '展开教室面板' : '折叠教室面板'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  {isClassroomPanelCollapsed ? (
+                    <path d="M18 15l-6-6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  ) : (
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  )}
+                </svg>
+              </button>
+              
+              {!isClassroomPanelCollapsed && (
+                <>
+                  <h3 className="classroom-panel-title">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px' }}>
                   <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
                   <path d="M3 9h18M9 4v5M15 4v5" stroke="currentColor" strokeWidth="2" />
@@ -2285,8 +2878,12 @@ const Experiment3 = () => {
                 </svg>
                 添加教室
               </button>
+                </>
+              )}
             </div>
-            <div className="classroom-panel-content">
+            
+            {!isClassroomPanelCollapsed && (
+              <div className="classroom-panel-content">
               {classrooms.length === 0 ? (
                 <div className="classroom-empty">
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.3 }}>
@@ -2334,15 +2931,33 @@ const Experiment3 = () => {
                   ))}
                 </div>
               )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* 右侧教师面板 */}
-        <div className="teacher-panel">
+        <div className={`teacher-panel ${isTeacherPanelCollapsed ? 'collapsed' : ''}`}>
           <div className="teacher-panel-header">
-            <div className="panel-header-title">教师列表</div>
-            <button className="panel-action-btn add-btn" onClick={handleAddTeacher}>
+            {/* 🔥 折叠按钮 */}
+            <button 
+              className="panel-collapse-btn"
+              onClick={() => setIsTeacherPanelCollapsed(!isTeacherPanelCollapsed)}
+              title={isTeacherPanelCollapsed ? '展开教师面板' : '折叠教师面板'}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                {isTeacherPanelCollapsed ? (
+                  <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                ) : (
+                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                )}
+              </svg>
+            </button>
+            
+            {!isTeacherPanelCollapsed && (
+              <>
+                <div className="panel-header-title">教师列表</div>
+                <button className="panel-action-btn add-btn" onClick={handleAddTeacher}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                 <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" strokeWidth="2" />
@@ -2350,9 +2965,12 @@ const Experiment3 = () => {
               </svg>
               添加教师
             </button>
+              </>
+            )}
           </div>
 
-          <div className="teacher-list">
+          {!isTeacherPanelCollapsed && (
+            <div className="teacher-list">
             {teachers.length === 0 ? (
               <div className="teacher-empty">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.3 }}>
@@ -2369,6 +2987,40 @@ const Experiment3 = () => {
                   className={`teacher-card ${teacher.rawData ? 'has-data' : ''}`}
                   style={{ borderLeftColor: teacher.color }}
                 >
+                  {/* 教师选择checkbox */}
+                  {teacher.rawData && (
+                    <input
+                      type="checkbox"
+                      className="teacher-selection-checkbox"
+                      checked={teacher.selected || false}
+                      onChange={() => toggleTeacherSelection(teacher.id)}
+                      title="选择此教师"
+                    />
+                  )}
+                  
+                  {/* 课程显示toggle按钮 */}
+                  {scheduledCourses.some(course => course.teacherId === teacher.id) && (
+                    <button
+                      className={`teacher-course-visibility-toggle ${teacher.courseVisibility !== false ? 'active' : ''}`}
+                      onClick={() => toggleTeacherCourseVisibility(teacher.id)}
+                      title={teacher.courseVisibility !== false ? '隐藏该教师的排课课程' : '显示该教师的排课课程'}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        {teacher.courseVisibility !== false ? (
+                          <>
+                            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                            <path d="M9 11l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </>
+                        ) : (
+                          <>
+                            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          </>
+                        )}
+                      </svg>
+                    </button>
+                  )}
+                  
                   {/* 可用性显示toggle按钮 */}
                   {teacher.rawData && (
                     <button
@@ -2427,7 +3079,8 @@ const Experiment3 = () => {
                 </div>
               ))
             )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2526,6 +3179,54 @@ const Experiment3 = () => {
             </div>
 
             <div className="modal-footer">
+              {/* 🔥 课程状态显示 */}
+              {selectedEvent.extendedProps.isVirtual && (
+                <div className="modal-status-badge virtual-badge">
+                  ⚠️ 虚拟排课（待分配）
+                </div>
+              )}
+              {selectedEvent.extendedProps.conflictReason && (
+                <div className="modal-status-badge conflict-badge" title={selectedEvent.extendedProps.conflictReason}>
+                  原因: {selectedEvent.extendedProps.conflictReason.slice(0, 30)}...
+                </div>
+              )}
+              
+              {/* 🔥 确认按钮 */}
+              <button
+                className={`modal-button ${
+                  selectedEvent.extendedProps.confirmationStatus === 'confirmed'
+                    ? 'modal-button-secondary'
+                    : 'modal-button-primary'
+                }`}
+                onClick={() => {
+                  toggleCourseConfirmation(selectedEvent.id);
+                  closeModal();
+                }}
+                title={
+                  selectedEvent.extendedProps.confirmationStatus === 'confirmed'
+                    ? '点击取消确认'
+                    : '点击确认此课程'
+                }
+              >
+                {selectedEvent.extendedProps.confirmationStatus === 'confirmed' ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}>
+                      <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    取消确认
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }}>
+                      <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    确认课程
+                  </>
+                )}
+              </button>
+              
               <button
                 className="modal-button modal-button-danger"
                 onClick={handleDeleteEvent}

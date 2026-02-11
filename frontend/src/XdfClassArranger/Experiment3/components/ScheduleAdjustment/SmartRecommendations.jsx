@@ -200,6 +200,30 @@ function getConfidenceLevel(confidence) {
 }
 
 /**
+ * 辅助函数：生成双格式数据（V4 + 旧格式）
+ */
+function createDualFormatData(student, v4Scheduling, legacyFields = {}) {
+  const isV4 = student.scheduling && student.scheduling.timeConstraints;
+  
+  if (isV4) {
+    // V4格式
+    return {
+      scheduling: {
+        ...student.scheduling,
+        ...v4Scheduling
+      }
+    };
+  } else {
+    // 旧格式
+    return {
+      ...legacyFields,
+      parsedData: legacyFields.parsedData || {},
+      constraints: legacyFields.constraints || {}
+    };
+  }
+}
+
+/**
  * 生成推荐方案
  */
 function generateRecommendations(conflict, targetType) {
@@ -208,16 +232,40 @@ function generateRecommendations(conflict, targetType) {
   
   console.log('[generateRecommendations] 输入 - targetType:', targetType);
   console.log('[generateRecommendations] 输入 - student:', student);
+  console.log('[generateRecommendations] Student Schema version:', student._version || 'legacy');
   
   if (!student) {
     console.warn('[generateRecommendations] 警告: student 为空');
     return recommendations;
   }
   
+  // 检测是否为V4格式
+  const isV4 = student.scheduling && student.scheduling.timeConstraints;
+  console.log('[generateRecommendations] 使用Schema:', isV4 ? 'V4' : 'Legacy');
+  
   if (targetType === 'student') {
     // 学生约束调整推荐
     
+    // 获取当前约束（支持V4和旧格式）
+    const currentDays = isV4 
+      ? student.scheduling.timeConstraints.allowedDays
+      : (student.parsedData?.allowedDays || [1,2,3,4,5]);
+    
+    const currentTimeRanges = isV4
+      ? student.scheduling.timeConstraints.allowedTimeRanges
+      : (student.parsedData?.allowedTimeRanges || []);
+    
     // 推荐0（最高优先级）: 极度宽松 - 全天全周可用
+    const ultraFlexibleTimeSlots = [
+      { day: 0, startSlot: 12, endSlot: 102 },  // 周日 8:00-23:00
+      { day: 1, startSlot: 12, endSlot: 102 },  // 周一 8:00-23:00
+      { day: 2, startSlot: 12, endSlot: 102 },  // 周二 8:00-23:00
+      { day: 3, startSlot: 12, endSlot: 102 },  // 周三 8:00-23:00
+      { day: 4, startSlot: 12, endSlot: 102 },  // 周四 8:00-23:00
+      { day: 5, startSlot: 12, endSlot: 102 },  // 周五 8:00-23:00
+      { day: 6, startSlot: 12, endSlot: 102 }   // 周六 8:00-23:00
+    ];
+    
     recommendations.push({
       id: 'ultra-flexible',
       title: '🚀 极度宽松排课（最高成功率）',
@@ -227,7 +275,7 @@ function generateRecommendations(conflict, targetType) {
       changes: [
         {
           field: '可用天数',
-          oldValue: `${(student.parsedData?.allowedDays || [1,2,3,4,5]).length}天`,
+          oldValue: `${currentDays.length}天`,
           newValue: '7天（全周）'
         },
         {
@@ -243,30 +291,33 @@ function generateRecommendations(conflict, targetType) {
       ],
       expectedEffect: '提供最大时间灵活性，排课成功率接近100%！系统将在所有可用时间中灵活安排，每次课可以在不同时间段。',
       risks: ['需要学生接受灵活的上课时间安排', '需及时通知学生每次课的具体时间'],
-      data: {
+      data: isV4 ? {
+        // V4 格式
+        scheduling: {
+          timeConstraints: {
+            allowedDays: [0, 1, 2, 3, 4, 5, 6],
+            allowedTimeRanges: ultraFlexibleTimeSlots,
+            excludedTimeRanges: []
+          },
+          frequencyConstraints: {
+            ...student.scheduling.frequencyConstraints,
+            schedulingMode: 'flexible',
+            isRecurringFixed: false
+          }
+        }
+      } : {
+        // 旧格式（向后兼容）
         parsedData: {
-          allowedDays: [0, 1, 2, 3, 4, 5, 6], // 全周
-          allowedTimeRanges: [
-            { day: 0, start: 12, end: 102 },  // 周日 8:00-23:00
-            { day: 1, start: 12, end: 102 },  // 周一 8:00-23:00
-            { day: 2, start: 12, end: 102 },  // 周二 8:00-23:00
-            { day: 3, start: 12, end: 102 },  // 周三 8:00-23:00
-            { day: 4, start: 12, end: 102 },  // 周四 8:00-23:00
-            { day: 5, start: 12, end: 102 },  // 周五 8:00-23:00
-            { day: 6, start: 12, end: 102 }   // 周六 8:00-23:00
-          ]
+          allowedDays: [0, 1, 2, 3, 4, 5, 6],
+          allowedTimeRanges: ultraFlexibleTimeSlots.map(r => ({
+            day: r.day,
+            start: r.startSlot,
+            end: r.endSlot
+          }))
         },
         constraints: {
           allowedDays: new Set([0, 1, 2, 3, 4, 5, 6]),
-          allowedTimeRanges: [
-            { day: 0, startSlot: 12, endSlot: 102 },
-            { day: 1, startSlot: 12, endSlot: 102 },
-            { day: 2, startSlot: 12, endSlot: 102 },
-            { day: 3, startSlot: 12, endSlot: 102 },
-            { day: 4, startSlot: 12, endSlot: 102 },
-            { day: 5, startSlot: 12, endSlot: 102 },
-            { day: 6, startSlot: 12, endSlot: 102 }
-          ],
+          allowedTimeRanges: ultraFlexibleTimeSlots,
           excludedTimeRanges: []
         },
         schedulingMode: 'flexible',
@@ -275,16 +326,15 @@ function generateRecommendations(conflict, targetType) {
     });
     
     // 推荐1: 扩大可用时间范围
-    const hasTimeRanges = student.parsedData?.allowedTimeRanges?.length > 0;
+    const hasTimeRanges = currentTimeRanges.length > 0;
     if (hasTimeRanges) {
-      const currentRanges = student.parsedData.allowedTimeRanges;
-      const avgStart = Math.min(...currentRanges.map(r => r.start));
-      const avgEnd = Math.max(...currentRanges.map(r => r.end));
+      const avgStart = Math.min(...currentTimeRanges.map(r => r.start || r.startSlot));
+      const avgEnd = Math.max(...currentTimeRanges.map(r => r.end || r.endSlot));
       
-      const expandedRanges = currentRanges.map(r => ({
-        ...r,
-        start: Math.max(0, r.start - 6),
-        end: Math.min(149, r.end + 6)
+      const expandedTimeSlots = currentTimeRanges.map(r => ({
+        day: r.day,
+        startSlot: Math.max(0, (r.start || r.startSlot) - 6),
+        endSlot: Math.min(149, (r.end || r.endSlot) + 6)
       }));
       
       recommendations.push({
@@ -302,27 +352,32 @@ function generateRecommendations(conflict, targetType) {
         ],
         expectedEffect: '增加约10-20%的可用时间槽，显著提高排课成功率。适合时间要求较灵活的学生。',
         risks: [],
-        data: {
+        data: createDualFormatData(student, {
+          timeConstraints: {
+            ...student.scheduling?.timeConstraints,
+            allowedTimeRanges: expandedTimeSlots
+          }
+        }, {
           parsedData: {
             ...student.parsedData,
-            allowedTimeRanges: expandedRanges
+            allowedTimeRanges: expandedTimeSlots.map(r => ({
+              day: r.day,
+              start: r.startSlot,
+              end: r.endSlot
+            }))
           },
           constraints: {
             ...(student.constraints || {}),
-            allowedTimeRanges: expandedRanges.map(r => ({
-              day: r.day,
-              startSlot: r.start,
-              endSlot: r.end
-            }))
+            allowedTimeRanges: expandedTimeSlots
           }
-        }
+        })
       });
     } else {
       // 如果没有时间范围数据，推荐设置全天可用
-      const fullDayRanges = [1, 2, 3, 4, 5].map(day => ({
+      const fullDayTimeSlots = [1, 2, 3, 4, 5].map(day => ({
         day,
-        start: 18,
-        end: 90
+        startSlot: 18,
+        endSlot: 90
       }));
       
       recommendations.push({
@@ -340,26 +395,31 @@ function generateRecommendations(conflict, targetType) {
         ],
         expectedEffect: '提供充足的可用时间段，大幅提高排课成功率。',
         risks: ['请确认学生在这些时间段确实有空'],
-        data: {
+        data: createDualFormatData(student, {
+          timeConstraints: {
+            allowedDays: [1, 2, 3, 4, 5],
+            allowedTimeRanges: fullDayTimeSlots,
+            excludedTimeRanges: []
+          }
+        }, {
           parsedData: {
             allowedDays: [1, 2, 3, 4, 5],
-            allowedTimeRanges: fullDayRanges
+            allowedTimeRanges: fullDayTimeSlots.map(r => ({
+              day: r.day,
+              start: r.startSlot,
+              end: r.endSlot
+            }))
           },
           constraints: {
             allowedDays: new Set([1, 2, 3, 4, 5]),
-            allowedTimeRanges: fullDayRanges.map(r => ({
-              day: r.day,
-              startSlot: r.start,
-              endSlot: r.end
-            })),
+            allowedTimeRanges: fullDayTimeSlots,
             excludedTimeRanges: []
           }
-        }
+        })
       });
     }
     
     // 推荐2: 增加可用天数
-    const currentDays = student.parsedData?.allowedDays || [1, 2, 3, 4, 5];
     const allDays = [0, 1, 2, 3, 4, 5, 6];
     const additionalDays = allDays.filter(d => !currentDays.includes(d));
     
@@ -367,18 +427,17 @@ function generateRecommendations(conflict, targetType) {
       const newDays = [...currentDays, ...additionalDays.slice(0, 1)];
       
       // 为新增的天数创建时间范围（使用现有时间范围的平均值）
-      const existingRanges = student.parsedData?.allowedTimeRanges || [];
-      const avgStart = existingRanges.length > 0 
-        ? Math.min(...existingRanges.map(r => r.start))
+      const avgStart = currentTimeRanges.length > 0 
+        ? Math.min(...currentTimeRanges.map(r => r.start || r.startSlot))
         : 18;
-      const avgEnd = existingRanges.length > 0
-        ? Math.max(...existingRanges.map(r => r.end))
+      const avgEnd = currentTimeRanges.length > 0
+        ? Math.max(...currentTimeRanges.map(r => r.end || r.endSlot))
         : 90;
       
-      const newTimeRanges = newDays.map(day => ({
+      const newTimeSlots = newDays.map(day => ({
         day,
-        start: avgStart,
-        end: avgEnd
+        startSlot: avgStart,
+        endSlot: avgEnd
       }));
       
       recommendations.push({
@@ -396,28 +455,38 @@ function generateRecommendations(conflict, targetType) {
         ],
         expectedEffect: '可用天数增加，教师和教室匹配成功率提升约30-40%。',
         risks: ['请确认学生在新增日期确实有空'],
-        data: {
+        data: createDualFormatData(student, {
+          timeConstraints: {
+            ...student.scheduling?.timeConstraints,
+            allowedDays: newDays,
+            allowedTimeRanges: newTimeSlots
+          }
+        }, {
           parsedData: {
             ...student.parsedData,
             allowedDays: newDays,
-            allowedTimeRanges: newTimeRanges
+            allowedTimeRanges: newTimeSlots.map(r => ({
+              day: r.day,
+              start: r.startSlot,
+              end: r.endSlot
+            }))
           },
           constraints: {
             ...(student.constraints || {}),
             allowedDays: new Set(newDays),
-            allowedTimeRanges: newTimeRanges.map(r => ({
-              day: r.day,
-              startSlot: r.start,
-              endSlot: r.end
-            }))
+            allowedTimeRanges: newTimeSlots
           }
-        }
+        })
       });
     }
     
     // 推荐3: 调整频率降低单次课时
-    const currentFreq = parseInt(student.frequency) || 1;
-    const currentDuration = parseFloat(student.duration) || 2.5;
+    const currentFreq = isV4 
+      ? parseInt(student.scheduling.frequencyConstraints.frequency)
+      : parseInt(student.frequency) || 1;
+    const currentDuration = isV4
+      ? student.scheduling.frequencyConstraints.duration / 60
+      : parseFloat(student.duration) || 2.5;
     
     if (currentFreq === 1 && currentDuration >= 2) {
       recommendations.push({
@@ -449,10 +518,6 @@ function generateRecommendations(conflict, targetType) {
     
     // 推荐4: 灵活时间安排（针对时间冲突）⭐ 重要
     if (currentFreq > 1) {
-      // 保留现有的时间范围和天数
-      const existingTimeRanges = student.parsedData?.allowedTimeRanges || [];
-      const existingDays = student.parsedData?.allowedDays || [1, 2, 3, 4, 5];
-      
       recommendations.push({
         id: 'flexible-scheduling',
         title: '采用灵活时间安排（推荐）',
@@ -473,25 +538,36 @@ function generateRecommendations(conflict, targetType) {
         ],
         expectedEffect: '避免固定时间冲突，每次课独立寻找最佳时间槽。成功率提升约70-80%！特别适合时间冲突严重的情况。',
         risks: ['学生需要接受每周上课时间不固定', '需要及时通知学生每周的上课时间'],
-        data: {
+        data: createDualFormatData(student, {
+          frequencyConstraints: {
+            ...student.scheduling?.frequencyConstraints,
+            schedulingMode: 'flexible',
+            isRecurringFixed: false
+          },
+          timeConstraints: {
+            ...student.scheduling?.timeConstraints,
+            allowedDays: currentDays,
+            allowedTimeRanges: currentTimeRanges
+          }
+        }, {
           parsedData: {
             ...student.parsedData,
-            allowedDays: existingDays,
-            allowedTimeRanges: existingTimeRanges
+            allowedDays: currentDays,
+            allowedTimeRanges: currentTimeRanges.map(r => ({
+              day: r.day,
+              start: r.start || r.startSlot,
+              end: r.end || r.endSlot
+            }))
           },
           constraints: {
             ...(student.constraints || {}),
-            allowedDays: new Set(existingDays),
-            allowedTimeRanges: existingTimeRanges.map(r => ({
-              day: r.day,
-              startSlot: r.start || r.startSlot,
-              endSlot: r.end || r.endSlot
-            }))
+            allowedDays: new Set(currentDays),
+            allowedTimeRanges: currentTimeRanges
           },
           frequency: student.frequency,
           schedulingMode: 'flexible',
           isRecurringFixed: false
-        }
+        })
       });
     }
     

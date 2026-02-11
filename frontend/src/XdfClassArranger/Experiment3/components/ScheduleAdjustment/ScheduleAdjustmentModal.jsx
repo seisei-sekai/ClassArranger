@@ -179,6 +179,8 @@ const ScheduleAdjustmentModal = ({
       }
       
       console.log('[AdjustmentModal] Target before modification:', JSON.parse(JSON.stringify(target)));
+      console.log('[AdjustmentModal] ===== 开始应用推荐数据 =====');
+      console.log('[AdjustmentModal] Recommendation data:', JSON.parse(JSON.stringify(data)));
       
       // 应用所有修改
       let modifiedFields = [];
@@ -187,8 +189,105 @@ const ScheduleAdjustmentModal = ({
         
         const oldValue = target[field];
         
-        // 特殊处理 parsedData - 深度合并而不是替换
-        if (field === 'parsedData' && typeof value === 'object' && value !== null) {
+        // === V4 Schema: 特殊处理 scheduling ===
+        if (field === 'scheduling' && typeof value === 'object' && value !== null) {
+          if (!target.scheduling) {
+            target.scheduling = {
+              timeConstraints: {},
+              frequencyConstraints: {},
+              teacherConstraints: {},
+              modeConstraints: {}
+            };
+          }
+          
+          // 深度合并 scheduling
+          Object.entries(value).forEach(([scheduleField, scheduleValue]) => {
+            if (typeof scheduleValue === 'object' && scheduleValue !== null) {
+              // 合并子对象（如 timeConstraints, frequencyConstraints）
+              if (!target.scheduling[scheduleField]) {
+                target.scheduling[scheduleField] = {};
+              }
+              
+              Object.entries(scheduleValue).forEach(([subField, subValue]) => {
+                const oldSubValue = target.scheduling[scheduleField][subField];
+                if (JSON.stringify(oldSubValue) !== JSON.stringify(subValue)) {
+                  target.scheduling[scheduleField][subField] = subValue;
+                  modifiedFields.push(`scheduling.${scheduleField}.${subField}: ${JSON.stringify(oldSubValue)} → ${JSON.stringify(subValue)}`);
+                }
+              });
+            } else {
+              // 简单值直接赋值
+              if (target.scheduling[scheduleField] !== scheduleValue) {
+                target.scheduling[scheduleField] = scheduleValue;
+                modifiedFields.push(`scheduling.${scheduleField}: ${target.scheduling[scheduleField]} → ${scheduleValue}`);
+              }
+            }
+          });
+          
+          // 同步到旧格式（向后兼容）
+          if (value.timeConstraints) {
+            target.parsedData = target.parsedData || {};
+            target.parsedData.allowedDays = value.timeConstraints.allowedDays;
+            target.parsedData.allowedTimeRanges = value.timeConstraints.allowedTimeRanges?.map(r => ({
+              day: r.day,
+              start: r.startSlot,
+              end: r.endSlot
+            })) || [];
+            
+            target.constraints = target.constraints || {};
+            target.constraints.allowedDays = new Set(value.timeConstraints.allowedDays);
+            target.constraints.allowedTimeRanges = value.timeConstraints.allowedTimeRanges;
+            
+            console.log('[handleManualModify] 已同步 timeConstraints 到旧格式');
+          }
+          
+          // 🔥 关键修复：同步 frequencyConstraints 到旧格式
+          if (value.frequencyConstraints) {
+            if (value.frequencyConstraints.schedulingMode !== undefined) {
+              target.schedulingMode = value.frequencyConstraints.schedulingMode;
+              modifiedFields.push(`schedulingMode: ${target.schedulingMode} → ${value.frequencyConstraints.schedulingMode}`);
+              console.log('[handleManualModify] 同步 schedulingMode 到旧格式:', value.frequencyConstraints.schedulingMode);
+            }
+            
+            if (value.frequencyConstraints.isRecurringFixed !== undefined) {
+              target.isRecurringFixed = value.frequencyConstraints.isRecurringFixed;
+              modifiedFields.push(`isRecurringFixed: ${target.isRecurringFixed} → ${value.frequencyConstraints.isRecurringFixed}`);
+              console.log('[handleManualModify] 同步 isRecurringFixed 到旧格式:', value.frequencyConstraints.isRecurringFixed);
+            }
+            
+            if (value.frequencyConstraints.frequency !== undefined) {
+              target.frequency = value.frequencyConstraints.frequency;
+              modifiedFields.push(`frequency: ${target.frequency} → ${value.frequencyConstraints.frequency}`);
+              console.log('[handleManualModify] 同步 frequency 到旧格式:', value.frequencyConstraints.frequency);
+            }
+            
+            if (value.frequencyConstraints.duration !== undefined) {
+              target.duration = `${value.frequencyConstraints.duration / 60}小时`;
+              modifiedFields.push(`duration: ${target.duration} → ${value.frequencyConstraints.duration}分钟`);
+              console.log('[handleManualModify] 同步 duration 到旧格式:', target.duration);
+            }
+            
+            console.log('[handleManualModify] 已同步 frequencyConstraints 到旧格式');
+          }
+          
+          // 同步 teacherConstraints 和 modeConstraints
+          if (value.teacherConstraints) {
+            if (value.teacherConstraints.preferredTeachers !== undefined) {
+              target.preferredTeacher = value.teacherConstraints.preferredTeachers[0] || null;
+              console.log('[handleManualModify] 同步 preferredTeacher 到旧格式:', target.preferredTeacher);
+            }
+          }
+          
+          if (value.modeConstraints) {
+            if (value.modeConstraints.mode !== undefined) {
+              target.mode = value.modeConstraints.mode;
+              modifiedFields.push(`mode: ${target.mode} → ${value.modeConstraints.mode}`);
+              console.log('[handleManualModify] 同步 mode 到旧格式:', value.modeConstraints.mode);
+            }
+          }
+        }
+        // === 旧格式: parsedData ===
+        else if (field === 'parsedData' && typeof value === 'object' && value !== null) {
           if (!target.parsedData) {
             target.parsedData = {};
           }
@@ -201,8 +300,25 @@ const ScheduleAdjustmentModal = ({
               modifiedFields.push(`parsedData.${subField}: ${JSON.stringify(oldSubValue)} → ${JSON.stringify(subValue)}`);
             }
           });
-        } else if (field === 'constraints' && typeof value === 'object' && value !== null) {
-          // 特殊处理 constraints - 深度合并并转换 Set
+          
+          // 同步到V4 Schema
+          if (target.scheduling) {
+            if (value.allowedDays) {
+              target.scheduling.timeConstraints = target.scheduling.timeConstraints || {};
+              target.scheduling.timeConstraints.allowedDays = value.allowedDays;
+            }
+            if (value.allowedTimeRanges) {
+              target.scheduling.timeConstraints = target.scheduling.timeConstraints || {};
+              target.scheduling.timeConstraints.allowedTimeRanges = value.allowedTimeRanges.map(r => ({
+                day: r.day,
+                startSlot: r.start || r.startSlot,
+                endSlot: r.end || r.endSlot
+              }));
+            }
+          }
+        }
+        // === 旧格式: constraints ===
+        else if (field === 'constraints' && typeof value === 'object' && value !== null) {
           if (!target.constraints) {
             target.constraints = {};
           }
@@ -227,6 +343,18 @@ const ScheduleAdjustmentModal = ({
               }
             }
           });
+          
+          // 同步到V4 Schema
+          if (target.scheduling) {
+            if (value.allowedDays) {
+              target.scheduling.timeConstraints = target.scheduling.timeConstraints || {};
+              target.scheduling.timeConstraints.allowedDays = Array.from(value.allowedDays);
+            }
+            if (value.allowedTimeRanges) {
+              target.scheduling.timeConstraints = target.scheduling.timeConstraints || {};
+              target.scheduling.timeConstraints.allowedTimeRanges = value.allowedTimeRanges;
+            }
+          }
         } else {
           // 普通字段直接赋值
           if (JSON.stringify(oldValue) !== JSON.stringify(value)) {
@@ -236,8 +364,12 @@ const ScheduleAdjustmentModal = ({
         }
       });
       
+      console.log('[AdjustmentModal] ===== 应用完成 =====');
       console.log('[AdjustmentModal] Target after modification:', JSON.parse(JSON.stringify(target)));
       console.log('[AdjustmentModal] Modified fields:', modifiedFields);
+      console.log('[AdjustmentModal] Target.schedulingMode:', target.schedulingMode);
+      console.log('[AdjustmentModal] Target.isRecurringFixed:', target.isRecurringFixed);
+      console.log('[AdjustmentModal] Target.scheduling:', target.scheduling);
       
       if (modifiedFields.length > 0) {
         // 标记为已修改

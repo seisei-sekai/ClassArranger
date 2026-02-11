@@ -1,16 +1,16 @@
 /**
  * Greedy Scheduling Algorithm
  * 贪心排课算法
- * 
+ *
  * Simple and fast scheduling algorithm that assigns courses sequentially
  */
 
-import { 
-  timeSlotsOverlap, 
-  findOverlap, 
+import {
+  timeSlotsOverlap,
+  findOverlap,
   createCourse,
-  deepClone 
-} from '../utils/dataStructures.js';
+  deepClone,
+} from "../utils/dataStructures.js";
 
 /**
  * Greedy Scheduler
@@ -37,19 +37,19 @@ export class GreedyScheduler {
         totalStudents: this.students.length,
         scheduledStudents: 0,
         totalAttempts: 0,
-        successRate: 0
-      }
+        successRate: 0,
+      },
     };
 
     // Initialize teacher availability map
     const teacherAvailability = this.initializeTeacherAvailability();
-    
+
     // Process each student
     this.students.forEach((student, index) => {
       this.onProgress({
         current: index + 1,
         total: this.students.length,
-        message: `正在为 ${student.name} 排课...`
+        message: `正在为 ${student.name} 排课...`,
       });
 
       const result = this.scheduleStudent(student, teacherAvailability);
@@ -58,17 +58,17 @@ export class GreedyScheduler {
       if (result.success) {
         results.courses.push(result.course);
         results.stats.scheduledStudents++;
-        
+
         // Update teacher availability
         this.updateTeacherAvailability(
           teacherAvailability,
           result.course.teacher.id,
-          result.course.timeSlot
+          result.course.timeSlot,
         );
       } else {
         results.conflicts.push({
           student,
-          reason: result.reason
+          reason: result.reason,
         });
       }
     });
@@ -76,7 +76,8 @@ export class GreedyScheduler {
     // Calculate statistics
     const endTime = Date.now();
     results.stats.executionTime = endTime - startTime;
-    results.stats.successRate = (results.stats.scheduledStudents / results.stats.totalStudents) * 100;
+    results.stats.successRate =
+      (results.stats.scheduledStudents / results.stats.totalStudents) * 100;
 
     return results;
   }
@@ -87,12 +88,12 @@ export class GreedyScheduler {
    */
   initializeTeacherAvailability() {
     const availability = {};
-    
-    this.teachers.forEach(teacher => {
+
+    this.teachers.forEach((teacher) => {
       availability[teacher.id] = {
         teacher: teacher,
         availableSlots: deepClone(teacher.availableTimeSlots),
-        hoursUsed: 0
+        hoursUsed: 0,
       };
     });
 
@@ -105,12 +106,15 @@ export class GreedyScheduler {
    */
   scheduleStudent(student, teacherAvailability) {
     // Step 1: Find eligible teachers (can teach the subject)
-    const eligibleTeachers = this.findEligibleTeachers(student.subject, teacherAvailability);
-    
+    const eligibleTeachers = this.findEligibleTeachers(
+      student.subject,
+      teacherAvailability,
+    );
+
     if (eligibleTeachers.length === 0) {
       return {
         success: false,
-        reason: `没有教师可以教授"${student.subject}"科目`
+        reason: `没有教师可以教授"${student.subject}"科目`,
       };
     }
 
@@ -118,7 +122,7 @@ export class GreedyScheduler {
     if (student.remainingHours <= 0) {
       return {
         success: false,
-        reason: '学生没有剩余课时'
+        reason: "学生没有剩余课时",
       };
     }
 
@@ -128,7 +132,7 @@ export class GreedyScheduler {
 
     for (const teacherInfo of eligibleTeachers) {
       const teacher = teacherInfo.teacher;
-      
+
       // Check if teacher hasn't exceeded max hours
       const hoursNeeded = (courseDuration * this.granularity.minutes) / 60;
       if (teacherInfo.hoursUsed + hoursNeeded > teacher.maxHoursPerWeek) {
@@ -140,25 +144,25 @@ export class GreedyScheduler {
       const validSlots = this.findValidTimeSlots(
         student,
         teacherInfo.availableSlots,
-        courseDuration
+        courseDuration,
       );
 
       if (validSlots.length > 0) {
         // Found a valid slot - assign it
         const timeSlot = validSlots[0];
-        
+
         const course = createCourse({
           student: student,
           teacher: teacher,
           subject: student.subject,
           timeSlot: timeSlot,
           isRecurring: this.shouldBeRecurring(student.constraints.frequency),
-          recurrencePattern: 'weekly'
+          recurrencePattern: "weekly",
         });
 
         return {
           success: true,
-          course: course
+          course: course,
         };
       } else {
         failureReasons.push(`与教师${teacher.name}没有共同时间段`);
@@ -166,9 +170,9 @@ export class GreedyScheduler {
     }
 
     // Construct detailed failure reason
-    let reason = '没有找到满足所有约束的时间槽';
+    let reason = "没有找到满足所有约束的时间槽";
     if (failureReasons.length > 0) {
-      reason += ': ' + failureReasons.slice(0, 3).join('; ');
+      reason += ": " + failureReasons.slice(0, 3).join("; ");
       if (failureReasons.length > 3) {
         reason += ` (还有${failureReasons.length - 3}个原因)`;
       }
@@ -176,7 +180,7 @@ export class GreedyScheduler {
 
     return {
       success: false,
-      reason: reason
+      reason: reason,
     };
   }
 
@@ -186,7 +190,7 @@ export class GreedyScheduler {
    */
   findEligibleTeachers(subject, teacherAvailability) {
     return Object.values(teacherAvailability)
-      .filter(info => info.teacher.subjects.includes(subject))
+      .filter((info) => info.teacher.subjects.includes(subject))
       .sort((a, b) => {
         // Sort by least hours used first (load balancing)
         return a.hoursUsed - b.hoursUsed;
@@ -210,7 +214,7 @@ export class GreedyScheduler {
       for (const teacherSlot of teacherSlots) {
         // Check if there's overlap
         const overlap = findOverlap(studentRange, teacherSlot);
-        
+
         if (!overlap) continue;
 
         // Check if overlap is long enough for the course
@@ -220,7 +224,7 @@ export class GreedyScheduler {
         // Check against excluded time ranges
         const hasExclusion = this.hasExcludedTimeConflict(
           overlap,
-          student.constraints.excludedTimeRanges || []
+          student.constraints.excludedTimeRanges || [],
         );
         if (hasExclusion) continue;
 
@@ -229,22 +233,22 @@ export class GreedyScheduler {
         const minutesPerSlot = this.granularity.minutes;
         const startMinutes = overlap.startSlot * minutesPerSlot;
         const endMinutes = (overlap.startSlot + duration) * minutesPerSlot;
-        
+
         const startHour = 9 + Math.floor(startMinutes / 60);
         const startMin = startMinutes % 60;
         const endHour = 9 + Math.floor(endMinutes / 60);
         const endMin = endMinutes % 60;
-        
-        const startTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-        const endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
-        
+
+        const startTime = `${String(startHour).padStart(2, "0")}:${String(startMin).padStart(2, "0")}`;
+        const endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+
         validSlots.push({
           day: overlap.day,
           startSlot: overlap.startSlot,
           endSlot: overlap.startSlot + duration,
           duration: duration,
           start: startTime,
-          end: endTime
+          end: endTime,
         });
       }
     }
@@ -257,7 +261,9 @@ export class GreedyScheduler {
    * 检查时间槽是否与排除时间段冲突
    */
   hasExcludedTimeConflict(timeSlot, excludedRanges) {
-    return excludedRanges.some(excluded => timeSlotsOverlap(timeSlot, excluded));
+    return excludedRanges.some((excluded) =>
+      timeSlotsOverlap(timeSlot, excluded),
+    );
   }
 
   /**
@@ -267,47 +273,55 @@ export class GreedyScheduler {
   updateTeacherAvailability(availabilityMap, teacherId, assignedSlot) {
     const teacherInfo = availabilityMap[teacherId];
     if (!teacherInfo) return;
-    
+
     // Validate assignedSlot parameter
-    if (!assignedSlot || assignedSlot.day === undefined || assignedSlot.startSlot === undefined || assignedSlot.endSlot === undefined) {
-      console.error('[Greedy.updateTeacherAvailability] Invalid assignedSlot:', assignedSlot);
+    if (
+      !assignedSlot ||
+      assignedSlot.day === undefined ||
+      assignedSlot.startSlot === undefined ||
+      assignedSlot.endSlot === undefined
+    ) {
+      console.error(
+        "[Greedy.updateTeacherAvailability] Invalid assignedSlot:",
+        assignedSlot,
+      );
       return;
     }
 
     // Remove the assigned time slot from available slots
     teacherInfo.availableSlots = teacherInfo.availableSlots
-      .filter(slot => slot != null) // Filter out null/undefined slots
-      .map(slot => {
+      .filter((slot) => slot != null) // Filter out null/undefined slots
+      .map((slot) => {
         if (slot.day !== assignedSlot.day) return slot;
-        
+
         const overlap = findOverlap(slot, assignedSlot);
         if (!overlap) return slot;
 
         // Split the slot if necessary
         const splitSlots = [];
-        
+
         // Add time before the assigned slot
         if (slot.startSlot < assignedSlot.startSlot) {
           splitSlots.push({
             day: slot.day,
             startSlot: slot.startSlot,
-            endSlot: assignedSlot.startSlot
+            endSlot: assignedSlot.startSlot,
           });
         }
-        
+
         // Add time after the assigned slot
         if (slot.endSlot > assignedSlot.endSlot) {
           splitSlots.push({
             day: slot.day,
             startSlot: assignedSlot.endSlot,
-            endSlot: slot.endSlot
+            endSlot: slot.endSlot,
           });
         }
 
         return splitSlots;
       })
       .flat()
-      .filter(slot => slot != null && slot.endSlot > slot.startSlot);
+      .filter((slot) => slot != null && slot.endSlot > slot.startSlot);
 
     // Update hours used
     const hoursUsed = (assignedSlot.duration * this.granularity.minutes) / 60;
@@ -320,10 +334,10 @@ export class GreedyScheduler {
    */
   shouldBeRecurring(frequency) {
     if (!frequency) return false;
-    
+
     const match = frequency.match(/(\d+)次/);
     if (!match) return false;
-    
+
     const timesPerWeek = parseInt(match[1]);
     return timesPerWeek > 0;
   }
@@ -336,11 +350,14 @@ export class GreedyScheduler {
     return {
       totalStudents: results.stats.totalStudents,
       scheduledStudents: results.stats.scheduledStudents,
-      unscheduledStudents: results.stats.totalStudents - results.stats.scheduledStudents,
+      unscheduledStudents:
+        results.stats.totalStudents - results.stats.scheduledStudents,
       successRate: results.stats.successRate.toFixed(1),
       executionTime: results.stats.executionTime,
-      averageTimePerStudent: (results.stats.executionTime / results.stats.totalStudents).toFixed(2),
-      conflictReasons: this.analyzeConflictReasons(results.conflicts)
+      averageTimePerStudent: (
+        results.stats.executionTime / results.stats.totalStudents
+      ).toFixed(2),
+      conflictReasons: this.analyzeConflictReasons(results.conflicts),
     };
   }
 
@@ -350,8 +367,8 @@ export class GreedyScheduler {
    */
   analyzeConflictReasons(conflicts) {
     const reasons = {};
-    
-    conflicts.forEach(conflict => {
+
+    conflicts.forEach((conflict) => {
       const reason = conflict.reason;
       reasons[reason] = (reasons[reason] || 0) + 1;
     });

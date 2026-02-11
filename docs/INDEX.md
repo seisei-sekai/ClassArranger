@@ -1,7 +1,7 @@
 # Documentation Index
 
 **Created:** 2026-01-22  
-**Last Updated:** 2026-01-23  
+**Last Updated:** 2026-02-06  
 **Purpose:** Central index of all project documentation files
 
 ---
@@ -35,6 +35,13 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
   - 状态：✅ **推荐使用**
 
 ### 💻 开发指南
+
+- **[⭐⭐⭐ 统一数据层架构文档](./unified-data-layer-architecture.md) - tempFrontEndMongoDB 完整指南**
+  - 包含：V4 Schema、Repository API、数据迁移、向后兼容、使用示例、测试套件
+  - 创建时间：2026-02-03
+  - 最后更新：2026-02-03
+  - 状态：✅ **最新 · 核心架构 · 生产就绪**
+  - 适用于：统一数据管理、MongoDB风格API、数据一致性保障
 
 - **[⭐ 用户管理页面](./user-management-page.md) - 管理员CRUD用户界面**
   - 包含：查看所有用户、创建用户、编辑用户、删除用户、查看详情、表格界面
@@ -110,6 +117,14 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
   - 创建时间：2026-02-02
   - 状态：📖 配置指南
   - 适用于：需要使用AI智能解析功能的用户
+
+- **[⭐ 音频转写功能](./audio-transcription-feature.md) - OpenAI Whisper API 音频转文字**
+  - 包含：功能概述、架构设计、API规格、使用方法、故障排查
+  - 创建时间：2026-02-06
+  - 状态：✅ **最新 · 生产可用 · 多格式支持**
+  - 适用于：音频转写、会议记录、语音笔记
+  - 支持格式：MP3、MP4、WAV、WEBM等
+  - 路径：`/audio-transcription`
 
 - **[实验页面对比指南](./experiments-comparison.md) - 三个实验页面完整对比**
   - 包含：详细功能对比、性能分析、使用场景推荐、迁移指南
@@ -263,16 +278,16 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 
 ## 🗂️ Document Status
 
-| 文档 | 状态 | 优先级 | 说明 |
-|-----|------|--------|------|
-| beginner-deploy-guide.md | ✅ 最新 | ⭐⭐⭐ | 完整部署指南，推荐新手 |
-| git-deployment-guide.md | ✅ 最新 | ⭐⭐⭐ | 日常部署必读 |
-| local-run.md | ✅ 最新 | ⭐⭐ | 本地开发必备 |
-| mock-mode-guide.md | ✅ 最新 | ⭐⭐ | 测试和演示 |
-| testing-quick-reference.md | ✅ 最新 | ⭐ | 测试参考 |
-| deployment-comparison.md | ✅ 最新 | ⭐ | 方案选择参考 |
-| NLP约束转换系统使用指南.md | ✅ 最新 | ⭐⭐⭐ | AI智能排课约束解析 |
-| NLP约束转换系统实施总结.md | ✅ 最新 | ⭐⭐ | 技术实施文档 |
+| 文档                       | 状态    | 优先级 | 说明                   |
+| -------------------------- | ------- | ------ | ---------------------- |
+| beginner-deploy-guide.md   | ✅ 最新 | ⭐⭐⭐ | 完整部署指南，推荐新手 |
+| git-deployment-guide.md    | ✅ 最新 | ⭐⭐⭐ | 日常部署必读           |
+| local-run.md               | ✅ 最新 | ⭐⭐   | 本地开发必备           |
+| mock-mode-guide.md         | ✅ 最新 | ⭐⭐   | 测试和演示             |
+| testing-quick-reference.md | ✅ 最新 | ⭐     | 测试参考               |
+| deployment-comparison.md   | ✅ 最新 | ⭐     | 方案选择参考           |
+| NLP约束转换系统使用指南.md | ✅ 最新 | ⭐⭐⭐ | AI智能排课约束解析     |
+| NLP约束转换系统实施总结.md | ✅ 最新 | ⭐⭐   | 技术实施文档           |
 
 ---
 
@@ -281,6 +296,7 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 所有文档都遵循以下标准：
 
 ### Header Format
+
 ```markdown
 # Document Title
 
@@ -292,11 +308,13 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 ```
 
 ### Naming Convention
+
 - 使用 kebab-case: `deployment-guide.md`
 - 使用描述性名称
 - 使用英文命名
 
 ### Content Standards
+
 - 清晰的目录结构
 - 代码示例必须可运行
 - 包含实际输出示例
@@ -347,6 +365,7 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 以下文档已被删除或合并，内容已整合到核心文档中：
 
 ### 已删除（冗余/过时）
+
 - ~~terraform-guide.md~~ → 合并到 `beginner-deploy-guide.md`
 - ~~terraform-implementation-summary.md~~ → 合并到 `beginner-deploy-guide.md`
 - ~~quick-deploy.md~~ → 合并到 `beginner-deploy-guide.md`
@@ -391,15 +410,18 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 ## 🔗 External Resources
 
 ### Terraform
+
 - [Terraform Documentation](https://www.terraform.io/docs)
 - [GCP Provider](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
 
 ### GCP
+
 - [Google Cloud Documentation](https://cloud.google.com/docs)
 - [Compute Engine](https://cloud.google.com/compute/docs)
 - [Cloud Logging](https://cloud.google.com/logging/docs)
 
 ### Best Practices
+
 - [12-Factor App](https://12factor.net/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [GitHub Flow](https://guides.github.com/introduction/flow/)
@@ -409,13 +431,17 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 ## 🆘 Getting Help
 
 ### 文档问题
+
 如果发现文档有错误或不清楚的地方：
+
 1. 提交 GitHub Issue
 2. 标注 `documentation` 标签
 3. 说明问题所在
 
 ### 技术问题
+
 如果遇到技术问题：
+
 1. 查看相关文档的"故障排查"章节
 2. 检查 `scripts/README.md` 中的故障排查部分
 3. 提交 GitHub Issue（附带错误日志）
@@ -454,6 +480,7 @@ ClassArranger 采用 **Best Practice** 的部署和开发流程，所有文档�
 ## 📞 Maintainers
 
 文档维护者：
+
 - ClassArranger Team
 - 欢迎贡献！查看 [Contributing Guide](../CONTRIBUTING.md)
 

@@ -34,10 +34,37 @@ const CURRENT_SCHEMA_VERSION = 3; // V3: Added isModified and modificationHistor
 export const saveToLocalStorage = (key, data) => {
   try {
     const serialized = JSON.stringify(data);
+    const sizeInKB = (new Blob([serialized]).size / 1024).toFixed(2);
+    
+    // Check if size is too large (> 2MB for safety)
+    if (new Blob([serialized]).size > 2 * 1024 * 1024) {
+      console.warn(`[LocalStorage] Warning: ${key} is large (${sizeInKB} KB). Consider data reduction.`);
+    }
+    
     localStorage.setItem(key, serialized);
-    console.log(`[LocalStorage] Saved ${key}`);
+    console.log(`[LocalStorage] Saved ${key} (${sizeInKB} KB)`);
   } catch (error) {
-    console.error(`[LocalStorage] Error saving ${key}:`, error);
+    if (error.name === 'QuotaExceededError') {
+      console.error(`[LocalStorage] QuotaExceeded for ${key}. Attempting cleanup...`);
+      
+      // Try to free up space by clearing old data
+      try {
+        // Clear events and AI result (less critical data)
+        removeFromLocalStorage(STORAGE_KEYS.EVENTS);
+        removeFromLocalStorage(STORAGE_KEYS.AI_RESULT);
+        console.log('[LocalStorage] Cleared events and AI result to free space');
+        
+        // Retry save
+        const serialized = JSON.stringify(data);
+        localStorage.setItem(key, serialized);
+        console.log(`[LocalStorage] Saved ${key} after cleanup`);
+      } catch (retryError) {
+        console.error(`[LocalStorage] Failed to save ${key} even after cleanup:`, retryError);
+        alert('存储空间不足！已自动清理缓存，请重新执行操作。如仍失败，请清空浏览器缓存。');
+      }
+    } else {
+      console.error(`[LocalStorage] Error saving ${key}:`, error);
+    }
   }
 };
 
@@ -189,7 +216,12 @@ export const classroomsStorage = {
 };
 
 export const scheduledCoursesStorage = {
-  save: (courses) => saveToLocalStorage(STORAGE_KEYS.SCHEDULED_COURSES, courses),
+  save: (courses) => {
+    // 🔥 过滤掉虚拟课程，避免 LocalStorage 配额超出
+    const realCourses = courses.filter(course => !course.isVirtual && course.status !== 'unscheduled');
+    console.log(`[LocalStorage] Filtering courses: ${courses.length} total → ${realCourses.length} real courses (${courses.length - realCourses.length} virtual excluded)`);
+    saveToLocalStorage(STORAGE_KEYS.SCHEDULED_COURSES, realCourses);
+  },
   load: () => loadFromLocalStorage(STORAGE_KEYS.SCHEDULED_COURSES, []),
   clear: () => removeFromLocalStorage(STORAGE_KEYS.SCHEDULED_COURSES),
 };

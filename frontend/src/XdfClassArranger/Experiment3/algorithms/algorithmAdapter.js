@@ -82,6 +82,23 @@ export class SchedulingAlgorithmAdapter {
     console.log(
       `[AlgorithmAdapter.adaptStudents] 开始适配 ${students.length} 个学生`,
     );
+    
+    // 🔥 调试：检查每个学生为什么被过滤
+    students.forEach((s, idx) => {
+      const hasRawData = !!s.rawData;
+      const hasCourseHours = !!s.courseHours;
+      const totalHours = s.courseHours?.totalHours;
+      const passed = hasRawData && totalHours > 0;
+      
+      console.log(`[AlgorithmAdapter] 学生${idx + 1} "${s.name}":`, {
+        hasRawData,
+        hasCourseHours,
+        totalHours,
+        passed,
+        rawDataKeys: s.rawData ? Object.keys(s.rawData).slice(0, 5) : null,
+        studentId: s.id
+      });
+    });
 
     const adapted = students
       .filter((s) => s.rawData && s.courseHours?.totalHours > 0)
@@ -118,15 +135,23 @@ export class SchedulingAlgorithmAdapter {
           manager: student.rawData?.学管姓名 || "",
           batch: student.rawData?.学生批次 || "",
           subject: student.rawData?.内容 || student.subject || "",
-          frequency: student.rawData?.频次 || "2次",
-          duration: this.parseDuration(student.rawData?.时长) || 2,
-          format: student.rawData?.形式 || "线下",
+          frequency: student.frequency || student.rawData?.频次 || "2次",  // 🔥 优先从修改后的字段读取
+          duration: this.parseDuration(student.duration || student.rawData?.时长) || 2,
+          format: student.mode || student.rawData?.形式 || "线下",
           totalHours: student.courseHours?.totalHours || 0,
           remainingHours: student.courseHours?.remainingHours || 0,
           hoursUsed:
             (student.courseHours?.totalHours || 0) -
             (student.courseHours?.remainingHours || 0),
           constraints: constraints,
+          
+          // 🔥 关键修复：传递 schedulingMode 和 isRecurringFixed
+          schedulingMode: student.schedulingMode || student.scheduling?.frequencyConstraints?.schedulingMode || 'fixed',
+          isRecurringFixed: student.isRecurringFixed ?? student.scheduling?.frequencyConstraints?.isRecurringFixed ?? true,
+          
+          // 🔥 保留完整的 scheduling 对象（供算法读取）
+          scheduling: student.scheduling,
+          
           originalData: student, // Keep reference
         };
       });
@@ -139,22 +164,122 @@ export class SchedulingAlgorithmAdapter {
 
   /**
    * Extract constraints from student data
-   * 支持新的10类约束系统 (Supports new 10-type constraint system)
+   * 支持新的10类约束系统 + V4 Schema (Supports new 10-type constraint system + V4 Schema)
    */
   extractConstraints(student, availability) {
-    // Check if student has new-style constraints
+    // === V4 Schema Support (最高优先级) ===
+    // 检查是否为V4格式（有scheduling字段）
+    if (student.scheduling && student.scheduling.timeConstraints) {
+      console.log(`[AlgorithmAdapter] ✅ 使用 V4 Schema (student.scheduling):`, student.name);
+      
+      const scheduling = student.scheduling;
+      const constraints = {
+        allowedDays: new Set(scheduling.timeConstraints.allowedDays || [1, 2, 3, 4, 5]),
+        allowedTimeRanges: (scheduling.timeConstraints.allowedTimeRanges || []).map(r => ({
+          day: r.day,
+          startSlot: r.startSlot,
+          endSlot: r.endSlot
+        })),
+        excludedTimeRanges: (scheduling.timeConstraints.excludedTimeRanges || []).map(r => ({
+          day: r.day,
+          startSlot: r.startSlot,
+          endSlot: r.endSlot
+        })),
+        duration: (scheduling.frequencyConstraints.duration / 10) || 12, // 分钟转换为10分钟槽数
+        frequency: scheduling.frequencyConstraints.frequency || "1次/周",
+        isRecurringFixed: scheduling.frequencyConstraints.isRecurringFixed ?? true,
+        schedulingMode: scheduling.frequencyConstraints.schedulingMode || 'fixed'
+      };
+      
+      console.log(`[AlgorithmAdapter] V4约束:`, {
+        allowedDays: Array.from(constraints.allowedDays),
+        timeRangesCount: constraints.allowedTimeRanges.length,
+        duration: constraints.duration,
+        frequency: constraints.frequency,
+        schedulingMode: constraints.schedulingMode
+      });
+      
+      return constraints;
+    }
+    
+    // === 🔥 修复：优先使用 parsedData/constraints（旧格式，手动修改后的数据）===
+    // 检查是否有 parsedData 或 constraints 对象（非数组）包含时间约束
+    const hasParsedDataTimeConstraints = student.parsedData?.allowedDays || student.parsedData?.allowedTimeRanges;
+    const hasConstraintsTimeConstraints = student.constraints && 
+      !Array.isArray(student.constraints) && 
+      (student.constraints.allowedDays || student.constraints.allowedTimeRanges);
+    
+    if (hasParsedDataTimeConstraints || hasConstraintsTimeConstraints) {
+      console.log(`[AlgorithmAdapter] ✅ 使用 Legacy parsedData/constraints:`, student.name);
+      
+      const constraints = {
+        allowedDays: new Set(),
+        allowedTimeRanges: [],
+        excludedTimeRanges: [],
+        duration: this.parseDuration(student.duration || student.rawData?.时长) * 12 || 24,
+        frequency: student.frequency || student.rawData?.频次 || "1次/周",
+      };
+      
+      // 从 parsedData 读取时间约束
+      if (student.parsedData) {
+        if (student.parsedData.allowedDays) {
+          const days = Array.isArray(student.parsedData.allowedDays) 
+            ? student.parsedData.allowedDays 
+            : [student.parsedData.allowedDays];
+          days.forEach(day => constraints.allowedDays.add(day));
+        }
+        
+        if (student.parsedData.allowedTimeRanges) {
+          constraints.allowedTimeRanges = student.parsedData.allowedTimeRanges.map(r => ({
+            day: r.day,
+            startSlot: r.start || r.startSlot,
+            endSlot: r.end || r.endSlot
+          }));
+        }
+      }
+      
+      // 从 constraints 对象读取时间约束（可能覆盖 parsedData）
+      if (student.constraints && !Array.isArray(student.constraints)) {
+        if (student.constraints.allowedDays) {
+          constraints.allowedDays = student.constraints.allowedDays instanceof Set 
+            ? student.constraints.allowedDays 
+            : new Set(student.constraints.allowedDays);
+        }
+        
+        if (student.constraints.allowedTimeRanges) {
+          constraints.allowedTimeRanges = student.constraints.allowedTimeRanges;
+        }
+        
+        if (student.constraints.excludedTimeRanges) {
+          constraints.excludedTimeRanges = student.constraints.excludedTimeRanges;
+        }
+      }
+      
+      console.log(`[AlgorithmAdapter] Legacy约束:`, {
+        allowedDays: Array.from(constraints.allowedDays),
+        timeRangesCount: constraints.allowedTimeRanges.length,
+        duration: constraints.duration,
+        frequency: constraints.frequency
+      });
+      
+      return constraints;
+    }
+    
+    // === 新的10类约束系统 ===
+    // Check if student has new-style constraints (数组格式)
     if (
       student.constraints &&
       Array.isArray(student.constraints) &&
       student.constraints.length > 0
     ) {
+      console.log(`[AlgorithmAdapter] ✅ 使用新的10类约束系统:`, student.name);
       return this.convertNewConstraintsToAlgorithmFormat(
         student.constraints,
         student,
       );
     }
 
-    // Fallback to legacy constraint extraction
+    // === Fallback to legacy constraint extraction ===
     const constraints = {
       allowedDays: new Set(),
       allowedTimeRanges: [],
@@ -166,6 +291,7 @@ export class SchedulingAlgorithmAdapter {
     console.log(`[AlgorithmAdapter] 提取学生 ${student.name} 的约束，原始数据:`, {
       hasParsedData: !!student.parsedData,
       hasConstraints: !!student.constraints,
+      hasScheduling: !!student.scheduling,
       hasAvailability: !!availability,
       studentKeys: Object.keys(student)
     });
@@ -564,16 +690,25 @@ export class SchedulingAlgorithmAdapter {
     originalTeachers,
     originalClassrooms,
   ) {
+    const courses = result.courses || [];
+    const conflicts = result.conflicts || [];
+    const totalStudents = result.stats?.totalStudents || originalStudents?.length || 0;
+    const scheduledStudents = result.stats?.scheduledStudents || 0;
+    
+    // 🔥 添加 success 字段：如果排课了任何课程，就认为成功
+    const success = courses.length > 0 || (totalStudents > 0 && conflicts.length < totalStudents);
+    
     return {
-      courses: result.courses || [],
-      conflicts: result.conflicts || [],
+      success: success,
+      courses: courses,
+      conflicts: conflicts,
       stats: {
-        totalStudents: result.stats?.totalStudents || 0,
-        scheduledStudents: result.stats?.scheduledStudents || 0,
+        totalStudents: totalStudents,
+        scheduledStudents: scheduledStudents,
         unscheduledStudents: result.stats?.unscheduledStudents || 0,
         successRate: result.stats?.successRate || 0,
         executionTime: result.stats?.executionTime || 0,
-        totalCourses: (result.courses || []).length,
+        totalCourses: courses.length,
       },
       algorithmType: this.algorithmType,
     };

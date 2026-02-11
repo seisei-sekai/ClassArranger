@@ -1,0 +1,439 @@
+/**
+ * Audio Transcription Styles
+ * 音频转写样式
+ */
+
+.audio-transcription-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    sans-serif;
+}
+
+/* Header */
+.audio-transcription-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.audio-transcription-header h2 {
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.audio-transcription-header .subtitle {
+  font-size: 1.1rem;
+  color: #7f8c8d;
+  margin: 0;
+}
+
+/* Upload Section */
+.upload-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.upload-area {
+  text-align: center;
+}
+
+.upload-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.upload-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.upload-button:active {
+  transform: translateY(0);
+}
+
+.upload-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.file-info {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.file-icon {
+  font-size: 1.5rem;
+}
+
+.file-size {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.upload-hint {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #95a5a6;
+}
+
+.transcribe-button {
+  width: 100%;
+  margin-top: 1.5rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+}
+
+.transcribe-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 87, 108, 0.5);
+}
+
+.transcribe-button:active {
+  transform: translateY(0);
+}
+
+/* Progress Section */
+.progress-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.progress-label {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: #ecf0f1;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  animation: pulse 1.5s infinite;
+}
+
+.progress-percentage {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.progress-hint {
+  text-align: center;
+  margin-top: 0.5rem;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Error Section */
+.error-section {
+  background: #fee;
+  border: 2px solid #fcc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.error-message {
+  color: #c0392b;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+/* Result Section */
+.result-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.5s ease;
+}
+
+.result-header {
+  margin-bottom: 1.5rem;
+}
+
+.result-header h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: #2c3e50;
+}
+
+.result-metadata {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.metadata-item {
+  font-size: 0.95rem;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.result-content {
+  margin-bottom: 1.5rem;
+}
+
+.transcription-text {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    sans-serif;
+  color: #2c3e50;
+  background: #f8f9fa;
+  transition: border-color 0.3s ease;
+}
+
+.transcription-text:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+}
+
+.result-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.copy-button {
+  flex: 1;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border: none;
+  padding: 0.9rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+}
+
+.copy-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(79, 172, 254, 0.5);
+}
+
+.copy-button:active {
+  transform: translateY(0);
+}
+
+.reset-button {
+  flex: 1;
+  background: #95a5a6;
+  color: white;
+  border: none;
+  padding: 0.9rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-button:hover {
+  background: #7f8c8d;
+  transform: translateY(-2px);
+}
+
+.reset-button:active {
+  transform: translateY(0);
+}
+
+/* Tips Section */
+.tips-section {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.tips-section h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.tips-section ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #34495e;
+}
+
+.tips-section li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .audio-transcription-container {
+    padding: 1rem;
+  }
+
+  .audio-transcription-header h2 {
+    font-size: 2rem;
+  }
+
+  .upload-section,
+  .progress-section,
+  .result-section {
+    padding: 1.5rem;
+  }
+
+  .result-actions {
+    flex-direction: column;
+  }
+
+  .copy-button,
+  .reset-button {
+    width: 100%;
+  }
+
+  .result-metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .audio-transcription-container {
+    color: #ecf0f1;
+  }
+
+  .audio-transcription-header h2 {
+    color: #ecf0f1;
+  }
+
+  .upload-section,
+  .progress-section,
+  .result-section {
+    background: #2c3e50;
+  }
+
+  .file-info {
+    background: #34495e;
+  }
+
+  .file-name {
+    color: #ecf0f1;
+  }
+
+  .transcription-text {
+    background: #34495e;
+    color: #ecf0f1;
+    border-color: #4a5d6f;
+  }
+
+  .transcription-text:focus {
+    background: #2c3e50;
+  }
+
+  .result-header h3 {
+    color: #ecf0f1;
+  }
+
+  .tips-section {
+    background: linear-gradient(135deg, #3a4d5f 0%, #4a5d6f 100%);
+  }
+
+  .tips-section h4 {
+    color: #ecf0f1;
+  }
+
+  .tips-section li {
+    color: #bdc3c7;
+  }
+}

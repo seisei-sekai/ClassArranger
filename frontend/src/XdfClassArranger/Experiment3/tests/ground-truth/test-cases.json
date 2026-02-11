@@ -1,0 +1,1439 @@
+[
+  {
+    "id": "TC001",
+    "category": "basic-single-frequency",
+    "description": "简单1次/周，周一上午，固定时间，线下",
+    "studentConfig": {
+      "name": "TC001学生",
+      "campus": "新宿校区",
+      "subject": "数学",
+      "timesPerWeek": 1,
+      "hoursPerClass": 2,
+      "frequency": "1次/周",
+      "duration": 120,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "mode": "offline",
+      "allowedDays": [1],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "13:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "name": "TC001教师",
+      "subjects": ["数学"],
+      "campuses": ["新宿校区"],
+      "modes": ["offline"],
+      "availableTimeSlots": [
+        { "day": 1, "start": "9:00", "end": "21:30" }
+      ]
+    }],
+    "classroomConfigs": [{
+      "name": "TC001教室",
+      "campus": "新宿校区"
+    }],
+    "phase1_initialScheduling": {
+      "expected": "success"
+    },
+    "phase2_smartRecommendation": {
+      "trigger": "simulate_conflict",
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase3_applyRecommendation": {
+      "validations": [
+        "scheduling.timeConstraints.allowedDays.length === 7",
+        "scheduling.frequencyConstraints.schedulingMode === 'flexible'",
+        "parsedData exists and synced",
+        "constraints exists and synced"
+      ]
+    },
+    "phase4_reschedule": {
+      "expected": "success"
+    }
+  },
+  {
+    "id": "TC002",
+    "category": "basic-single-frequency",
+    "description": "简单1次/周，周三下午，1.5小时",
+    "studentConfig": {
+      "name": "TC002学生",
+      "campus": "新宿校区",
+      "subject": "英语",
+      "frequency": "1次/周",
+      "duration": 90,
+      "allowedDays": [3],
+      "allowedTimeRanges": [
+        { "day": 3, "start": "14:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"],
+      "campuses": ["新宿校区"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "trigger": "simulate_conflict",
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase3_applyRecommendation": {
+      "validations": ["time ranges expanded"]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC003",
+    "category": "basic-single-frequency",
+    "description": "简单1次/周，周五晚上，2.5小时",
+    "studentConfig": {
+      "name": "TC003学生",
+      "subject": "物理",
+      "frequency": "1次/周",
+      "duration": 150,
+      "allowedDays": [5],
+      "allowedTimeRanges": [
+        { "day": 5, "start": "18:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["物理"],
+      "campuses": ["新宿校区"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC004",
+    "category": "basic-single-frequency",
+    "description": "不同校区测试（涩谷校区）",
+    "studentConfig": {
+      "name": "TC004学生",
+      "campus": "涩谷校区",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [2],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "13:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "campuses": ["涩谷校区"]
+    }],
+    "classroomConfigs": [{
+      "campus": "涩谷校区"
+    }],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC005",
+    "category": "basic-single-frequency",
+    "description": "不同科目测试（化学）",
+    "studentConfig": {
+      "name": "TC005学生",
+      "subject": "化学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [4],
+      "allowedTimeRanges": [
+        { "day": 4, "start": "15:00", "end": "19:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["化学"],
+      "campuses": ["新宿校区"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "add-available-days"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC006",
+    "category": "basic-single-frequency",
+    "description": "短时长测试（1小时）",
+    "studentConfig": {
+      "name": "TC006学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 60,
+      "hoursPerClass": 1,
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "16:00", "end": "19:00" },
+        { "day": 3, "start": "16:00", "end": "19:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC007",
+    "category": "basic-single-frequency",
+    "description": "长时长测试（3小时）",
+    "studentConfig": {
+      "name": "TC007学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 180,
+      "hoursPerClass": 3,
+      "allowedDays": [6],
+      "allowedTimeRanges": [
+        { "day": 6, "start": "9:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success_or_conflict" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC008",
+    "category": "basic-single-frequency",
+    "description": "线上模式测试",
+    "studentConfig": {
+      "name": "TC008学生",
+      "subject": "英语",
+      "frequency": "1次/周",
+      "duration": 120,
+      "mode": "online",
+      "allowedDays": [2, 4],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "19:00", "end": "21:00" },
+        { "day": 4, "start": "19:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"],
+      "modes": ["online"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC009",
+    "category": "basic-single-frequency",
+    "description": "周末排课测试",
+    "studentConfig": {
+      "name": "TC009学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [0, 6],
+      "allowedTimeRanges": [
+        { "day": 0, "start": "10:00", "end": "16:00" },
+        { "day": 6, "start": "10:00", "end": "16:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "availableTimeSlots": [
+        { "day": 0, "start": "9:00", "end": "18:00" },
+        { "day": 6, "start": "9:00", "end": "18:00" }
+      ]
+    }],
+    "classroomConfigs": [{
+      "availableTimeSlots": [
+        { "day": 0, "start": "9:00", "end": "21:30" },
+        { "day": 6, "start": "9:00", "end": "21:30" }
+      ]
+    }],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "add-available-days"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC010",
+    "category": "basic-single-frequency",
+    "description": "多时段可选测试",
+    "studentConfig": {
+      "name": "TC010学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "12:00" },
+        { "day": 2, "start": "14:00", "end": "16:00" },
+        { "day": 3, "start": "16:00", "end": "18:00" },
+        { "day": 4, "start": "10:00", "end": "12:00" },
+        { "day": 5, "start": "14:00", "end": "16:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC011",
+    "category": "multi-frequency",
+    "description": "2次/周，固定时间，周一周三",
+    "studentConfig": {
+      "name": "TC011学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "14:00" },
+        { "day": 3, "start": "10:00", "end": "14:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC012",
+    "category": "multi-frequency",
+    "description": "2次/周，不同天数，周二周四",
+    "studentConfig": {
+      "name": "TC012学生",
+      "subject": "英语",
+      "frequency": "2次/周",
+      "duration": 90,
+      "timesPerWeek": 2,
+      "hoursPerClass": 1.5,
+      "allowedDays": [2, 4],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "15:00", "end": "18:00" },
+        { "day": 4, "start": "15:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC013",
+    "category": "multi-frequency",
+    "description": "3次/周，固定时间，周一三五",
+    "studentConfig": {
+      "name": "TC013学生",
+      "subject": "数学",
+      "frequency": "3次/周",
+      "duration": 120,
+      "timesPerWeek": 3,
+      "allowedDays": [1, 3, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "14:00", "end": "17:00" },
+        { "day": 3, "start": "14:00", "end": "17:00" },
+        { "day": 5, "start": "14:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC014",
+    "category": "multi-frequency",
+    "description": "2次/周，灵活模式",
+    "studentConfig": {
+      "name": "TC014学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "flexible",
+      "isRecurringFixed": false,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "18:00" },
+        { "day": 2, "start": "10:00", "end": "18:00" },
+        { "day": 3, "start": "10:00", "end": "18:00" },
+        { "day": 4, "start": "10:00", "end": "18:00" },
+        { "day": 5, "start": "10:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC015",
+    "category": "multi-frequency",
+    "description": "3次/周，灵活模式",
+    "studentConfig": {
+      "name": "TC015学生",
+      "subject": "英语",
+      "frequency": "3次/周",
+      "duration": 90,
+      "timesPerWeek": 3,
+      "hoursPerClass": 1.5,
+      "schedulingMode": "flexible",
+      "isRecurringFixed": false,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "13:00", "end": "21:00" },
+        { "day": 2, "start": "13:00", "end": "21:00" },
+        { "day": 3, "start": "13:00", "end": "21:00" },
+        { "day": 4, "start": "13:00", "end": "21:00" },
+        { "day": 5, "start": "13:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC016",
+    "category": "multi-frequency",
+    "description": "2次/周，时长不同（每次1小时）",
+    "studentConfig": {
+      "name": "TC016学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 60,
+      "timesPerWeek": 2,
+      "hoursPerClass": 1,
+      "allowedDays": [2, 5],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "17:00", "end": "20:00" },
+        { "day": 5, "start": "17:00", "end": "20:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC017",
+    "category": "multi-frequency",
+    "description": "4次/周，灵活模式",
+    "studentConfig": {
+      "name": "TC017学生",
+      "subject": "数学",
+      "frequency": "4次/周",
+      "duration": 90,
+      "timesPerWeek": 4,
+      "hoursPerClass": 1.5,
+      "schedulingMode": "flexible",
+      "isRecurringFixed": false,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "9:00", "end": "21:00" },
+        { "day": 2, "start": "9:00", "end": "21:00" },
+        { "day": 3, "start": "9:00", "end": "21:00" },
+        { "day": 4, "start": "9:00", "end": "21:00" },
+        { "day": 5, "start": "9:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC018",
+    "category": "multi-frequency",
+    "description": "2次/周，时间跨度大",
+    "studentConfig": {
+      "name": "TC018学生",
+      "subject": "物理",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "allowedDays": [1, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "9:00", "end": "12:00" },
+        { "day": 5, "start": "18:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["物理"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC019",
+    "category": "multi-frequency",
+    "description": "2次/周，周末+工作日",
+    "studentConfig": {
+      "name": "TC019学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "allowedDays": [3, 6],
+      "allowedTimeRanges": [
+        { "day": 3, "start": "14:00", "end": "18:00" },
+        { "day": 6, "start": "10:00", "end": "16:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "availableTimeSlots": [
+        { "day": 3, "start": "9:00", "end": "21:30" },
+        { "day": 6, "start": "9:00", "end": "21:30" }
+      ]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC020",
+    "category": "multi-frequency",
+    "description": "2次/周，连续两天",
+    "studentConfig": {
+      "name": "TC020学生",
+      "subject": "化学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "allowedDays": [1, 2],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "16:00", "end": "19:00" },
+        { "day": 2, "start": "16:00", "end": "19:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["化学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success" },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC021",
+    "category": "smart-recommendation-ultra-flexible",
+    "description": "极度宽松：仅工作日→全周",
+    "studentConfig": {
+      "name": "TC021学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "allowedDays": [1, 2, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "15:00", "end": "17:00" },
+        { "day": 2, "start": "15:00", "end": "17:00" },
+        { "day": 3, "start": "15:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": { "expected": "success_or_conflict" },
+    "phase2_smartRecommendation": {
+      "trigger": "always",
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase3_applyRecommendation": {
+      "expectedChanges": {
+        "scheduling.timeConstraints.allowedDays": [0, 1, 2, 3, 4, 5, 6],
+        "scheduling.frequencyConstraints.schedulingMode": "flexible",
+        "scheduling.frequencyConstraints.isRecurringFixed": false
+      }
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC022",
+    "category": "smart-recommendation-ultra-flexible",
+    "description": "极度宽松：固定→灵活，时间冲突场景",
+    "studentConfig": {
+      "name": "TC022学生",
+      "subject": "英语",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "12:00" },
+        { "day": 3, "start": "10:00", "end": "12:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC023",
+    "category": "smart-recommendation-ultra-flexible",
+    "description": "极度宽松：2次/周约束严格→全周全天",
+    "studentConfig": {
+      "name": "TC023学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "allowedDays": [2],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "14:00", "end": "16:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC024",
+    "category": "smart-recommendation-ultra-flexible",
+    "description": "极度宽松：3次/周约束严格",
+    "studentConfig": {
+      "name": "TC024学生",
+      "subject": "物理",
+      "frequency": "3次/周",
+      "duration": 90,
+      "timesPerWeek": 3,
+      "hoursPerClass": 1.5,
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "16:00", "end": "18:00" },
+        { "day": 3, "start": "16:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["物理"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC025",
+    "category": "smart-recommendation-ultra-flexible",
+    "description": "极度宽松：线下→线上，扩大资源池",
+    "studentConfig": {
+      "name": "TC025学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "mode": "offline",
+      "allowedDays": [1, 4],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "19:00", "end": "21:00" },
+        { "day": 4, "start": "19:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "modes": ["online", "offline"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC026",
+    "category": "smart-recommendation-expand-time",
+    "description": "扩大范围：13:00-16:00→12:00-17:00",
+    "studentConfig": {
+      "name": "TC026学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [2],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "13:00", "end": "16:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase3_applyRecommendation": {
+      "validations": ["v4-schema", "all timeRanges have day field", "all slots in 0-149 range"]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC027",
+    "category": "smart-recommendation-expand-time",
+    "description": "扩大范围：仅下午→全天",
+    "studentConfig": {
+      "name": "TC027学生",
+      "subject": "英语",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [3],
+      "allowedTimeRanges": [
+        { "day": 3, "start": "14:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC028",
+    "category": "smart-recommendation-expand-time",
+    "description": "扩大范围：2次/周，同时扩大两天",
+    "studentConfig": {
+      "name": "TC028学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "allowedDays": [1, 4],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "14:00", "end": "17:00" },
+        { "day": 4, "start": "14:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC029",
+    "category": "smart-recommendation-expand-time",
+    "description": "扩大范围：跨午休时间",
+    "studentConfig": {
+      "name": "TC029学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [2],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "10:00", "end": "12:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC030",
+    "category": "smart-recommendation-expand-time",
+    "description": "扩大范围：晚上时段延后",
+    "studentConfig": {
+      "name": "TC030学生",
+      "subject": "英语",
+      "frequency": "1次/周",
+      "duration": 90,
+      "allowedDays": [5],
+      "allowedTimeRanges": [
+        { "day": 5, "start": "19:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC031",
+    "category": "smart-recommendation-add-days",
+    "description": "增加天数：周一→周一+周二",
+    "studentConfig": {
+      "name": "TC031学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [1],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "14:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "add-available-days"
+    },
+    "phase3_applyRecommendation": {
+      "validations": ["v4-schema", "all timeRanges have day field", "all slots in 0-149 range"]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC032",
+    "category": "smart-recommendation-add-days",
+    "description": "增加天数：工作日→工作日+周末",
+    "studentConfig": {
+      "name": "TC032学生",
+      "subject": "英语",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "14:00", "end": "18:00" },
+        { "day": 2, "start": "14:00", "end": "18:00" },
+        { "day": 3, "start": "14:00", "end": "18:00" },
+        { "day": 4, "start": "14:00", "end": "18:00" },
+        { "day": 5, "start": "14:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "add-available-days"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC033",
+    "category": "smart-recommendation-add-days",
+    "description": "增加天数：2天→5天",
+    "studentConfig": {
+      "name": "TC033学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "13:00", "end": "18:00" },
+        { "day": 3, "start": "13:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "add-available-days"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC034",
+    "category": "smart-recommendation-add-days",
+    "description": "增加天数：2次/周+灵活模式",
+    "studentConfig": {
+      "name": "TC034学生",
+      "subject": "物理",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "flexible",
+      "isRecurringFixed": false,
+      "allowedDays": [2, 4],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "10:00", "end": "18:00" },
+        { "day": 4, "start": "10:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["物理"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "add-available-days"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC035",
+    "category": "smart-recommendation-add-days",
+    "description": "增加天数：仅周末→周末+工作日",
+    "studentConfig": {
+      "name": "TC035学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [0, 6],
+      "allowedTimeRanges": [
+        { "day": 0, "start": "10:00", "end": "16:00" },
+        { "day": 6, "start": "10:00", "end": "16:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "availableTimeSlots": [
+        { "day": 0, "start": "9:00", "end": "18:00" },
+        { "day": 1, "start": "9:00", "end": "21:30" },
+        { "day": 6, "start": "9:00", "end": "18:00" }
+      ]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "add-available-days"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC036",
+    "category": "smart-recommendation-flexible-mode",
+    "description": "灵活模式：2次/周，固定→灵活",
+    "studentConfig": {
+      "name": "TC036学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "14:00", "end": "18:00" },
+        { "day": 2, "start": "14:00", "end": "18:00" },
+        { "day": 3, "start": "14:00", "end": "18:00" },
+        { "day": 4, "start": "14:00", "end": "18:00" },
+        { "day": 5, "start": "14:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase3_applyRecommendation": {
+      "expectedChanges": {
+        "scheduling.frequencyConstraints.schedulingMode": "flexible",
+        "scheduling.frequencyConstraints.isRecurringFixed": false
+      }
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC037",
+    "category": "smart-recommendation-flexible-mode",
+    "description": "灵活模式：3次/周，固定→灵活",
+    "studentConfig": {
+      "name": "TC037学生",
+      "subject": "英语",
+      "frequency": "3次/周",
+      "duration": 90,
+      "timesPerWeek": 3,
+      "hoursPerClass": 1.5,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "18:00" },
+        { "day": 2, "start": "10:00", "end": "18:00" },
+        { "day": 3, "start": "10:00", "end": "18:00" },
+        { "day": 4, "start": "10:00", "end": "18:00" },
+        { "day": 5, "start": "10:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC038",
+    "category": "smart-recommendation-flexible-mode",
+    "description": "灵活模式：时间冲突严重场景",
+    "studentConfig": {
+      "name": "TC038学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "12:00" },
+        { "day": 3, "start": "10:00", "end": "12:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "availableTimeSlots": [
+        { "day": 1, "start": "10:00", "end": "12:00" },
+        { "day": 3, "start": "10:00", "end": "14:00" }
+      ]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC039",
+    "category": "smart-recommendation-flexible-mode",
+    "description": "灵活模式：教师资源紧张",
+    "studentConfig": {
+      "name": "TC039学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "fixed",
+      "allowedDays": [1, 3, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "13:00", "end": "19:00" },
+        { "day": 3, "start": "13:00", "end": "19:00" },
+        { "day": 5, "start": "13:00", "end": "19:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "maxHoursPerWeek": 10
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC040",
+    "category": "smart-recommendation-flexible-mode",
+    "description": "灵活模式：4次/周",
+    "studentConfig": {
+      "name": "TC040学生",
+      "subject": "数学",
+      "frequency": "4次/周",
+      "duration": 90,
+      "timesPerWeek": 4,
+      "hoursPerClass": 1.5,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "allowedDays": [1, 2, 3, 4, 5],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "9:00", "end": "18:00" },
+        { "day": 2, "start": "9:00", "end": "18:00" },
+        { "day": 3, "start": "9:00", "end": "18:00" },
+        { "day": 4, "start": "9:00", "end": "18:00" },
+        { "day": 5, "start": "9:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC041",
+    "category": "smart-recommendation-other",
+    "description": "切换线上：线下→线上",
+    "studentConfig": {
+      "name": "TC041学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "mode": "offline",
+      "allowedDays": [2],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "19:00", "end": "21:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "modes": ["online"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "switch-online"
+    },
+    "phase3_applyRecommendation": {
+      "expectedChanges": {
+        "scheduling.modeConstraints.mode": "online"
+      },
+      "validations": ["v4-schema"]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC042",
+    "category": "smart-recommendation-other",
+    "description": "调整频率：1次/周→2次/周",
+    "studentConfig": {
+      "name": "TC042学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 150,
+      "timesPerWeek": 1,
+      "hoursPerClass": 2.5,
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "13:00", "end": "18:00" },
+        { "day": 3, "start": "13:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "adjust-frequency"
+    },
+    "phase3_applyRecommendation": {
+      "expectedChanges": {
+        "frequency": "2次/周"
+      },
+      "validations": ["v4-schema"]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC043",
+    "category": "smart-recommendation-other",
+    "description": "放宽教师约束",
+    "studentConfig": {
+      "name": "TC043学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "preferredTeachers": ["specific_teacher_id"],
+      "allowedDays": [2, 4],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "14:00", "end": "18:00" },
+        { "day": 4, "start": "14:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [
+      {
+        "name": "指定教师",
+        "subjects": ["数学"]
+      },
+      {
+        "name": "其他教师",
+        "subjects": ["数学"]
+      }
+    ],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "relax-teacher-preference"
+    },
+    "phase3_applyRecommendation": {
+      "validations": ["v4-schema"]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC044",
+    "category": "smart-recommendation-other",
+    "description": "全面放宽约束",
+    "studentConfig": {
+      "name": "TC044学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [3],
+      "allowedTimeRanges": [
+        { "day": 3, "start": "16:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "general-flexibility"
+    },
+    "phase3_applyRecommendation": {
+      "validations": [
+        "allowedDays expanded",
+        "timeRanges expanded",
+        "day field exists in all ranges"
+      ]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC045",
+    "category": "smart-recommendation-other",
+    "description": "组合推荐：先灵活，再极度宽松",
+    "studentConfig": {
+      "name": "TC045学生",
+      "subject": "英语",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "fixed",
+      "allowedDays": [1, 3],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "15:00", "end": "17:00" },
+        { "day": 3, "start": "15:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["英语"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "flexible-scheduling"
+    },
+    "phase4_reschedule": {
+      "expected": "success_or_conflict",
+      "then_apply": "ultra-flexible"
+    }
+  },
+  {
+    "id": "TC046",
+    "category": "edge-case-failure",
+    "description": "失败场景：无可用教师（科目不匹配）",
+    "studentConfig": {
+      "name": "TC046学生",
+      "subject": "生物",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [1],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "14:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学", "物理"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": {
+      "expected": "failure",
+      "expectedReason": "没有教师可以.*教授.*生物"
+    },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": {
+      "expected": "failure"
+    }
+  },
+  {
+    "id": "TC047",
+    "category": "edge-case-failure",
+    "description": "失败场景：无可用教室（校区不匹配）",
+    "studentConfig": {
+      "name": "TC047学生",
+      "campus": "银座校区",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [2],
+      "allowedTimeRanges": [
+        { "day": 2, "start": "14:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"],
+      "campuses": ["银座校区"]
+    }],
+    "classroomConfigs": [{
+      "campus": "新宿校区"
+    }],
+    "phase1_initialScheduling": {
+      "expected": "failure",
+      "expectedReason": "无可用教室"
+    }
+  },
+  {
+    "id": "TC048",
+    "category": "edge-case-failure",
+    "description": "失败场景：时间冲突无法解决",
+    "studentConfig": {
+      "name": "TC048学生",
+      "subject": "数学",
+      "frequency": "2次/周",
+      "duration": 120,
+      "timesPerWeek": 2,
+      "schedulingMode": "fixed",
+      "isRecurringFixed": true,
+      "allowedDays": [1],
+      "allowedTimeRanges": [
+        { "day": 1, "start": "10:00", "end": "12:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": {
+      "expected": "success_or_conflict"
+    },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC049",
+    "category": "edge-case-failure",
+    "description": "失败场景：约束过严（时间段太短）",
+    "studentConfig": {
+      "name": "TC049学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 180,
+      "allowedDays": [3],
+      "allowedTimeRanges": [
+        { "day": 3, "start": "16:00", "end": "17:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase1_initialScheduling": {
+      "expected": "failure",
+      "expectedReason": "(时间段不足|没有共同时间)"
+    },
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "expand-time-range"
+    },
+    "phase4_reschedule": { "expected": "success" }
+  },
+  {
+    "id": "TC050",
+    "category": "edge-case-boundary",
+    "description": "边界测试：推荐数据格式验证",
+    "studentConfig": {
+      "name": "TC050学生",
+      "subject": "数学",
+      "frequency": "1次/周",
+      "duration": 120,
+      "allowedDays": [4],
+      "allowedTimeRanges": [
+        { "day": 4, "start": "14:00", "end": "18:00" }
+      ]
+    },
+    "teacherConfigs": [{
+      "subjects": ["数学"]
+    }],
+    "classroomConfigs": [{}],
+    "phase2_smartRecommendation": {
+      "selectedRecommendation": "ultra-flexible"
+    },
+    "phase3_applyRecommendation": {
+      "validations": [
+        "all timeRanges have day field",
+        "all slots in 0-149 range",
+        "schedulingMode is 'flexible'",
+        "V4 and legacy formats synced",
+        "no missing fields in scheduling"
+      ]
+    },
+    "phase4_reschedule": { "expected": "success" }
+  }
+]

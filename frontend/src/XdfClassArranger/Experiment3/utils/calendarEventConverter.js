@@ -19,7 +19,22 @@ export function convertCourseToFullCalendarEvent(course, baseDate = new Date()) 
 
   const { student, teacher, classroom, timeSlot, subject } = course;
   
-  if (!student || !teacher) {
+  // 🔥 处理虚拟课程（使用 course 的直接属性）
+  const isVirtual = course.isVirtual || course.status === 'unscheduled';
+  const confirmationStatus = course.confirmationStatus || 'pending'; // 确认状态
+  
+  const studentObj = student || {
+    id: course.studentId,
+    name: course.studentName,
+    campus: course.campus
+  };
+  
+  const teacherObj = teacher || {
+    id: course.teacherId,
+    name: course.teacherName
+  };
+  
+  if (!studentObj || !teacherObj) {
     console.warn('[EventConverter] Invalid course - missing student or teacher:', course);
     return null;
   }
@@ -44,35 +59,66 @@ export function convertCourseToFullCalendarEvent(course, baseDate = new Date()) 
     timeSlot.endSlot
   );
 
-  // Get color
-  const color = getColorForStudent(student.id);
+  // 🔥 根据状态确定颜色和样式类
+  // 状态1: 成功生成 + 待确认 → 彩色 + 半透明灰色斜条
+  // 状态2: 成功生成 + 已确认 → 纯彩色
+  // 状态3: 失败生成 + 待确认 → 灰色斜条纹（虚拟）
+  // 状态4: 失败生成 + 已确认 → 彩色纯颜色
+  
+  let color, classNames, title;
+  
+  if (isVirtual && confirmationStatus === 'pending') {
+    // 状态3: 失败生成 + 待确认
+    color = '#9CA3AF';
+    classNames = ['event-type-course', 'event-virtual', 'event-pending'];
+    title = `${studentObj.name} - 待排课`;
+  } else if (isVirtual && confirmationStatus === 'confirmed') {
+    // 状态4: 失败生成 + 已确认
+    color = getColorForStudent(studentObj.id);
+    classNames = ['event-type-course', 'event-confirmed'];
+    title = `${studentObj.name} - ${teacherObj.name}`;
+  } else if (!isVirtual && confirmationStatus === 'pending') {
+    // 状态1: 成功生成 + 待确认（有斜条纹提示）
+    color = getColorForStudent(studentObj.id);
+    classNames = ['event-type-course', 'event-pending-with-stripe'];
+    title = `${studentObj.name} - ${teacherObj.name}`;
+  } else {
+    // 状态2: 成功生成 + 已确认（纯色，默认）
+    color = getColorForStudent(studentObj.id);
+    classNames = ['event-type-course', 'event-confirmed'];
+    title = `${studentObj.name} - ${teacherObj.name}`;
+  }
 
   return {
     id: course.id || `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    title: `${student.name} - ${teacher.name}`,
+    title: title,
     start: startDateTime.toISOString(),
     end: endDateTime.toISOString(),
     backgroundColor: color,
-    borderColor: color,
-    textColor: '#FFFFFF',
-    classNames: ['event-type-course'], // 标识为课程事件
+    borderColor: isVirtual && confirmationStatus === 'pending' ? '#6B7280' : color,
+    textColor: isVirtual && confirmationStatus === 'pending' ? '#374151' : '#FFFFFF',
+    classNames: classNames,
     display: 'block', // 实心块显示
     extendedProps: {
       eventType: 'course', // 事件类型标识
-      studentId: student.id,
-      studentName: student.name,
-      teacherId: teacher.id,
-      teacherName: teacher.name,
-      classroomId: classroom?.id,
-      classroomName: classroom?.name || '虚拟教室',
-      subject: subject || student.subject,
-      campus: student.campus,
+      isVirtual: isVirtual, // 🔥 标记虚拟课程
+      confirmationStatus: confirmationStatus, // 🔥 确认状态
+      status: course.status || 'scheduled', // 🔥 课程状态
+      conflictReason: course.conflictReason, // 🔥 失败原因
+      studentId: studentObj.id,
+      studentName: studentObj.name,
+      teacherId: teacherObj.id,
+      teacherName: teacherObj.name,
+      classroomId: classroom?.id || course.classroomId,
+      classroomName: classroom?.name || course.classroomName || '虚拟教室',
+      subject: subject || studentObj.subject || course.subject,
+      campus: studentObj.campus || course.campus,
       duration: timeSlot.duration,
-      format: student.format || '线下',
+      format: studentObj.format || course.format || '线下',
       courseData: course
     },
-    editable: true,
-    draggable: true
+    editable: confirmationStatus !== 'confirmed', // 已确认的课程不可编辑
+    draggable: confirmationStatus !== 'confirmed' // 已确认的课程不可拖动
   };
 }
 

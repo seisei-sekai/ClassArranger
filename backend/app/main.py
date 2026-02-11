@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, ai, users, backup
+from app.api.routes import auth, ai, users, backup, scheduling
 from app.core.database import connect_to_mongodb, close_mongodb_connection
 from app.services.auth_service import initialize_admin_user
 from app.services.backup_scheduler import get_backup_scheduler
@@ -58,6 +58,7 @@ app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(backup.router, prefix="/backup", tags=["backup"])
 app.include_router(ai.router, prefix="/ai", tags=["ai"])
+app.include_router(scheduling.router, prefix="/api/scheduling", tags=["scheduling"])
 
 @app.get("/")
 async def root():

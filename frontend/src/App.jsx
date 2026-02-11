@@ -19,6 +19,7 @@ import XdfMyPage from "./XdfClassArranger/MyPage/MyPage.jsx";
 import Experiment from "./XdfClassArranger/Experiment/Experiment.jsx";
 import Experiment2 from "./XdfClassArranger/Experiment2/Experiment2.jsx";
 import Experiment3 from "./XdfClassArranger/Experiment3/Experiment3.jsx";
+import AudioTranscription from "./XdfClassArranger/Experiment3/components/AudioTranscription.jsx";
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
           <Routes>
             {/* Public route */}
             <Route path="/login" element={<Login />} />
-            
+
             {/* Protected routes */}
             <Route
               path="/"
@@ -46,8 +47,12 @@ function App() {
               <Route path="experiment" element={<Experiment />} />
               <Route path="experiment2" element={<Experiment2 />} />
               <Route path="experiment3" element={<Experiment3 />} />
+              <Route
+                path="audio-transcription"
+                element={<AudioTranscription />}
+              />
               <Route path="mypage" element={<XdfMyPage />} />
-              
+
               {/* Admin-only routes */}
               <Route
                 path="register_other_account"

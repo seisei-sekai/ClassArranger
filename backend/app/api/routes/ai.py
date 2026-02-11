@@ -1,11 +1,14 @@
 """
 AI Routes - Mock版本 + OpenAI Proxy
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import os
+import tempfile
+import math
 from openai import OpenAI
+from pydub import AudioSegment
 
 from app.services.mock_ai_service import (
     generate_mock_insight,
@@ -234,6 +237,210 @@ async def parse_constraint_with_openai(request: ConstraintParseRequest):
             status_code=500,
             detail={
                 "error": "OpenAI API call failed",
+                "message": str(e),
+                "type": type(e).__name__
+            }
+        )
+
+
+# ============================================
+# Whisper Audio Transcription with Segmentation
+# ============================================
+
+def split_audio_file(file_path: str, max_size_mb: float = 24) -> List[str]:
+    """
+    Split audio file into segments under max_size_mb.
+    
+    Args:
+        file_path: Path to audio file
+        max_size_mb: Maximum size per segment in MB
+    
+    Returns:
+        List of temporary file paths for segments
+    """
+    try:
+        # Load audio file
+        audio = AudioSegment.from_file(file_path)
+        
+        # Get file size
+        file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+        
+        # If file is small enough, return as is
+        if file_size_mb <= max_size_mb:
+            return [file_path]
+        
+        # Calculate number of segments needed
+        num_segments = math.ceil(file_size_mb / max_size_mb)
+        
+        # Calculate segment duration
+        total_duration_ms = len(audio)
+        segment_duration_ms = total_duration_ms // num_segments
+        
+        # Split audio
+        segment_paths = []
+        file_ext = os.path.splitext(file_path)[1]
+        
+        for i in range(num_segments):
+            start_ms = i * segment_duration_ms
+            end_ms = (i + 1) * segment_duration_ms if i < num_segments - 1 else total_duration_ms
+            
+            segment = audio[start_ms:end_ms]
+            
+            # Export segment
+            temp_segment = tempfile.NamedTemporaryFile(suffix=file_ext, delete=False)
+            segment.export(temp_segment.name, format=file_ext[1:])  # Remove dot from extension
+            segment_paths.append(temp_segment.name)
+            temp_segment.close()
+        
+        return segment_paths
+    
+    except Exception as e:
+        print(f"Audio splitting error: {str(e)}")
+        raise
+
+
+@router.post("/whisper/transcribe")
+async def transcribe_audio(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Transcribe audio file using OpenAI Whisper API.
+    Supports files up to 100MB by automatic segmentation.
+    
+    Args:
+        file: Audio file (mp3, mp4, mpeg, mpga, m4a, wav, webm)
+    
+    Returns:
+        Transcription text and metadata
+    
+    Raises:
+        HTTPException: If OpenAI client is not configured or transcription fails
+    """
+    # Check if OpenAI is configured
+    if not openai_client:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "OpenAI API not configured",
+                "message": "请在服务器端配置 OPENAI_API_KEY 环境变量"
+            }
+        )
+    
+    # Validate file type
+    allowed_extensions = ['.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm']
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "Invalid file type",
+                "message": f"只支持音频格式: {', '.join(allowed_extensions)}",
+                "received": file_ext
+            }
+        )
+    
+    # Check file size (100MB absolute limit)
+    max_size = 100 * 1024 * 1024  # 100MB
+    file_content = await file.read()
+    file_size = len(file_content)
+    
+    if file_size > max_size:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "File too large",
+                "message": "文件大小不能超过100MB",
+                "size": f"{file_size / 1024 / 1024:.2f}MB"
+            }
+        )
+    
+    temp_file_path = None
+    segment_paths = []
+    
+    try:
+        # Create temporary file for original audio
+        with tempfile.NamedTemporaryFile(suffix=file_ext, delete=False) as temp_file:
+            temp_file.write(file_content)
+            temp_file_path = temp_file.name
+        
+        # Split audio into segments if necessary (24MB per segment)
+        segment_paths = split_audio_file(temp_file_path, max_size_mb=24)
+        
+        # Transcribe each segment
+        transcriptions = []
+        total_duration = 0
+        detected_language = None
+        previous_text = ""  # For context prompt
+        
+        for i, segment_path in enumerate(segment_paths):
+            with open(segment_path, 'rb') as audio_file:
+                # Use previous segment's text as prompt for context continuity
+                transcript_params = {
+                    "model": "whisper-1",
+                    "file": audio_file,
+                    "response_format": "verbose_json"
+                }
+                
+                # Add prompt for context (helps with continuity across segments)
+                if previous_text and i > 0:
+                    # Use last 200 chars as prompt
+                    transcript_params["prompt"] = previous_text[-200:]
+                
+                transcript = openai_client.audio.transcriptions.create(**transcript_params)
+                
+                transcriptions.append(transcript.text)
+                total_duration += transcript.duration
+                
+                if not detected_language:
+                    detected_language = transcript.language
+                
+                previous_text = transcript.text
+        
+        # Combine all transcriptions
+        full_text = " ".join(transcriptions)
+        
+        # Clean up temporary files
+        if temp_file_path and temp_file_path not in segment_paths:
+            os.unlink(temp_file_path)
+        
+        for segment_path in segment_paths:
+            try:
+                os.unlink(segment_path)
+            except:
+                pass
+        
+        return {
+            "text": full_text,
+            "language": detected_language,
+            "duration": total_duration,
+            "filename": file.filename,
+            "size_mb": f"{file_size / 1024 / 1024:.2f}",
+            "segments": len(segment_paths),
+            "success": True
+        }
+    
+    except Exception as e:
+        # Clean up temporary files if exists
+        if temp_file_path:
+            try:
+                os.unlink(temp_file_path)
+            except:
+                pass
+        
+        for segment_path in segment_paths:
+            try:
+                os.unlink(segment_path)
+            except:
+                pass
+        
+        print(f"Whisper API Error: {str(e)}")
+        
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "Transcription failed",
                 "message": str(e),
                 "type": type(e).__name__
             }

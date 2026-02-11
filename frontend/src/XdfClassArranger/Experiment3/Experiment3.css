@@ -72,8 +72,32 @@
 }
 
 .view-btn.active {
-  background: var(--primary-color);
+  background: #4F7CAC;  /* 蓝色系，白天模式 */
   color: white;
+}
+
+/* 🔥 暗色模式优化 - view-mode-switcher */
+:root[data-theme="dark"] .view-mode-switcher {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+}
+
+:root[data-theme="dark"] .view-btn {
+  color: var(--text-secondary);
+}
+
+:root[data-theme="dark"] .view-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+:root[data-theme="dark"] .view-btn.active {
+  background: var(--accent-secondary);
+  color: var(--text-primary);
+}
+
+:root[data-theme="dark"] .control-label {
+  color: var(--text-secondary);
 }
 
 .view-btn:disabled {
@@ -687,7 +711,48 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* 自动填充main-content-area的整个高度 */
+  transition: all 0.3s ease;
+}
+
+/* 🔥 折叠状态 */
+.student-panel.collapsed {
+  width: 3rem;
+  min-width: 3rem;
+}
+
+.teacher-panel.collapsed {
+  width: 3rem;
+  min-width: 3rem;
+}
+
+.classroom-panel.collapsed {
+  height: 3rem;
+  min-height: 3rem;
+}
+
+/* 🔥 折叠按钮样式 */
+.panel-collapse-btn {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: var(--bg-primary);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.panel-collapse-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.panel-collapse-btn svg {
+  flex-shrink: 0;
 }
 
 .student-panel-header {
@@ -936,6 +1001,45 @@
 }
 
 .student-visibility-toggle svg {
+  flex-shrink: 0;
+}
+
+/* 🔥 课程可见性 toggle 按钮样式 */
+.student-course-visibility-toggle,
+.teacher-course-visibility-toggle {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: var(--border-primary);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+}
+
+.student-course-visibility-toggle:hover,
+.teacher-course-visibility-toggle:hover {
+  background: var(--border-primary);
+  color: var(--text-tertiary);
+}
+
+.student-course-visibility-toggle.active,
+.teacher-course-visibility-toggle.active {
+  background: #4F7CAC;
+  color: #FFFFFF;
+}
+
+.student-course-visibility-toggle.active:hover,
+.teacher-course-visibility-toggle.active:hover {
+  background: #3E6B9A;
+}
+
+.student-course-visibility-toggle svg,
+.teacher-course-visibility-toggle svg {
   flex-shrink: 0;
 }
 
@@ -1587,7 +1691,7 @@
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
-  /* 自动填充main-content-area的整个高度 */
+  transition: all 0.3s ease;
 }
 
 .teacher-panel-header {
@@ -2002,7 +2106,7 @@
   max-height: 15rem;
   flex: 0 0 auto;
   width: 100%;
-  /* 确保占满center-column的宽度 */
+  transition: all 0.3s ease;
 }
 
 .classroom-panel-header {
@@ -2823,7 +2927,8 @@
 /* ==================== 学生选择和排课功能样式 ==================== */
 
 /* 学生选择checkbox */
-.student-selection-checkbox {
+.student-selection-checkbox,
+.teacher-selection-checkbox {
   flex-shrink: 0;
   width: 1.125rem;
   height: 1.125rem;
@@ -2861,7 +2966,8 @@
   margin-bottom: 0.75rem;
 }
 
-.select-all-btn {
+.select-all-btn,
+.toggle-course-visibility-btn {
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -2876,12 +2982,14 @@
   transition: all 0.2s;
 }
 
-.select-all-btn:hover:not(:disabled) {
+.select-all-btn:hover:not(:disabled),
+.toggle-course-visibility-btn:hover:not(:disabled) {
   background: var(--bg-secondary);
   box-shadow: 0 2px 0.5rem rgba(0, 0, 0, 0.1);
 }
 
-.select-all-btn:disabled {
+.select-all-btn:disabled,
+.toggle-course-visibility-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -4794,6 +4902,194 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   transition: all 0.2s ease;
+}
+
+/* 🔥 课程状态样式系统 */
+/* 状态1: 成功生成 + 待确认 - 彩色 + 半透明灰色斜条 */
+.fc-event.event-pending-with-stripe {
+  position: relative;
+  overflow: hidden;
+}
+
+.fc-event.event-pending-with-stripe::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(156, 163, 175, 0.15),
+    rgba(156, 163, 175, 0.15) 8px,
+    rgba(156, 163, 175, 0.3) 8px,
+    rgba(156, 163, 175, 0.3) 16px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fc-event.event-pending-with-stripe .fc-event-main {
+  position: relative;
+  z-index: 2;
+}
+
+/* 状态2: 成功生成 + 已确认 - 纯彩色（干净整洁） */
+.fc-event.event-confirmed {
+  /* 纯色，无需额外样式 */
+}
+
+.fc-event.event-confirmed .fc-event-title::after {
+  content: ' ✓';
+  font-size: 0.85em;
+  font-weight: bold;
+  opacity: 0.8;
+  margin-left: 4px;
+}
+
+/* 状态3: 失败生成 + 待确认 - 灰色斜条纹（虚拟） */
+.fc-event.event-virtual.event-pending {
+  opacity: 0.65 !important;
+  border-style: dashed !important;
+  background: repeating-linear-gradient(
+    45deg,
+    #9CA3AF,
+    #9CA3AF 10px,
+    #B8BEC5 10px,
+    #B8BEC5 20px
+  ) !important;
+  font-style: italic;
+}
+
+.fc-event.event-virtual.event-pending .fc-event-main {
+  opacity: 0.8;
+}
+
+.fc-event.event-virtual.event-pending:hover {
+  opacity: 0.8 !important;
+  transform: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.fc-event.event-virtual.event-pending .fc-event-title::after {
+  content: ' (未排课)';
+  font-size: 0.75em;
+  font-weight: normal;
+  opacity: 0.7;
+}
+
+/* 状态4: 失败生成 + 已确认 - 彩色纯颜色（与状态2相同） */
+/* 使用 .event-confirmed 样式即可 */
+
+/* 🔥 课程确认相关UI样式 */
+.modal-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.virtual-badge {
+  background: rgba(251, 191, 36, 0.15);
+  color: #D97706;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.conflict-badge {
+  background: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.confirm-all-btn,
+.unconfirm-all-btn {
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.confirm-all-btn:hover {
+  background: #10B981;
+  color: white;
+  border-color: #10B981;
+}
+
+.unconfirm-all-btn:hover {
+  background: #6B7280;
+  color: white;
+  border-color: #6B7280;
+}
+
+.confirm-all-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.unconfirm-all-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 暗色模式下的确认按钮 */
+:root[data-theme="dark"] .modal-status-badge.virtual-badge {
+  background: rgba(251, 191, 36, 0.2);
+  color: #FCD34D;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+:root[data-theme="dark"] .modal-status-badge.conflict-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+:root[data-theme="dark"] .confirm-all-btn,
+:root[data-theme="dark"] .unconfirm-all-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+:root[data-theme="dark"] .confirm-all-btn:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+:root[data-theme="dark"] .unconfirm-all-btn:hover {
+  background: #4B5563;
+  border-color: #4B5563;
+}
+
+/* 暗色模式下的事件确认样式 */
+:root[data-theme="dark"] .fc-event.event-pending-with-stripe::after {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(156, 163, 175, 0.25),
+    rgba(156, 163, 175, 0.25) 8px,
+    rgba(156, 163, 175, 0.4) 8px,
+    rgba(156, 163, 175, 0.4) 16px
+  );
 }
 
 /* Availability events - 背景显示，半透明 */

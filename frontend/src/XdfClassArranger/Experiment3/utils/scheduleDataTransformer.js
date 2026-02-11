@@ -39,17 +39,25 @@ export function transformStorageToResult(stored) {
  * 提取可显示的课程
  */
 export function extractDisplayableCourses(courses) {
-  return courses.filter(course => {
-    return (
-      course &&
-      course.student &&
-      course.teacher &&
-      course.timeSlot &&
-      course.timeSlot.day !== undefined &&
-      course.timeSlot.startSlot !== undefined &&
-      course.timeSlot.endSlot !== undefined
-    );
-  });
+  return courses
+    .filter(course => {
+      return (
+        course &&
+        course.student &&
+        course.teacher &&
+        course.timeSlot &&
+        course.timeSlot.day !== undefined &&
+        course.timeSlot.startSlot !== undefined &&
+        course.timeSlot.endSlot !== undefined
+      );
+    })
+    .map(course => {
+      // 🔥 确保所有课程都有 confirmationStatus 属性
+      if (!course.confirmationStatus) {
+        course.confirmationStatus = 'pending'; // 默认为待确认
+      }
+      return course;
+    });
 }
 
 /**

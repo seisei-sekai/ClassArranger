@@ -339,19 +339,44 @@ class ScheduleAdjustmentService {
     this._updateConflict(updateConflictStatus(conflict, ConflictStatus.IN_PROGRESS));
     
     try {
-      // 只为这一个学生排课
-      const studentToSchedule = [conflict.student];
+      // 🔥 关键修复：使用最新的 student 数据，而不是 conflict 中的旧引用
+      // 因为 handleManualModify 修改的是 this.students 中的原始对象
+      const latestStudent = this.students.find(s => s.id === conflict.student.id);
+      const studentToSchedule = latestStudent ? [latestStudent] : [conflict.student];
       
       if (!this.algorithmAdapter) {
         throw new Error('算法适配器未初始化');
       }
       
       // 调用算法
+      console.log('[AdjustmentService] 准备排课:', {
+        studentName: studentToSchedule[0].name,
+        studentId: studentToSchedule[0].id,
+        studentSchedulingMode: studentToSchedule[0].schedulingMode,
+        studentIsRecurringFixed: studentToSchedule[0].isRecurringFixed,
+        studentFrequency: studentToSchedule[0].frequency,
+        studentScheduling: studentToSchedule[0].scheduling,
+        studentParsedData: studentToSchedule[0].parsedData,
+        studentConstraints: studentToSchedule[0].constraints,
+        studentRawData: !!studentToSchedule[0].rawData,
+        studentCourseHours: studentToSchedule[0].courseHours,
+        teachersCount: this.teachers.length,
+        classroomsCount: this.classrooms.length
+      });
+      
       const result = await this.algorithmAdapter.schedule(
         studentToSchedule,
         this.teachers,
         this.classrooms
       );
+      
+      console.log('[AdjustmentService] 排课原始结果:', {
+        success: result.success,
+        coursesCount: result.courses?.length || 0,
+        conflictsCount: result.conflicts?.length || 0,
+        stats: result.stats,
+        firstConflict: result.conflicts?.[0]
+      });
       
       if (result.courses && result.courses.length > 0) {
         // 排课成功
